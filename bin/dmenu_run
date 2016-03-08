@@ -1,0 +1,7 @@
+#!/bin/sh
+
+if [ -n "$DMENU_PATH" ]; then
+    PATH="$DMENU_PATH:$PATH"
+fi
+
+dmenu_path | dmenu "$@" | ${SHELL:-"/bin/sh"} &
