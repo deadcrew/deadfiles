@@ -1,7 +1,14 @@
 #!/bin/sh
 
+OLDPATH="$PATH"
+
 if [ -n "$DMENU_PATH" ]; then
     PATH="$DMENU_PATH:$PATH"
 fi
 
-dmenu_path | dmenu "$@" | ${SHELL:-"/bin/sh"} &
+RUN="$(dmenu_path | dmenu "$@")"
+RUNPATH="$(which "$RUN")"
+
+PATH="$OLDPATH"
+
+exec $RUNPATH

@@ -1,0 +1,27 @@
+#!/bin/bash
+
+session="$(marvex)"
+
+self="$0"
+self_bin="$(basename $self)"
+
+cmd="$self_bin"$'\n'
+
+count=0
+while :; do
+    tmux list-sessions -F '#S' | grep "$session" -q
+    if [ $? -eq 0 ]; then
+        break;
+    fi
+
+    sleep 0.5
+
+    count=$((count+1))
+
+    if [ $count -eq 20 ]; then
+        logger "tmux session was not started"
+        exit 1
+    fi
+done
+
+tmux send -t "$session" "$cmd"
