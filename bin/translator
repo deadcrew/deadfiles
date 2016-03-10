@@ -1,24 +1,17 @@
 #!/bin/bash
 
 HISTORY=~/.engrus_history
-touch $HISTORY
 
-if [[ "$1" != "" ]]; then
+if [[ $# -ne 0 ]]; then
     INPUT="$@"
 else
-    INPUT=$(cut -f1 $HISTORY | dmenu -b -p "translate: ")
+    INPUT=$(dmenu -b -p "translate: ")
 fi
 
 LANG="en-ru"
 if ! grep -qiE '[a-z]' <<< "$INPUT"; then
     LANG="ru-en"
 fi
-
-while read result; do
-    notify-send -t 2000 -- "$result"
-    echo $result
-    exit 0
-done < <(grep -F "$INPUT"$'\t' $HISTORY | cut -f2-)
 
 if [ "$(wc -w <<< "$INPUT")" == "1" ]; then
     while read result; do
