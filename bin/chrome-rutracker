@@ -1,0 +1,22 @@
+#!/bin/bash
+
+config=$HOME/.config/chrome-rutracker
+
+if [ ! -d $config/profile ]; then
+    mkdir -p $config/{profile,extensions}/
+
+    {
+        cd $config/extensions
+        git clone git@github.com:kovetskiy/datacompressionproxy.git
+    }
+fi
+
+extensions="$(
+    ls -dm $config/extensions/*
+)"
+
+exec google-chrome-stable \
+    --user-data-dir=$config/profile/ \
+    --load-extension="$extensions" \
+    --system-developer-mode \
+    http://rutracker.org/
