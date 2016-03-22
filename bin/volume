@@ -1,0 +1,19 @@
+#!/bin/bash
+
+[ -n "$_LOCK" ] || _LOCK=taken exec flock -n $0 $0 "${@}"
+
+adb_state=$(adb get-state)
+
+if [ "$adb_state" == "device" ]; then
+    exec android-volume $@
+fi
+
+sound_control_name=$(amixer scontrols | head -n1 | cut -f4- -d' ')
+
+if [ "$1" == "up" ]; then
+    exec amixer set $sound_control_name 2%+
+fi
+
+if [ "$1" == "down" ]; then
+    exec amixer set $sound_control_name 2%-
+fi

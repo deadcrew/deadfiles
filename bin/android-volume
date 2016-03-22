@@ -1,0 +1,22 @@
+#!/bin/bash
+
+KEYCODE_VOLUME_DOWN=114
+KEYCODE_VOLUME_UP=115
+
+keypress() {
+    adb shell "
+    dev=\$(getevent -p | grep gpio-keys -B1 | grep -o '/dev/.*')
+    sendevent \$dev 1 $1 1 &&
+    sendevent \$dev 0 0 0 &&
+    sendevent \$dev 1 $1 0 &&
+    sendevent \$dev 0 0 0
+    "
+}
+
+if [ "$1" == "up" ]; then
+    keypress $KEYCODE_VOLUME_UP
+fi
+
+if [ "$1" == "down" ]; then
+    keypress $KEYCODE_VOLUME_DOWN
+fi
