@@ -5,7 +5,7 @@ HISTORY=~/.engrus_history
 if [[ $# -ne 0 ]]; then
     INPUT="$@"
 else
-    INPUT=$(dmenu -b -p "translate: ")
+    INPUT=$(dmenu -b -p "translate: " <&-)
 fi
 
 LANG="en-ru"
