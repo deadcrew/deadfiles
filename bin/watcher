@@ -1,0 +1,105 @@
+#!/bin/bash
+
+
+function :execute-command-template() {
+    local file_name="$1"
+    shift
+
+    local command_template="$@"
+
+    sed "s|%s|$file_name|g" <<< $command_template
+}
+
+function :eval-command-on-file-name() {
+    local file_name="$1"
+    shift
+
+    local command=$(:execute-command-template "$file_name" "$@")
+
+    :export-environment "$file_name"
+
+    echo "$ $command"
+    (
+        eval "$command"
+    )
+}
+
+function :export-environment() {
+    local file_name="$1"
+
+    export FILE=$file_name
+    export EXT=$(:get-file-extension $file_name)
+}
+
+function :get-file-extension() {
+    local file_name="$1"
+
+    sed 's/.*\.//g' <<< "$file_name"
+}
+
+function :colorize-output() {
+    echo -e '\e[1;44;1;37m'"${@}"'\e[0m'
+}
+
+function :is-run-step() {
+    local run_number="$1"
+    local run_step="$2"
+    test $(( $run_number % $run_step )) -eq 0
+}
+
+function :wait-changed-files() {
+    local directory="$1"
+
+    inotifywait -r -m -e modify --format %w%f $directory 2>/dev/null
+}
+
+function :main() {
+    if [ $# -eq 0 -o "$1" = "-h" -o "$1" = "--help" ]; then
+        cat <<HELP
+Usage:
+    watcher <pattern> [<run_step>] <command>...
+
+Options:
+    <pattern>   Used to match file name and run command only if matched.
+    <command>   Command to run, '%s' will be replaced with file name.
+    <run_step>  Used, if passed as number. Command will run only after
+                  <pattern> get matched specified number of times.
+HELP
+
+        exit 0
+    fi
+
+    if [ -n "$1" ]; then
+        local pattern=${1:-.}
+        shift
+    fi
+
+    local run_step=1
+    if [[ $1 =~ ^-?[0-9]+$ ]]; then
+        local run_step=1
+        shift
+    fi
+
+    local command="${@:-echo %s}"
+
+    local current_step=0
+
+    :wait-changed-files . | while read file_name; do
+        if ! grep -q "$pattern" <<< "$file_name"; then
+            continue
+        fi
+
+        current_step=$(( $current_step + 1 ))
+
+        if ! :is-run-step $current_step $run_step; then
+            continue
+        fi
+
+        :colorize-output "( $current_step % $run_step ) $file_name"
+
+        :eval-command-on-file-name "$file_name" "$command"
+    done
+}
+
+
+:main "${@}"
