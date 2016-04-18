@@ -76,7 +76,7 @@ HELP
 
     local run_step=1
     if [[ $1 =~ ^-?[0-9]+$ ]]; then
-        local run_step=1
+        local run_step=$1
         shift
     fi
 
