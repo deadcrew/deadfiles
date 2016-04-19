@@ -59,6 +59,16 @@ function :main() {
 Usage:
     watcher <pattern> [<run_step>] <command>...
 
+Examples:
+    $ watcher *.sh
+        > will echo modified .sh filename
+
+    $ watcher *.sh bash
+        > will run modified .sh filename
+
+    $ watcher *.sh 2 bash
+        > will run every second .sh filename
+
 Options:
     <pattern>   Used to match file name and run command only if matched.
     <command>   Command to run, '%s' will be replaced with file name.
@@ -69,7 +79,7 @@ HELP
         exit 0
     fi
 
-    if [ -n "$1" ]; then
+    if [ "$1" ]; then
         local pattern=${1:-.}
         shift
     fi
@@ -95,7 +105,11 @@ HELP
             continue
         fi
 
-        :colorize-output "( $current_step % $run_step ) $file_name"
+        if [ $run_step -gt 1 ]; then
+            :colorize-output "($current_step % $run_step)" "$file_name"
+        else
+            :colorize-output "$file_name"
+        fi
 
         :eval-command-on-file-name "$file_name" "$command"
     done
