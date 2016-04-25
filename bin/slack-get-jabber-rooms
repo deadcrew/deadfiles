@@ -3,8 +3,14 @@
 set -euo pipefail
 
 team="$1"
-url="https://slack.com/api/channels.list?token=$2&exclude_archived=1"
 
-curl -s "$url" \
+url_channels="https://slack.com/api/channels.list?token=$2&exclude_archived=1"
+url_groups="https://slack.com/api/groups.list?token=$2&exclude_archived=1"
+
+curl -s "$url_channels" \
     | jq -r '.channels[] | .name' \
+    | sed "s/$/@conference.$team.xmpp.slack.com/"
+
+curl -s "$url_groups" \
+    | jq -r '.groups[] | .name' \
     | sed "s/$/@conference.$team.xmpp.slack.com/"
