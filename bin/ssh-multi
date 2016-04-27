@@ -4,12 +4,13 @@ set -euo pipefail
 
 :main() {
     local login
+    local quiet
     local ask_pass
     local ssh_args
     local remote_command=()
     local servers=()
 
-    :parse-args login ask_pass ssh_args remote_command servers "${@}"
+    :parse-args login ask_pass ssh_args remote_command quiet servers "${@}"
 
     if [ $? -gt 0 ]; then
         exit 1
@@ -24,7 +25,7 @@ set -euo pipefail
 
     local joined_command=$(paste -sd' ' <<< ${remote_command[@]})
 
-    :run "$password" "$ssh_cmd_line" "$joined_command" "${servers[@]}"
+    :run "$password" "$ssh_cmd_line" "$joined_command" "$quiet" "${servers[@]}"
 }
 
 
@@ -33,20 +34,22 @@ set -euo pipefail
     local ask_pass_var=$2
     local ssh_args_var=$3
     local remote_command_var=$4
-    local servers_var=$5
+    local quiet_var=$5
+    local servers_var=$6
 
-    shift 5
+    shift 6
 
     eval $login_var=$(whoami)
     eval $ask_pass_var="false"
+    eval $quiet_var="false"
     eval $ssh_args_var="-oStrictHostKeyChecking=no"
 
-    eval set -- "$(getopt -o AS:l:h -- "${@}")"
+    eval set -- "$(getopt -o AS:l:hq -- "${@}")"
 
     while [ $# -gt 0 ]; do
         case "$1" in
             -A)
-                eval $ask_pass_var=true
+                eval $ask_pass_var="true"
                 ;;
             -S)
                 eval $ssh_args_var=$1
@@ -54,6 +57,10 @@ set -euo pipefail
                 ;;
             -l)
                 eval $login_var=$1
+                shift
+                ;;
+            -q)
+                eval $quiet_var="true"
                 shift
                 ;;
             -h)
@@ -102,7 +109,8 @@ set -euo pipefail
 
 :read-password() {
     if $ask_pass; then
-        read -p "Password: " -s password && echo >&2
+        echo -n "Password: " >&2
+        read -s password && echo >&2
         printf "%s" $password
     fi
 }
@@ -112,16 +120,21 @@ set -euo pipefail
     local password=$1
     local ssh_cmd_line=$2
     local remote_command=$3
+    local quiet=$4
 
-    shift 3
+    shift 4
 
     for server in "${@}"; do
-        echo "[$server]" >&2
+        if ! $quiet; then
+            echo "[$server]" >&2
+        fi
 
         if ! :ssh-do \
-            "$password" "$ssh_cmd_line" "$server" "$remote_command"
+            "$password" "$ssh_cmd_line" "$server" "$quiet" "$remote_command"
         then
-            echo "[command failed]" >&2
+            if ! $quiet; then
+                echo "[command failed]" >&2
+            fi
         fi
     done
 }
@@ -130,10 +143,11 @@ set -euo pipefail
     local password=$1
     local ssh_cmd_line=$2
     local server=$3
-    local remote_command=$4
+    local quiet=$4
+    local remote_command=$5
 
     if [ "$password" ]; then
-        :ssh-pass "$password" "$ssh_cmd_line" "$server" "$remote_command"
+        :ssh-pass "${@}"
     else
         $ssh_cmd_line "$server" "$remote_command"
     fi
@@ -144,8 +158,14 @@ set -euo pipefail
     local password=$(sed -r 's/"/\"/g' <<< $1)
     local ssh_cmd_line=$2
     local server=$3
+    local quiet=$4
 
-    shift 3
+    shift 4
+
+    local send_error='send_error "\[connection failed\]\n$expect_out(buffer)"'
+    if $quiet; then
+        send_error='send_error "$expect_out(buffer)"'
+    fi
 
     expect -f <(cat <<EXPECT
         spawn -noecho $ssh_cmd_line $server \$argv
@@ -155,7 +175,7 @@ set -euo pipefail
             assword: {
                 send "$password\r"
             } eof {
-                send_error "connection failed: \$expect_out(buffer)\r"
+                $send_error
                 exit 1
             }
         }
