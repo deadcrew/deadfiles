@@ -1,0 +1,164 @@
+#!/bin/bash
+
+set -euo pipefail
+
+:main() {
+    local login
+    local ask_pass
+    local ssh_args
+    local remote_command=()
+    local servers=()
+
+    :parse-args login ask_pass ssh_args remote_command servers "${@}"
+
+    if [ $? -gt 0 ]; then
+        exit 1
+    fi
+
+    local password=$(:read-password $ask_pass)
+    local ssh_cmd_line=$(:get-ssh-cmdline "$ssh_args" "$login")
+
+    if $ask_pass; then
+        ssh_cmd_line+=' -oControlPath=none'
+    fi
+
+    local joined_command=$(paste -sd' ' <<< ${remote_command[@]})
+
+    :run "$password" "$ssh_cmd_line" "$joined_command" "${servers[@]}"
+}
+
+
+:parse-args() {
+    local login_var=$1
+    local ask_pass_var=$2
+    local ssh_args_var=$3
+    local remote_command_var=$4
+    local servers_var=$5
+
+    shift 5
+
+    eval $login_var=$(whoami)
+    eval $ask_pass_var="false"
+    eval $ssh_args_var="-oStrictHostKeyChecking=no"
+
+    eval set -- "$(getopt -o AS:l:h -- "${@}")"
+
+    while [ $# -gt 0 ]; do
+        case "$1" in
+            -A)
+                eval $ask_pass_var=true
+                ;;
+            -S)
+                eval $ssh_args_var=$1
+                shift
+                ;;
+            -l)
+                eval $login_var=$1
+                shift
+                ;;
+            -h)
+                :usage
+                exit 1
+                ;;
+            *)
+                ;&
+            --)
+                shift
+                break
+                ;;
+        esac
+
+        shift
+    done
+
+    if [ $# -eq 0 ]; then
+        :usage
+        exit 1
+    fi
+
+    echo "${@}" >&2
+
+    while [ $# -gt 0 -a "${1:-}" != "-" ]; do
+        eval $servers_var+=\("$1"\)
+        shift
+    done
+
+    if [ $# -lt 2 ]; then
+        :usage
+        exit 1
+    fi
+
+    shift
+
+    while [ $# -gt 0 ]; do
+        eval $remote_command_var+=\("$1"\)
+        shift
+    done
+}
+
+
+:get-ssh-cmdline() {
+    printf '%s' 'ssh '$ssh_args' -l'$login
+}
+
+
+:read-password() {
+    if $ask_pass; then
+        read -p "Password: " -s password && echo >&2
+        printf "%s" $password
+    fi
+}
+
+
+:run() {
+    local password=$1
+    local ssh_cmd_line=$2
+    local remote_command=$3
+
+    shift 3
+
+    for server in "${@}"; do
+        echo "[$server]" >&2
+
+        if [ "$password" ]; then
+            :ssh-pass \
+                "$password" "$ssh_cmd_line" "$server" "$remote_command"
+        else
+            $ssh_cmd_line "$server" "$remote_command"
+        fi
+    done
+}
+
+
+:ssh-pass() {
+    local password=$(sed -r 's/"/\"/g' <<< $1)
+    local ssh_cmd_line=$2
+    local server=$3
+
+    shift 3
+
+    expect -f <(cat <<EXPECT
+        spawn -noecho $ssh_cmd_line $server \$argv
+
+        log_user 0
+        expect -notransfer "assword:"
+        send "$password\r"
+
+        interact
+EXPECT
+    ) "${@}" | tail -n+2  # expect still leaves empty line in place of password
+}
+
+
+:usage() {
+    cat <<HELP
+Usage: ssh-multi [-A] [-S <ssh-args>] [-l <login>] <server>... - <cmd>...
+
+Options:
+    -A             Ask password once and use it for all servers.
+    -S <ssh-args>  Additional args to pass to ssh.
+    -l <login>     Login to use.
+HELP
+}
+
+:main "${@}"
