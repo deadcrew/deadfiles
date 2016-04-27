@@ -76,8 +76,6 @@ set -euo pipefail
         exit 1
     fi
 
-    echo "${@}" >&2
-
     while [ $# -gt 0 -a "${1:-}" != "-" ]; do
         eval $servers_var+=\("$1"\)
         shift
@@ -120,13 +118,25 @@ set -euo pipefail
     for server in "${@}"; do
         echo "[$server]" >&2
 
-        if [ "$password" ]; then
-            :ssh-pass \
-                "$password" "$ssh_cmd_line" "$server" "$remote_command"
-        else
-            $ssh_cmd_line "$server" "$remote_command"
+        if ! :ssh-do \
+            "$password" "$ssh_cmd_line" "$server" "$remote_command"
+        then
+            echo "[command failed]" >&2
         fi
     done
+}
+
+:ssh-do() {
+    local password=$1
+    local ssh_cmd_line=$2
+    local server=$3
+    local remote_command=$4
+
+    if [ "$password" ]; then
+        :ssh-pass "$password" "$ssh_cmd_line" "$server" "$remote_command"
+    else
+        $ssh_cmd_line "$server" "$remote_command"
+    fi
 }
 
 
@@ -141,8 +151,14 @@ set -euo pipefail
         spawn -noecho $ssh_cmd_line $server \$argv
 
         log_user 0
-        expect -notransfer "assword:"
-        send "$password\r"
+        expect {
+            assword: {
+                send "$password\r"
+            } eof {
+                send_error "connection failed: \$expect_out(buffer)\r"
+                exit 1
+            }
+        }
 
         interact
 EXPECT
