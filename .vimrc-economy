@@ -2,6 +2,9 @@ set nocompatible
 
 let $RUNTIME=$HOME . "/.vim-economy"
 
+set rtp-=~/.vim
+set rtp^=$RUNTIME
+
 if empty(glob($RUNTIME . "/autoload/plug.vim"))
   silent !mkdir -p $RUNTIME/tmp
   silent !mkdir -p $RUNTIME/autoload
@@ -36,9 +39,6 @@ call plug#end()
 
 syntax on
 filetype plugin indent on
-
-set rtp-=~/.vim
-set rtp^=$RUNTIME
 
 set encoding=utf-8
 set printencoding=cp1251
@@ -206,8 +206,12 @@ endfun
 
 if system('background') == "light\n"
     call g:LightRoom()
-else
+elseif system('background') == "dark\n"
     call g:DarkRoom()
+elseif $BACKGROUND == 'light'
+    call g:LightRoom()
+else
+    call g:LightRoom()
 endif
 
 noh
