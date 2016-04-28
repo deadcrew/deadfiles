@@ -59,7 +59,7 @@ function :parse-opts() {
 
     shift 2
 
-    eval set -- $(getopt -o w:h -- "${@}")
+    eval set -- $(getopt -q -o w:h -- "${@}")
     while [ $# -gt 0 ]; do
         case $1 in
             -w)
