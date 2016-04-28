@@ -165,7 +165,7 @@ function :main() {
 
             (
                 sleep ${opts[wait]}
-                kill -TERM $(
+                kill 2>/dev/null -TERM $(
                     pstree -p $child \
                         | grep -o '([0-9]\+)' \
                         | grep -o '[0-9]\+'
