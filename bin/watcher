@@ -53,11 +53,40 @@ function :wait-changed-files() {
     inotifywait -r -m -e modify --format %w%f $directory 2>/dev/null
 }
 
-function :main() {
-    if [ $# -eq 0 -o "$1" = "-h" -o "$1" = "--help" ]; then
+function :parse-opts() {
+    local _opts=$1
+    local _args=$2
+
+    shift 2
+
+    eval set -- $(getopt -o w:h -- "${@}")
+    while [ $# -gt 0 ]; do
+        case $1 in
+            -w)
+                shift
+                eval $_opts\[wait\]=$1
+                ;;
+            --)
+                shift
+                break
+                ;;
+            *)
+                ;&
+            -h)
+                :usage
+                exit 1
+        esac
+
+        shift
+    done
+
+    eval $_args=\$@
+}
+
+function :usage() {
         cat <<HELP
 Usage:
-    watcher <pattern> [<run_step>] <command>...
+    watcher [-w] <pattern> [<run_step>] <command>...
 
 Examples:
     $ watcher *.sh
@@ -70,13 +99,32 @@ Examples:
         > will run every second .sh filename
 
 Options:
-    <pattern>   Used to match file name and run command only if matched.
-    <command>   Command to run, '%s' will be replaced with file name.
-    <run_step>  Used, if passed as number. Command will run only after
-                  <pattern> get matched specified number of times.
+    <pattern>     Used to match file name and run command only if matched.
+    <command>     Command to run, '%s' will be replaced with file name.
+    <run_step>    Used, if passed as number. Command will run only after
+                   <pattern> get matched specified number of times.
+    -w <timeout>  Kill task after specified time was passed.
+                   Task will be killed with 'TERM'.
 HELP
 
-        exit 0
+}
+
+function :main() {
+    local opts
+    local args=()
+
+    typeset -A opts
+
+    opts[wait]=0
+
+    :parse-opts opts args "${@}"
+
+    set -- ${args[@]}
+
+    if [ $# -eq 0 ]; then
+        :usage
+
+        exit 1
     fi
 
     if [ "$1" ]; then
@@ -111,7 +159,16 @@ HELP
             :colorize-output "$file_name"
         fi
 
-        :eval-command-on-file-name "$file_name" "$command"
+        if [ ${opts[wait]} -gt 0 ]; then
+            ( :eval-command-on-file-name "$file_name" "$command" ) &
+            local child=$!
+
+            ( sleep ${opts[wait]} && kill -TERM $child ) &
+
+            wait
+        else
+            :eval-command-on-file-name "$file_name" "$command"
+        fi
     done
 }
 
