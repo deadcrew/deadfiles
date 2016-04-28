@@ -35,6 +35,8 @@ Plug 'seletskiy/vim-nunu'
 
 Plug 'NLKNguyen/papercolor-theme'
 
+Plug 'vim-utils/vim-man'
+
 call plug#end()
 
 syntax on
