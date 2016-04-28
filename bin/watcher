@@ -50,7 +50,7 @@ function :is-run-step() {
 function :wait-changed-files() {
     local directory="$1"
 
-    inotifywait -r -m -e modify --format %w%f $directory 2>/dev/null
+    inotifywait -r -m -e close_write --format %w%f $directory 2>/dev/null
 }
 
 function :parse-opts() {
