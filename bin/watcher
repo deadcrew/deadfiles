@@ -163,8 +163,16 @@ function :main() {
             ( :eval-command-on-file-name "$file_name" "$command" ) &
             local child=$!
 
-            ( sleep ${opts[wait]} && kill -TERM $child ) &
+            (
+                sleep ${opts[wait]}
+                kill -TERM $(
+                    pstree -p $child \
+                        | grep -o '([0-9]\+)' \
+                        | grep -o '[0-9]\+'
+                    )
+            ) &
 
+            wait
             wait
         else
             :eval-command-on-file-name "$file_name" "$command"
