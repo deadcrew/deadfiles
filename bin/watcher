@@ -95,7 +95,7 @@ HELP
     local current_step=0
 
     :wait-changed-files . | while read file_name; do
-        if ! grep -q "$pattern" <<< "$file_name"; then
+        if ! grep -qE "$pattern" <<< "$file_name"; then
             continue
         fi
 
