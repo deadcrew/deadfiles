@@ -47,10 +47,10 @@ function :is-run-step() {
     test $(( $run_number % $run_step )) -eq 0
 }
 
-function :wait-changed-files() {
-    local directory="$1"
+    local events="$1"
+    local directory="$2"
 
-    inotifywait -r -m -e close_write --format %w%f $directory 2>/dev/null
+    inotifywait -r -m -e $events --format %w%f $directory 2>/dev/null
 }
 
 function :parse-opts() {
@@ -59,12 +59,16 @@ function :parse-opts() {
 
     shift 2
 
-    eval set -- $(getopt -o w:h -- "${@}")
+    eval set -- $(getopt -o w:he: -- "${@}")
     while [ $# -gt 0 ]; do
         case $1 in
             -w)
                 shift
                 eval $_opts\[wait\]=$1
+                ;;
+            -e)
+                shift
+                eval $_opts\[events\]=$1
                 ;;
             --)
                 shift
@@ -86,7 +90,7 @@ function :parse-opts() {
 function :usage() {
         cat <<HELP
 Usage:
-    watcher [-w] <pattern> [<run_step>] <command>...
+    watcher [-we] <pattern> [<run_step>] <command>...
 
 Examples:
     $ watcher *.sh
@@ -94,6 +98,9 @@ Examples:
 
     $ watcher *.sh bash
         > will run modified .sh filename
+
+    $ watcher -e close_write *.sh bash
+        > will run modified .sh filename only on close_write
 
     $ watcher *.sh 2 bash
         > will run every second .sh filename
@@ -105,6 +112,8 @@ Options:
                    <pattern> get matched specified number of times.
     -w <timeout>  Kill task after specified time was passed.
                    Task will be killed with 'TERM'.
+    -e <events>   Run specified command only on <events. [default: modify].
+                  Most usable are: modify, close_write.
 HELP
 
 }
@@ -116,6 +125,7 @@ function :main() {
     typeset -A opts
 
     opts[wait]=0
+    opts[events]="modify"
 
     :parse-opts opts args "${@}"
 
@@ -142,7 +152,7 @@ function :main() {
 
     local current_step=0
 
-    :wait-changed-files . | while read file_name; do
+    :wait-changed-files "${opts[events]}" . | while read file_name; do
         if ! grep -qE "$pattern" <<< "$file_name"; then
             continue
         fi
