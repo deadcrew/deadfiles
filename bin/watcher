@@ -47,6 +47,7 @@ function :is-run-step() {
     test $(( $run_number % $run_step )) -eq 0
 }
 
+function :wait-changed-files() {
     local events="$1"
     local directory="$2"
 
