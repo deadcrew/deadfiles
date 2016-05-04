@@ -18,7 +18,7 @@ if output=$(carcosa -Lc \
     | sort \
     | dmenu -b -l 20 2>/dev/null \
     | perl -p -e 'chomp if eof' \
-    | xargs -0 carcosa -Gc 2>&1)
+    | xargs -r0 carcosa -Gc 2>&1)
 then
     cat <<< "$output" \
         | perl -p -e 'chomp if eof' \
@@ -26,5 +26,7 @@ then
         | xclip -i -selection clipboard
     xdotool key Shift+Insert
 else
-    notify-send carcosa "$output"
+    if [ "$output" ]; then
+        notify-send carcosa "$output"
+    fi
 fi
