@@ -10,21 +10,21 @@ if ! cd "${SECRETS_REPOSITORY}"; then
 fi
 
 if ! carcosa -Fc; then
-    notify-send "Master password key cache file is not found."
+    notify-send "carcosa" "Master password key cache file is not found."
     exit 1
 fi
 
-carcosa -Lc \
-    | dmenu -b -l 20 \
-    | ( carcosa -Gc $(cat) ) \
-    | paste \
+if output=$(carcosa -Lc \
+    | sort \
+    | dmenu -b -l 20 2>/dev/null \
     | perl -p -e 'chomp if eof' \
-    | xclip -f \
-    | xclip -selection clipboard
-
-# if dmenu returned non-zero exit code,
-# like on escape
-if [ $? -eq 0 ]; then
+    | xargs -0 carcosa -Gc 2>&1)
+then
+    cat <<< "$output" \
+        | perl -p -e 'chomp if eof' \
+        | xclip -i -f \
+        | xclip -i -selection clipboard
     xdotool key Shift+Insert
+else
+    notify-send carcosa "$output"
 fi
-
