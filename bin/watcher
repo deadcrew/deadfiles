@@ -119,6 +119,15 @@ HELP
 
 }
 
+function :watchdog() {
+    sleep $1
+    kill 2>/dev/null -TERM $(
+    pstree -p $2 \
+        | grep -o '([0-9]\+)' \
+        | grep -o '[0-9]\+'
+    )
+}
+
 function :main() {
     local opts
     local args=()
@@ -174,17 +183,15 @@ function :main() {
             ( :eval-command-on-file-name "$file_name" "$command" ) &
             local child=$!
 
-            (
-                sleep ${opts[wait]}
-                kill 2>/dev/null -TERM $(
-                    pstree -p $child \
-                        | grep -o '([0-9]\+)' \
-                        | grep -o '[0-9]\+'
-                    )
-            ) &
+            ( :watchdog ${opts[wait]} $child ) &
 
-            wait
-            wait
+            local watchdog=$!
+
+            wait $child
+
+            kill $watchdog 2>/dev/null
+
+            wait $watchdog
         else
             :eval-command-on-file-name "$file_name" "$command"
         fi
