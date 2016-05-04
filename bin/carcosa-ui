@@ -1,0 +1,30 @@
+#!/bin/bash
+
+set -euo pipefail
+
+SECRETS_REPOSITORY=${SECRETS_REPOSITORY:-$HOME/.secrets/}
+
+if ! cd "${SECRETS_REPOSITORY}"; then
+    notify-send "$SECRETS_REPOSITORY does not exist."
+    exit 1
+fi
+
+if ! carcosa -Fc; then
+    notify-send "Master password key cache file is not found."
+    exit 1
+fi
+
+carcosa -Lc \
+    | dmenu -b -l 20 \
+    | ( carcosa -Gc $(cat) ) \
+    | paste \
+    | perl -p -e 'chomp if eof' \
+    | xclip -f \
+    | xclip -selection clipboard
+
+# if dmenu returned non-zero exit code,
+# like on escape
+if [ $? -eq 0 ]; then
+    xdotool key Shift+Insert
+fi
+
