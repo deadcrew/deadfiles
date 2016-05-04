@@ -16,7 +16,7 @@ fi
 
 if output=$(carcosa -Lc \
     | sort \
-    | dmenu -b -l 20 2>/dev/null \
+    | dmenu -f -i -b -l 20 2>/dev/null \
     | perl -p -e 'chomp if eof' \
     | xargs -r0 carcosa -Gc 2>&1)
 then
