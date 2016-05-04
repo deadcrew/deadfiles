@@ -126,6 +126,9 @@ function :watchdog() {
         | grep -o '([0-9]\+)' \
         | grep -o '[0-9]\+'
     )
+
+
+    :colorize-output "$2 killed after ${1}sec timeout"
 }
 
 function :main() {
@@ -187,11 +190,11 @@ function :main() {
 
             local watchdog=$!
 
-            wait $child
-
-            kill $watchdog 2>/dev/null
-
-            wait $watchdog
+            {
+                wait $child
+                kill $watchdog
+                wait $watchdog
+            } 2>/dev/null
         else
             :eval-command-on-file-name "$file_name" "$command"
         fi
