@@ -52,11 +52,11 @@ set -euo pipefail
                 eval $ask_pass_var="true"
                 ;;
             -S)
-                eval $ssh_args_var=$1
+                eval $ssh_args_var=$2
                 shift
                 ;;
             -l)
-                eval $login_var=$1
+                eval $login_var=$2
                 shift
                 ;;
             -q)
@@ -188,7 +188,7 @@ EXPECT
 
 :usage() {
     cat <<HELP
-Usage: ssh-multi [-A] [-S <ssh-args>] [-l <login>] <server>... - <cmd>...
+Usage: ssh-multi [-A] [-S <ssh-args>] [-l <login>] <server>... -- <cmd>...
 
 Options:
     -A             Ask password once and use it for all servers.
