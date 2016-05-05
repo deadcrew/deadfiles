@@ -38,4 +38,4 @@ config() {
     fi
 }
 
-exec /usr/bin/mcabber -f <(config)
+exec mcabber -f <(config)
