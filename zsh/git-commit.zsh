@@ -53,7 +53,7 @@ git-commit() {
 
 
     local flags=""
-    if [ "$amend" ]; then
+    if $amend; then
         flags="--amend"
     fi
 
