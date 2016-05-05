@@ -1,5 +1,6 @@
 git-commit() {
     local message="$*"
+    local amend=false
     for x in $@; do
         if [ "$x" = "!" ]; then
             amend=true
