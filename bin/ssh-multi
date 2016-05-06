@@ -95,10 +95,7 @@ set -euo pipefail
 
     shift
 
-    while [ $# -gt 0 ]; do
-        eval $remote_command_var+=\("$1"\)
-        shift
-    done
+    eval $remote_command_var=\${@}
 }
 
 
@@ -168,7 +165,7 @@ set -euo pipefail
     fi
 
     expect -f <(cat <<EXPECT
-        spawn -noecho $ssh_cmd_line $server \$argv
+        spawn -noecho $ssh_cmd_line $server {*}\$argv
 
         log_user 0
         expect {
