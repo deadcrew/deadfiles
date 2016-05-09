@@ -88,7 +88,7 @@ USAGE
     local bad=""
     if bad=$(grep -P '[^\d]' <<< "$numbers"); then
         echo "detected malicious (non-lojban) CNAME records:" >&2
-        :number-to-lojban <<< "$bad" | sed "s/^/$prefix/g"
+        :number-to-lojban <<< "$bad" | sed "s/^/$prefix/g" >&2
         numbers=$(grep -v -P '[^\d]' <<< "$numbers")
     fi
 
