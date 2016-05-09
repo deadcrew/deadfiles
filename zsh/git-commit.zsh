@@ -57,5 +57,9 @@ git-commit() {
         flags="--amend"
     fi
 
+    if [ "$(git diff --cached)" = "" ]; then
+        git add .
+    fi
+
     git commit $flags -m "$message"
 }
