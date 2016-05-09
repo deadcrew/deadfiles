@@ -172,8 +172,8 @@ function :main() {
 
     local current_step=0
 
-    :wait-changed-files "${opts[events]}" "${opts[dir]}" | \
-        while read file_name; do
+    :wait-changed-files "${opts[events]}" "${opts[dir]}" \
+        | while read file_name; do
         if ! grep -qE "$pattern" <<< "$file_name"; then
             continue
         fi
