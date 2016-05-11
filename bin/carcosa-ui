@@ -22,9 +22,9 @@ if output=$(carcosa -Lc \
 then
     cat <<< "$output" \
         | perl -p -e 'chomp if eof' \
-        | xclip -i -f \
-        | xclip -i -selection clipboard
-    xdotool key Shift+Insert
+        | xdotool type --clearmodifiers --delay 1 --file -
+
+    xdotool key --clearmodifiers Return
 else
     if [ "$output" ]; then
         notify-send carcosa "$output"
