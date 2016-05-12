@@ -1,0 +1,181 @@
+#!/bin/bash
+
+
+set -euo pipefail
+
+:usage() {
+    sed -r 's/^([ ]{4}|\t)//g' <<USAGE
+    incidents
+
+    Usage:
+        incidents -C
+        incidents -U
+        incidents -R -t
+        incidents -R -b
+        incidents -h
+
+    Options:
+        -C  Create an incident.
+        -R  Raw print.
+         -t Print title.
+         -b Print body.
+         -u Print url.
+        -h  Show this screen.
+USAGE
+}
+
+:main() {
+    local _create=false
+    local _update=false
+    local _raw=false
+    local _raw_title=false
+    local _raw_body=false
+    local _raw_url=false
+    while getopts ":hRtbuCU" key; do
+        case "$key" in
+            h)
+                :usage
+                exit 0
+                ;;
+
+            C)
+                _create=true
+                ;;
+
+            U)
+                _update=true
+                ;;
+
+            R)
+                _raw=true
+                ;;
+
+            t)
+                _raw_title=true
+                ;;
+
+            b)
+                _raw_body=true
+                ;;
+
+            u)
+                _raw_url=true
+                ;;
+        esac
+    done
+    local OPTIND # reset options
+
+    :source_config
+    true $host $user $password
+
+    if $_create; then
+        :create
+        echo "created: " $(:get_url)
+        :update
+    fi
+
+    if $_update; then
+        :update
+    fi
+
+    if $_raw; then
+        if $_raw_title; then
+            echo $(:get_title)
+        fi
+
+        if $_raw_url; then
+            echo $(:get_url)
+        fi
+
+        if $_raw_body; then
+            cat .build
+            echo
+            echo $(:get_url)
+        fi
+
+        exit 0
+    fi
+
+    exit 0
+}
+
+:create() {
+    local name=$(date -Im)
+    local dir=~/.incidents/$name
+
+    mkdir -p $dir
+    cd $dir
+    echo $dir
+
+    touch incident.md
+    vim incident.md
+
+    title=$(:get_title)
+    url=$(:create_page "$title" | :parse_url)
+
+    :markrc "$url"
+}
+
+:update() {
+    tail -n+3 incident.md  > .build
+    mark -u $user -p $password -c .markrc
+    rm .build
+}
+
+:get_title() {
+    title=$(head -n 1 incident.md | sed -r 's/^#?\s*//')
+    if [ "$title" = "" ]; then
+        echo "empty title"
+        exit 1
+    fi
+    echo "$title"
+}
+
+:create_page() {
+    local title=$1
+    curl \
+        -s \
+        -u $user:$password \
+        -X POST \
+        -H 'Content-Type: application/json' \
+        -d '{
+                "type":"page",
+                "title":"'"$title"'",
+                "space":{"key":"DEVOPS"},
+                "ancestors":[{"id":36438926}],
+                "body":{
+                    "storage":{
+                        "value":"<p>blank</p>",
+                        "representation":"storage"
+                    }
+                }
+            }' http://$host/rest/api/content/
+}
+
+:parse_url() {
+    echo "http://$host/pages/viewpage.action?pageId="$(jq -r '.id')
+}
+
+:markrc() {
+    local url="$1"
+
+    cat > .markrc <<MARK
+    url = "$url"
+    file = ".build"
+MARK
+}
+
+
+:get_url() {
+    head -n1 .markrc | sed -r 's/^\s*url.*"([^"]+)".*/\1/g'
+}
+
+:log() {
+    echo "[$(date -Iseconds | cut -dT -f1)] $*" >&2
+}
+
+:source_config() {
+    source ~/.config/confluence
+}
+
+:main "$@"
