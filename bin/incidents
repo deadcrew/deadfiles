@@ -88,9 +88,9 @@ USAGE
         fi
 
         if $_raw_body; then
-            cat .build
+            :body
             echo
-            echo $(:get_url)
+            :get_url
         fi
 
         exit 0
@@ -116,8 +116,12 @@ USAGE
     :markrc "$url"
 }
 
+:body() {
+    tail -n+3 incident.md
+}
+
 :update() {
-    tail -n+3 incident.md  > .build
+    echo "$(:body)" > .build
     mark -u $user -p $password -c .markrc
     rm .build
 }
