@@ -1,0 +1,18 @@
+#!/bin/bash
+
+set -euo pipefail
+
+source ~/.config/incidents
+
+echo To: $email
+
+echo -n 'Subject: '
+incidents -Rlt
+echo
+incidents -Rlb
+
+echo
+echo "Press [Enter] to continue..."
+read -r key
+
+incidents -Rlb | mutt "$email" -s "$(incidents -Rlt)"
