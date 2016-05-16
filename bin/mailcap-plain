@@ -7,4 +7,4 @@ if grep -q "\[fetch\]" "$filename"; then
     exec mailcap-plain-makepkg "$@"
 fi
 
-iconv -f "$charset" -t "UTF-8" "$filename" | wrap -w 80
+iconv -f "$charset" -t "UTF-8" "$filename"
