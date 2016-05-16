@@ -162,7 +162,7 @@ set -euo pipefail
 :ssh-is-shared-connection() {
     shift
 
-    ssh -O check "${@}" # > /dev/null 2>&1
+    ssh -O check "${@}" > /dev/null 2>&1
 }
 
 
