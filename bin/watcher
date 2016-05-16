@@ -1,7 +1,7 @@
 #!/bin/bash
 
 
-function :execute-command-template() {
+:execute-command-template() {
     local file_name="$1"
     shift
 
@@ -10,7 +10,7 @@ function :execute-command-template() {
     sed "s|%s|$file_name|g" <<< $command_template
 }
 
-function :eval-command-on-file-name() {
+:eval-command-on-file-name() {
     local file_name="$1"
     shift
 
@@ -24,37 +24,37 @@ function :eval-command-on-file-name() {
     )
 }
 
-function :export-environment() {
+:export-environment() {
     local file_name="$1"
 
     export FILE=$file_name
     export EXT=$(:get-file-extension $file_name)
 }
 
-function :get-file-extension() {
+:get-file-extension() {
     local file_name="$1"
 
     sed 's/.*\.//g' <<< "$file_name"
 }
 
-function :colorize-output() {
+:colorize-output() {
     echo -e '\e[1;44;1;37m'"${@}"'\e[0m'
 }
 
-function :is-run-step() {
+:is-run-step() {
     local run_number="$1"
     local run_step="$2"
     test $(( $run_number % $run_step )) -eq 0
 }
 
-function :wait-changed-files() {
+:wait-changed-files() {
     local events="$1"
     local directory="$2"
 
     inotifywait -r -m -e $events --format %w%f $directory 2>/dev/null
 }
 
-function :parse-opts() {
+:parse-opts() {
     local _opts=$1
     local _args=$2
 
@@ -92,7 +92,7 @@ function :parse-opts() {
     eval $_args=\$@
 }
 
-function :usage() {
+:usage() {
         cat <<HELP
 Usage:
     watcher [-we] <pattern> [<run_step>] <command>...
@@ -125,7 +125,7 @@ HELP
 
 }
 
-function :watchdog() {
+:watchdog() {
     sleep $1
     kill 2>/dev/null -TERM $(
     pstree -p $2 \
@@ -137,7 +137,42 @@ function :watchdog() {
     :colorize-output "$2 killed after ${1}sec timeout"
 }
 
-function :main() {
+:lock() {
+    if [ -f "$_lockfile" ]; then
+        return 1
+    else
+        touch $_lockfile
+    fi
+}
+
+:unlock() {
+    rm -f $_lockfile
+}
+
+:run-command() {
+    local file_name="$1"
+    local command="$2"
+    local wait="$3"
+
+    if [ "$wait" -gt 0 ]; then
+        ( :eval-command-on-file-name "$file_name" "$command" ) &
+        local child=$!
+
+        ( :watchdog $wait $child ) &
+
+        local watchdog=$!
+
+        {
+            wait $child
+            kill $watchdog
+            wait $watchdog
+        } 2>/dev/null
+    else
+        :eval-command-on-file-name "$file_name" "$command"
+    fi
+}
+
+:main() {
     local opts
     local args=()
 
@@ -156,6 +191,9 @@ function :main() {
 
         exit 1
     fi
+
+    local _lockfile=/tmp/watcher.$(md5sum <<< "$(pwd): $@" | awk '{print $1}')
+    trap :unlock EXIT
 
     if [ "$1" ]; then
         local pattern=${1:-.}
@@ -184,28 +222,18 @@ function :main() {
             continue
         fi
 
-        if [ $run_step -gt 1 ]; then
-            :colorize-output "($current_step % $run_step)" "$file_name"
-        else
-            :colorize-output "$file_name"
-        fi
+        {
+            if :lock; then
+                if [ $run_step -gt 1 ]; then
+                    :colorize-output "($current_step % $run_step)" "$file_name"
+                else
+                    :colorize-output "$file_name"
+                fi
 
-        if [ ${opts[wait]} -gt 0 ]; then
-            ( :eval-command-on-file-name "$file_name" "$command" ) &
-            local child=$!
-
-            ( :watchdog ${opts[wait]} $child ) &
-
-            local watchdog=$!
-
-            {
-                wait $child
-                kill $watchdog
-                wait $watchdog
-            } 2>/dev/null
-        else
-            :eval-command-on-file-name "$file_name" "$command"
-        fi
+                :run-command "$file_name" "$command" ${opts[wait]}
+                :unlock
+            fi
+        } &
     done
 }
 
