@@ -3,8 +3,9 @@
 charset=$1
 filename=$2
 
-exec w3m \
+w3m \
     -I $charset -O UTF-8 \
     -T text/html \
     -dump -o display_link_number=1 \
-    "$filename"
+    "$filename" \
+    | wrap -w 80
