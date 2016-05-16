@@ -222,8 +222,8 @@ HELP
             continue
         fi
 
-        {
-            if :lock; then
+        if :lock; then
+            {
                 if [ $run_step -gt 1 ]; then
                     :colorize-output "($current_step % $run_step)" "$file_name"
                 else
@@ -232,8 +232,8 @@ HELP
 
                 :run-command "$file_name" "$command" ${opts[wait]}
                 :unlock
-            fi
-        } &
+            } &
+        fi
     done
 }
 
