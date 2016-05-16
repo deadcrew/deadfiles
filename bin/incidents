@@ -118,8 +118,13 @@ USAGE
     cd $dir
     echo $dir
 
-    touch incident.md
     vim incident.md
+
+    if [ ! -e incident.md ]; then
+        echo "Incident is empty, skipping."
+        rmdir $dir
+        exit 1
+    fi
 
     title=$(:get_title)
     url=$(:create_page "$title" | :parse_url)
