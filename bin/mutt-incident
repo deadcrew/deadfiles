@@ -15,4 +15,4 @@ echo
 echo "Press [Enter] to continue..."
 read -r key
 
-incidents -Rlb | mutt "$email" -s "$(incidents -Rlt)"
+incidents -Rlb | /bin/mutt "$email" -s "$(incidents -Rlt)"
