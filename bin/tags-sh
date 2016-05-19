@@ -1,0 +1,12 @@
+#!/bin/bash
+
+files=(
+    $(ag -l --nocolor -g '' \
+        | ag -v 'testcases')
+)
+
+ctags \
+    --regex-sh='/^([0-9a-zA-Z:_-]+)\(\)\s*\{/\1/f/' \
+    --fields=+l \
+    -f .tags \
+    "${files[@]}"
