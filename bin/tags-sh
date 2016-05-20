@@ -1,5 +1,10 @@
 #!/bin/bash
 
+if [[ $# -ne 0 ]]; then
+    tagsfile="$1"
+    cd $(dirname "$tagsfile")
+fi
+
 files=(
     $(ag -l --nocolor -g '' \
         | ag -v 'testcases')
