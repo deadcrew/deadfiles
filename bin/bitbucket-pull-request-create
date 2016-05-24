@@ -1,0 +1,54 @@
+#!/bin/bash
+
+set -euo pipefail
+
+:get-commit-ref() {
+    local commit=$1
+    git show-ref | grep -P "$commit refs/remotes/origin/(?!HEAD)" \
+    | rev | cut -f1 -d"/" | rev
+}
+
+:is-commit-an-origin-reference() {
+    local commit=$1
+    git show-ref | grep -qP "$commit refs/remotes/origin/(?!HEAD)"
+}
+
+:get-parents() {
+    local commit=$1
+    git rev-list --parents $commit
+}
+
+:get-prev-commit() {
+    local commit=$1
+    :get-parents $commit | head -n1 | cut -d' ' -f2
+}
+
+:get-destination-branch() {
+    local head=$1
+    local prev_commit=$(:get-prev-commit $head)
+
+    if :is-commit-an-origin-reference $prev_commit; then
+        :get-commit-ref $prev_commit
+    elif [[ $(:get-parents $prev_commit | wc -l) != 1 ]]; then
+        :get-destination-branch $prev_commit
+    fi
+}
+
+:get-source-branch() {
+    git symbolic-ref HEAD --short
+}
+
+:get-pull-request-url() {
+    local source=$1
+    local destination=$2
+    bitbucket pull-request $source $destination
+}
+
+source_branch=$(:get-source-branch)
+destination_branch=$(:get-destination-branch HEAD)
+pull_request_url=$(
+    :get-pull-request-url $source_branch $destination_branch
+)
+
+git config --local pull-request.$source_branch.to $destination_branch
+git config --local pull-request.$source_branch.url $pull_request_url
