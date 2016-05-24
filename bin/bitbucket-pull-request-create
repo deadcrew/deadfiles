@@ -44,11 +44,52 @@ set -euo pipefail
     bitbucket pull-request $source $destination
 }
 
-source_branch=$(:get-source-branch)
-destination_branch=$(:get-destination-branch HEAD)
-pull_request_url=$(
-    :get-pull-request-url $source_branch $destination_branch
-)
+:parse-opts() {
+    eval set -- $(getopt -o h -- "${@}")
+    while [ $# -gt 0 ]; do
+        case $1 in
+            -h)
+                :usage
+                exit 1
+        esac
 
-git config --local pull-request.$source_branch.to $destination_branch
-git config --local pull-request.$source_branch.url $pull_request_url
+        shift
+    done
+}
+
+:add-git-config() {
+    local basename=$1
+    local key=$2
+    local value=$3
+    git config --local $basename.$key $value
+}
+
+:usage() {
+        cat <<HELP
+Usage:
+    bitbucket-pull-request-create [-h]
+
+Examples:
+    $ bitbucket-pull-request-create
+        > will create current branch to it's parent branch pull request
+
+Options:
+    -h  Print this text.
+HELP
+
+}
+
+:main() {
+    :parse-opts "${@}"
+
+    from=$(:get-source-branch)
+    to=$(:get-destination-branch HEAD)
+    url=$(
+        :get-pull-request-url $from $to
+    )
+
+    :add-git-config pull-request.$from to-branch $to
+    :add-git-config pull-request.$from url $url
+}
+
+:main "${@}"
