@@ -45,9 +45,19 @@ set -euo pipefail
 }
 
 :parse-opts() {
-    eval set -- $(getopt -o h -- "${@}")
+    local _opts=$1
+
+    shift 1
+
+    eval set -- $(getopt -o hdv -- "${@}")
     while [ $# -gt 0 ]; do
         case $1 in
+            -d)
+                eval $_opts\[dryrun\]=true
+                ;;
+            -v)
+                eval $_opts\[verbose\]=true
+                ;;
             -h)
                 :usage
                 exit 1
@@ -67,29 +77,59 @@ set -euo pipefail
 :usage() {
         cat <<HELP
 Usage:
-    bitbucket-pull-request-create [-h]
+    bitbucket-pull-request-create [-h] [-d] [-v]
 
 Examples:
     $ bitbucket-pull-request-create
         > will create current branch to it's parent branch pull request
 
+    $ bitbucket-pull-request-create -d
+        > will print source and destination branch and exit
+
 Options:
+    -v  Be verbose.
+    -d  Dry run mode.
     -h  Print this text.
 HELP
 
 }
 
 :main() {
-    :parse-opts "${@}"
+    local opts
+    typeset -A opts
 
-    from=$(:get-source-branch)
-    to=$(:get-destination-branch HEAD)
-    url=$(
-        :get-pull-request-url $from $to
-    )
+    opts[dryrun]=false
+    opts[verbose]=false
 
-    :add-git-config pull-request.$from to-branch $to
-    :add-git-config pull-request.$from url $url
+    :parse-opts opts "${@}"
+
+    local source=$(:get-source-branch)
+    if ${opts[verbose]}; then
+        echo source branch: $source
+    fi
+
+    local destination=$(:get-destination-branch HEAD)
+    if ${opts[verbose]}; then
+        echo destination branch: $destination
+    fi
+
+    if ${opts[dryrun]} ; then
+        echo pull request branch $source -\> $destination
+        exit 0
+    fi
+
+    local url=$(:get-pull-request-url $source $destination)
+    if [[ ! $url =~ "^http://" ]]; then
+        echo $url
+        exit 1
+    fi
+
+    if ${opts[verbose]}; then
+        echo bitbucket url: $url
+    fi
+
+    :add-git-config pull-request.$source to-branch $destination
+    :add-git-config pull-request.$source url $url
 }
 
 :main "${@}"
