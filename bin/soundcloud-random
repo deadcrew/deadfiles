@@ -33,14 +33,14 @@ HELP
     local url=$1
 
     local file_content=$(
-        curl -qf $url 2>/dev/null | tr '\n' '^'
+        curl -qf $url 2>/dev/null
     )
 
     if [[ -z $file_content ]]; then
         exit
     fi
 
-    IFS='^' read -r -a strings <<< "$file_content"
+    IFS=$'\n' read -d $'\0' -r -a strings <<< "$file_content"
 
     echo ${strings[$RANDOM % ${#strings[@]}]} | tr ' ' '+'
 }
