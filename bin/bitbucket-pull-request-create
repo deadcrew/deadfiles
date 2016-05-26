@@ -109,6 +109,7 @@ HELP
     fi
 
     local destination=$(:get-destination-branch HEAD)
+    local destination=${destination:-master}
     if ${opts[verbose]}; then
         echo destination branch: $destination
     fi
