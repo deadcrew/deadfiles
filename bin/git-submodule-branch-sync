@@ -11,23 +11,28 @@ cd "$(git rev-parse --show-toplevel)"
         exit 0
     fi
 
-    directories=()
-    submodules=()
+    submodules=$(mktemp)
+    directories=$(mktemp)
+    trap "rm $submodules $directories" EXIT
 
     tasks=()
     while read name path branch
     do
-        :update "$name" "$path" "$branch" &
+        (
+            if :update "$name" "$path" "$branch"; then
+                echo "$path" >> "$directories"
+                echo "$name" >> "$submodules"
+            fi
+        ) &
         tasks+=($!)
-
-        directories+=("$path")
-        submodules+=("$name")
     done < <(:get-submodules .gitmodules)
 
     if [[ ${#tasks} -ne 0 ]]; then
         wait ${tasks[@]}
-
-        if [ ${#submodules} -gt 0 ]; then
+        cat "$submodules"
+        submodules=($(cat "$submodules"))
+        directories=($(cat "$directories"))
+        if [[ -v submodules ]]; then
             :commit
         fi
     fi
@@ -42,16 +47,23 @@ cd "$(git rev-parse --show-toplevel)"
         echo "syncing..."
 
         cd "$path"
-        if [[ "$(git status --porcelain | wc -l)" -eq 0 ]]; then
-            output=$(
-                git checkout --quiet "$branch" && \
-                    git pull --quiet --rebase origin "$branch"
-            )
-            if [[ $? -ne 0 ]]; then
-                echo "$output"
-                echo
-                echo "error"
-            fi
+        if [[ "$(git status --porcelain | wc -l)" -ne 0 ]]; then
+            echo "dirty tree, skipping"
+            exit 1
+        fi
+
+        rev=$(git rev-parse --short HEAD)
+        output=$(
+            git checkout -q "$branch" && \
+                git pull -q --rebase origin "$branch"
+        )
+        if [[ $? -ne 0 ]]; then
+            echo -n "$output"
+            exit 1
+        fi
+
+        if [[ "$(git rev-parse --short HEAD)" = "$rev" ]]; then
+            exit 1
         fi
     } 2>&1 | :indent "$name"
 }
@@ -62,12 +74,12 @@ cd "$(git rev-parse --show-toplevel)"
 }
 
 :commit() {
-    local index=$(git status --porcelain | awk '{print $2}')
+    local index=$(git status --porcelain | grep -v '^?? ' | awk '{print $2}')
 
-    git update-index --assume-unchanged --stdin <<< "$index"
+    git update-index -q --assume-unchanged --stdin <<< "$index"
     git add "${directories[@]}"
-    git commit -m "submodules: update ${submodules[@]}"
-    git update-index --no-assume-unchanged --stdin <<< "$index"
+    git commit -q -m "submodules: update ${submodules[*]}"
+    git update-index -q --no-assume-unchanged --stdin <<< "$index"
 }
 
 :get-submodules() {
