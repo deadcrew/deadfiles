@@ -1,0 +1,95 @@
+#!/bin/bash
+#
+# checkout branch to master for submodules with `branch = master`
+
+set -euo pipefail
+
+cd "$(git rev-parse --show-toplevel)"
+
+:main() {
+    if [[ ! -f .gitmodules ]]; then
+        exit 0
+    fi
+
+    directories=()
+    submodules=()
+
+    tasks=()
+    while read name path branch
+    do
+        :update "$name" "$path" "$branch" &
+        tasks+=($!)
+
+        directories+=("$path")
+        submodules+=("$name")
+    done < <(:get-submodules .gitmodules)
+
+    if [[ ${#tasks} -ne 0 ]]; then
+        wait ${tasks[@]}
+
+        if [ ${#submodules} -gt 0 ]; then
+            :commit
+        fi
+    fi
+}
+
+:update() {
+    local name="$1"
+    local path="$2"
+    local branch="$3"
+
+    {
+        echo "syncing..."
+
+        cd "$path"
+        if [[ "$(git status --porcelain | wc -l)" -eq 0 ]]; then
+            output=$(
+                git checkout --quiet "$branch" && \
+                    git pull --quiet --rebase origin "$branch"
+            )
+            if [[ $? -ne 0 ]]; then
+                echo "$output"
+                echo
+                echo "error"
+            fi
+        fi
+    } 2>&1 | :indent "$name"
+}
+
+:indent() {
+    local name="$1"
+    sed -r "s|^|[$name]: |" >&2
+}
+
+:commit() {
+    local index=$(git status --porcelain | awk '{print $2}')
+
+    git update-index --assume-unchanged --stdin <<< "$index"
+    git add "${directories[@]}"
+    git commit -m "submodules: update ${submodules[@]}"
+    git update-index --no-assume-unchanged --stdin <<< "$index"
+}
+
+:get-submodules() {
+    local gitmodules="$1"
+
+    awk '{
+        if (match($0, "\\[submodule \"(.*)\"", matches)) {
+            submodule = matches[1]
+            path=""
+            branch=""
+        }
+
+        if (match($0, "path = (.*)", matches)) {
+            path = matches[1]
+        }
+
+        if (match($0, "branch = (.*)", matches)) {
+            branch = matches[1]
+
+            printf("%s %s %s\n", submodule, path, branch)
+        }
+    }' $gitmodules
+}
+
+:main "$@"

@@ -1,0 +1,17 @@
+#!/bin/bash
+
+set -euo pipefail
+
+cd "$(git rev-parse --show-toplevel)"
+
+vim-bundle-save
+git add .vim/bundle/versions.vim
+
+if git status --porcelain | grep -q '.vim/bundle/versions.vim'; then
+    index=$(git status --porcelain | awk '{print $2}')
+
+    git update-index --assume-unchanged --stdin <<< "$index"
+    git add .vim/bundle/versions.vim
+    git commit -m "vim: update plugins"
+    git update-index --no-assume-unchanged --stdin <<< "$index"
+fi
