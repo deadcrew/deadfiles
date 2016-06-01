@@ -1,0 +1,152 @@
+#!/bin/bash
+
+set -euo pipefail
+
+:usage() {
+    sed -r 's/^([ ]{4}|\t)//g' <<DOCS
+    Create an issue in JIRA.
+
+    Write configuration file ~/.config/jira with following syntax:
+
+        host="jira.local"
+        user="username"
+        password="passwd"
+        project="DEVOPS"
+        issuetype="Задача"
+
+    Usage:
+        jira-issue-create <summary> [-l <label>...] [-d]
+        jira-issue-create -h
+
+    Options:
+        -l <label> Specify additional issue label.
+        -d         Open Vim and write issue description.
+        -h         Show this screen.
+DOCS
+}
+
+:main() {
+    local _summary=""
+    local _description=""
+    local _labels=""
+    while [[ $# -ne 0 ]]; do
+        local arg="$1"
+        shift
+        case "$arg" in
+            -l)
+                if [[ $# -eq 0 ]]; then
+                    echo "-l flag should be used with value" >&2
+                    exit 1
+                fi
+
+                local label=$(:quote "$1")
+                shift
+                if [[ "$_labels" ]]; then
+                    _labels="$_labels, \"$label\""
+                else
+                    _labels="\"$label\""
+                fi
+                ;;
+
+            -d)
+                local filename=$(mktemp --suffix=".summary")
+                vim "$filename"
+                if [[ $? -ne 0 ]]; then
+                    echo "vim exited with non-zero exit code" >&2
+                    exit 1
+                fi
+
+                _description=$(cat "$filename")
+                _description=$(:quote "$_description")
+                ;;
+
+            -h)
+                :usage
+                exit 0
+                ;;
+
+            *)
+                if [[ "$_summary" ]]; then
+                    _summary="$_summary $arg"
+                else
+                    _summary="$arg"
+                fi
+                ;;
+        esac
+    done
+
+    if [[ ! "$_summary" ]]; then
+        :usage
+        exit 1
+    fi
+
+    _summary=$(:quote "$_summary")
+
+    source ~/.config/jira
+
+    local _keys=("host" "user" "password" "project" "issuetype")
+    for _key in "${_keys[@]}"; do
+        if [[ ! -v $_key ]]; then
+            echo "config: $_key not specified" >&2
+            exit 1
+        fi
+    done
+
+    data=$(cat <<JSON
+{
+    "fields": {
+        "project": {
+            "key": "$project"
+        },
+        "summary": "$_summary",
+        "description": "$_description",
+        "issuetype": {
+            "name": "$issuetype"
+        },
+        "labels": [
+            $_labels
+        ],
+        "assignee": {
+            "name":"$user"
+        }
+    }
+}
+JSON
+    )
+
+    local response=""
+    if response=$(curl \
+        -D- \
+        -s \
+        -u "$user:$password" \
+        -X POST \
+        --data "$data" \
+        -H "Content-Type: application/json" \
+        http://$host/rest/api/2/issue/
+    ); then
+        :
+    else
+        echo "$data" >&2
+        echo "$response" >&2
+        exit 1
+    fi
+
+    local key=$(echo "$response" | tail -n1 | jq -r '.key')
+    if [[ "$key" != "null" ]]; then
+        echo "http://$host/browse/$key"
+        exit 0
+    fi
+
+    echo "$data" >&2
+    echo "$response" >&2
+    exit 1
+}
+
+:quote() {
+    local str="$1"
+    str="${str//\"/\\\"}";
+    str="${str//$'\n'/\\n}";
+    echo "$str"
+}
+
+:main "$@"
