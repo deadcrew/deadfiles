@@ -12,5 +12,5 @@ find $_bundle -maxdepth 1 ! -path $_bundle -type d \
 
         plugin=$(basename "$dir")
         commit=$(git rev-parse --short HEAD)
-        echo "silent! let g:plugs['$plugin'].commit = '$commit'" >> $_versions
+        echo "$plugin $commit" >> $_versions
     done
