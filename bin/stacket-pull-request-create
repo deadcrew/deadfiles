@@ -34,14 +34,33 @@ set -euo pipefail
     fi
 }
 
+:get-project() {
+    git remote get-url origin | cut -d/ -f 4
+}
+
+:get-repository() {
+    git remote get-url origin | cut -d/ -f 5 | sed 's/.git$//'
+}
+
 :get-source-branch() {
     git symbolic-ref HEAD --short
 }
 
-:get-pull-request-url() {
-    local source=$1
-    local destination=$2
-    bitbucket pull-request $source $destination
+:create-pull-request() {
+    local project="$1"
+    local repository="$2"
+    local source="$3"
+    local destination="$4"
+    local title="$5"
+    local description="$6"
+
+    set -x
+    stacket pull-requests create \
+        $project $repository \
+        $source $destination \
+        -t "$title" \
+        -d "$description"
+    return $?
 }
 
 :parse-opts() {
@@ -49,14 +68,22 @@ set -euo pipefail
 
     shift 1
 
-    eval set -- $(getopt -o hdv -- "${@}")
+    eval set -- $(getopt -o "hvx:t:dr" -- "${@}")
     while [ $# -gt 0 ]; do
         case $1 in
-            -d)
+            -x)
                 eval $_opts\[dryrun\]=true
                 ;;
             -v)
                 eval $_opts\[verbose\]=true
+                ;;
+            -t)
+                shift
+                eval $_opts\[title\]="\$1"
+                ;;
+            -d)
+                shift
+                eval $_opts\[description\]="\$1"
                 ;;
             -h)
                 :usage
@@ -77,18 +104,21 @@ set -euo pipefail
 :usage() {
         cat <<HELP
 Usage:
-    bitbucket-pull-request-create [-h] [-d] [-v]
+    stacket-pull-request-create [-h] [-d] [-v]
 
 Examples:
-    $ bitbucket-pull-request-create
+    $ stacket-pull-request-create
         > will create current branch to it's parent branch pull request
 
-    $ bitbucket-pull-request-create -d
+    $ stacket-pull-request-create -x
         > will print source and destination branch and exit
+
+    $ stacket-pull-request-create -t "hello world"
+        > will create pull-request and set title to "hello world"
 
 Options:
     -v  Be verbose.
-    -d  Dry run mode.
+    -x  Dry run mode.
     -h  Print this text.
 HELP
 
@@ -100,6 +130,8 @@ HELP
 
     opts[dryrun]=false
     opts[verbose]=false
+    opts[title]=""
+    opts[description]=""
 
     :parse-opts opts "${@}"
 
@@ -111,25 +143,30 @@ HELP
     local destination=$(:get-destination-branch HEAD)
     local destination=${destination:-master}
     if ${opts[verbose]}; then
-        echo destination branch: $destination
+        echo "destination branch: $destination"
     fi
 
+    local project=$(:get-project)
+    local repository=$(:get-repository)
+
     if ${opts[dryrun]} ; then
-        echo pull request branch $source -\> $destination
+        echo "project: $project"
+        echo "repository: $repository"
+        echo "$source -> $destination"
         exit 0
     fi
 
-    local url=$(:get-pull-request-url $source $destination)
-    if [[ ! $url =~ "^http://" ]]; then
-        echo $url
-        exit 1
-    fi
+    local url=""
+    url=$(
+        :create-pull-request \
+            $project $repository \
+            $source $destination \
+            "${opts[title]}" "${opts[description]}"
+    )
 
-    if ${opts[verbose]}; then
-        echo bitbucket url: $url
-    fi
+    echo "$url"
 
-    :add-git-config pull-request.$source to-branch $destination
+    :add-git-config pull-request.$source to $destination
     :add-git-config pull-request.$source url $url
 }
 
