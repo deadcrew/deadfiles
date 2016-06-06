@@ -2,29 +2,24 @@
 
 tasks=()
 while read plugin commit; do
-    {
-        cd ~/.vim/bundle/$plugin/
+    cd ~/.vim/bundle/$plugin/
 
-        _head=$(git rev-parse --short HEAD)
-        if [[ "$_head" != "$commit" ]]; then
-            _update=$(git remote update 2>&1)
-            if [[ $? -ne 0 ]]; then
-                echo "$plugin: error"
-                sed "s/^/$plugin: /" <<< "$_update" >&2
-                exit 1
-            fi
-
-            _checkout=$(git checkout "$commit" 2>&1)
-            if [[ $? -ne 0 ]]; then
-                echo "$plugin: error"
-                sed "s/^/$plugin: /" <<< "$_checkout" >&2
-                exit 1
-            fi
+    _head=$(git rev-parse --short HEAD)
+    if [[ "$_head" != "$commit" ]]; then
+        _update=$(git remote update 2>&1)
+        if [[ $? -ne 0 ]]; then
+            echo "$plugin: error"
+            sed "s/^/$plugin: /" <<< "$_update" >&2
+            exit 1
         fi
 
-        echo "$plugin: success"
-    } &
-    tasks+=($!)
-done < ~/.vim/bundle/versions.vim
+        _checkout=$(git checkout "$commit" 2>&1)
+        if [[ $? -ne 0 ]]; then
+            echo "$plugin: error"
+            sed "s/^/$plugin: /" <<< "$_checkout" >&2
+            exit 1
+        fi
+    fi
 
-wait ${tasks[@]}
+    echo "$plugin: success"
+done < ~/.vim/bundle/versions.vim
