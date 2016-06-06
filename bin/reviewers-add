@@ -1,0 +1,50 @@
+#!/bin/bash
+
+
+set -euo pipefail
+
+:usage() {
+    sed -r 's/^([ ]{4}|\t)//g' <<USAGE
+    pull-request-reviewers-add
+
+    Usage:
+        pull-request-reviewers-add [<branch>]
+        pull-request-reviewers-add -h
+
+    Options:
+        -h  Show this screen.
+USAGE
+}
+
+:main() {
+    local _arg="${1:-}"
+    if [[ "$_arg" = "-h" ]]; then
+        :usage
+        exit 1
+    fi
+
+    local branch="$(git rev-parse --abbrev-ref HEAD)"
+    if [[ "$_arg" ]]; then
+        branch="$_arg"
+    fi
+
+    local url="$(git config --local pull-request.$branch.url)"
+
+    local response=""
+    if response=$(curl -s --fail "http://snob.s/hsd:rn:ngs:engineers/$url");
+    then
+        echo "success" >&2
+        echo "$url"
+    else
+        echo "$response" >&2
+        exit 1
+    fi
+
+    exit 0
+}
+
+:log() {
+    echo "[$(date -Iseconds | cut -dT -f1)] $*" >&2
+}
+
+:main "$@"
