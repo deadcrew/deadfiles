@@ -54,7 +54,6 @@ set -euo pipefail
     local title="$5"
     local description="$6"
 
-    set -x
     stacket pull-requests create \
         $project $repository \
         $source $destination \
@@ -68,7 +67,7 @@ set -euo pipefail
 
     shift 1
 
-    eval set -- $(getopt -o "hvx:t:dr" -- "${@}")
+    eval set -- $(getopt -o "hvxt:d:r:" -- "${@}")
     while [ $# -gt 0 ]; do
         case $1 in
             -x)
