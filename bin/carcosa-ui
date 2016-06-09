@@ -14,6 +14,8 @@ if ! carcosa -Fc; then
     exit 1
 fi
 
+active_window_id=$(xdotool getactivewindow)
+
 if output=$(carcosa -Lc \
     | sort \
     | dmenu -f -i -b -l 20 2>/dev/null \
@@ -36,6 +38,7 @@ then
         | xdotool type --clearmodifiers --delay 1 --file -
 
     xdotool \
+        windowfocus "$active_window_id" \
         keyup --clearmodifiers Return \
         key --clearmodifiers Return
 
