@@ -1,0 +1,88 @@
+#!/bin/bash
+
+_verbose=false
+
+:usage() {
+    cat <<HELP
+Will setup basic test-runner for current project.
+
+Usage:
+    $0 [-v]
+HELP
+}
+
+:exec() {
+    local stdin_debug="2"
+
+    {
+        if "$_verbose"; then
+            printf "$ %s\n" "${*}" >&2
+        else
+            exec {stdin_debug}<> /dev/null
+        fi
+
+        "${@}"
+    } < <(tee >(cat >& ${stdin_debug}) < /dev/stdin 2> /dev/null)
+}
+
+:main() {
+    if [[ "$1" = "-h" || "$1" = "--help" ]]; then
+        :usage
+
+        exit 1
+    fi
+
+    if [[ "$1" = "-v" ]]; then
+        _verbose=true
+    fi
+
+    if [ ! -d tests/testcases ]; then
+        :exec mkdir -p tests/testcases
+    fi
+
+    if [ ! -f tests/setup.sh ]; then
+        :exec touch tests/setup.sh
+    fi
+
+    if [ ! -f tests/teardown.sh ]; then
+        :exec touch tests/teardown.sh
+    fi
+
+    if [ ! -f run_tests ]; then
+        :exec cat > run_tests <<RUN_TESTS
+#!/bin/bash
+
+set -euo pipefail
+
+_base_dir=\$(dirname "\$(readlink -f "\${BASH_SOURCE[0]}")")
+source "\$_base_dir/vendor/github.com/reconquest/import.bash/import.bash"
+
+import github.com/reconquest/test-runner
+
+:cleanup() {
+    :
+}
+
+trap :cleanup EXIT
+
+test-runner:run "\${@}"
+RUN_TESTS
+
+        chmod +x run_tests
+    fi
+
+    if [ ! -d vendor/github.com/reconquest/import.bash ]; then
+        git submodule add https://github.com/reconquest/import.bash \
+            vendor/github.com/reconquest/import.bash
+    fi
+
+    ./run_tests -h > /dev/null
+
+    if [ ! -f vendor/.gitignore ]; then
+        :exec find vendor -mindepth 3 -maxdepth 3 \
+            | grep -v import.bash \
+            | sed -r 's/^vendor//' > vendor/.gitignore
+    fi
+}
+
+:main "${@}"
