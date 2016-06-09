@@ -33,12 +33,14 @@ then
         done
     fi
 
+    xdotool \
+        windowfocus "$active_window_id"
+
     cat <<< "$output" \
         | perl -p -e 'chomp if eof' \
         | xdotool type --clearmodifiers --delay 1 --file -
 
     xdotool \
-        windowfocus "$active_window_id" \
         keyup --clearmodifiers Return \
         key --clearmodifiers Return
 
