@@ -154,6 +154,7 @@ USAGE
 :create_page() {
     local title=$1
     curl \
+        -v \
         -s \
         -u $user:$password \
         -X POST \
