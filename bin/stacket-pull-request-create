@@ -35,11 +35,14 @@ set -euo pipefail
 }
 
 :get-project() {
-    git remote get-url origin | cut -d/ -f 4
+    git remote get-url origin | sed 's/.git$//' | sed 's/^.*\w*\.\w*.//' \
+        | cut -d'/' -f1
 }
 
 :get-repository() {
-    git remote get-url origin | cut -d/ -f 5 | sed 's/.git$//'
+    git remote get-url origin | rev | cut -d/ -f1 | rev | sed 's/.git$//'
+
+
 }
 
 :get-source-branch() {
