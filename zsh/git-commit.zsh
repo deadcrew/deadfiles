@@ -19,7 +19,7 @@ git-commit() {
 
         local pwd=$(pwd)
 
-        if [[ $(pwd) =~ $HOME/dotfiles ]]; then
+        if [[ $(pwd) =~ $HOME/dotfiles || $(pwd) =~ $HOME/deadfiles ]]; then
             subject=$(
                 echo "$modified" \
                 | sed-replace '.*/' \
