@@ -27,5 +27,3 @@ func! _completions_complete()
     endif
     call feedkeys("\<C-N>", 'n')
 endfunc!
-
-au operations InsertCharPre * call _completions_complete()
