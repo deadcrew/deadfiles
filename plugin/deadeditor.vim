@@ -21,8 +21,8 @@ func! _completions_complete()
     endif
 
     let completion = completions.words[0].word
-    if matchstr(completion,suffix."$") == "" || \
-            matchstr(completion,moresuffix."$") != ""
+    if matchstr(completion,suffix."$") == "" ||
+            \ matchstr(completion,moresuffix."$") != ""
         return
     endif
     call feedkeys("\<C-N>", 'n')
