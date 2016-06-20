@@ -180,7 +180,7 @@ set -euo pipefail
 
 :usage() {
     cat <<HELP
-Usage: ssh-multi [-A] [-S <ssh-args>] [-l <login>] -- <server>... -- <cmd>...
+Usage: ssh-multi [-A] [-S <ssh-args>] [-l <login>] -- <server>... - <cmd>...
 
 Options:
     -A             Ask password once and use it for all servers.
