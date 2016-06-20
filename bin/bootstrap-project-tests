@@ -55,18 +55,20 @@ HELP
 set -euo pipefail
 
 cd "\$(dirname "\$(readlink -f "\${BASH_SOURCE[0]}")")"
-source "vendor/github.com/reconquest/import.bash/import.bash"
+source vendor/github.com/reconquest/import.bash/import.bash
 
 import:source github.com/reconquest/test-runner.bash
 
-:cleanup() {
-    :
+:main() {
+    trap :cleanup EXIT
+    :cleanup() {
+        :
+    }
+
+    test-runner:run "\${@}"
 }
 
-trap :cleanup EXIT
-
-test-runner:set-testcases-dir tests
-test-runner:run "\${@}"
+:main "\${@}"
 RUN_TESTS
 
         chmod +x run_tests
@@ -84,6 +86,8 @@ RUN_TESTS
             | grep -v import.bash \
             | sed -r 's/^vendor//' > vendor/.gitignore
     fi
+
+    :exec tags-sh
 }
 
 :main "${@}"
