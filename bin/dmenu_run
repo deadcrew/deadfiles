@@ -7,8 +7,9 @@ if [ -n "$DMENU_PATH" ]; then
 fi
 
 RUN="$(dmenu_path | dmenu "$@")"
-RUNPATH="$(which "$RUN")"
+COMMAND=($RUN)
+RUNPATH="$(which "$COMMAND")"
 
 PATH="$OLDPATH"
 
-exec $RUNPATH
+exec $RUNPATH "${COMMAND[@]:1}"
