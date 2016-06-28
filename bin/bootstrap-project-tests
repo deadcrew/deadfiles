@@ -81,6 +81,8 @@ RUN_TESTS
 
     ./run_tests -h > /dev/null
 
+    :exec echo ".last-testcase" >> .gitignore
+
     if [ ! -f vendor/.gitignore ]; then
         :exec find vendor -mindepth 3 -maxdepth 3 \
             | grep -v import.bash \
