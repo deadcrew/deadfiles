@@ -1,0 +1,47 @@
+#!/bin/bash
+
+fifo_in=$(mktemp -u --suffix=".autocomplete-tmux.in")
+fifo_out=$(mktemp -u --suffix=".autocomplete-tmux.out")
+
+trap "rm $fifo_in $fifo_out" EXIT
+
+mkfifo "$fifo_in" "$fifo_out"
+
+candidates=("$(
+    tmux ls -F '#S' \
+        | xargs -n1 tmux capture-pane -pt \
+        | grep -wPo '[\w-/:.]{3,}' \
+        | grep -P '^[\w/]' \
+        | grep -P '[\w/]$' \
+        | sort \
+        | uniq
+)")
+
+window_pid=$(xdotool getactivewindow getwindowpid)
+
+window_command=$(ps -o comm= "$window_pid")
+
+filter_command=("dmenu -b -i -p '>' -l 20")
+
+if [ "$window_command" = "urxvt" ]; then
+    read terminal_command_pid terminal_command \
+        <<< "$(ps -o pid=,comm=  --ppid="$window_pid")"
+
+    if [ "$terminal_command" = "tmux" ]; then
+        pane_id=$(tmux list-clients -F '#{client_pid} #{pane_id}' \
+            | awk "\$1 == $terminal_command_pid { print \$2 }")
+
+        filter_command=(
+            "tmux split-window -h -p 40 -t $pane_id"
+                    '"' "bash -c 'fzf > $fifo_out < $fifo_in'" '"'
+                "&& cat $fifo_out &" "tee $fifo_in >/dev/null"
+        )
+    fi
+fi
+
+choice=$(
+    { eval "${filter_command[@]}"; } <<< "${candidates[@]}" \
+        | head -n1
+)
+
+xdotool type --clearmodifiers --delay 1 --file - <<< "$choice"
