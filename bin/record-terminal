@@ -4,8 +4,13 @@ export TMUX=
 
 terminal_name=RECORD_TERMINAL
 
+screenkey=false
+if [ "$1" = "-x" ]; then
+    screenkey=true
+fi
+
 if [ "${@}" ]; then
-    initial_command="-e ""${@}"
+    initial_command="-e ${@}"
 else
     initial_command="-e tmux new -s record-terminal"
 fi
@@ -54,12 +59,13 @@ fi
 bg_color=$(awk "/color$bg_color:/{print \$2}" ~/.Xresources.$BACKGROUND)
 fg_color=$(awk "/color$fg_color:/{print \$2}" ~/.Xresources.$BACKGROUND)
 
-echo $fg_color $bg_color
+if $screenkey; then
+    screenkey \
+        --bg-color $bg_color --font-color $fg_color \
+        -f 'DejaVu Sans Bold' --no-detach -g $geometry \
+        --ignore ISO_Level5_Shift &
+fi
 
-screenkey \
-    --bg-color $bg_color --font-color $fg_color \
-    -f 'DejaVu Sans Bold' --no-detach -g $geometry \
-    --ignore ISO_Level5_Shift &
 
 xdotool windowfocus $current_window_id
 
