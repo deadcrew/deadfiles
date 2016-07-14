@@ -14,7 +14,7 @@ if ! carcosa -Fc; then
     exit 1
 fi
 
-active_window_id=$(xdotool getactivewindow)
+active_window_id=$(xdotool getwindowfocus)
 
 if output=$(carcosa -Lc \
     | sort \
@@ -34,7 +34,7 @@ then
     fi
 
     xdotool \
-        windowfocus "$active_window_id"
+        windowfocus --sync "$active_window_id"
 
     cat <<< "$output" \
         | perl -p -e 'chomp if eof' \
