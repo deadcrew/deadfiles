@@ -4,8 +4,6 @@ if [ "$1" = "-c" ]; then
     shift
 fi
 
-[ -n "$_LOCK" ] || _LOCK=taken exec flock -n $0 $0 "${@}"
-
 devices=$(adb devices -l | tail -n+3)
 if [ "$devices" ]; then
     adb_state=$(adb get-state)
@@ -14,6 +12,8 @@ if [ "$devices" ]; then
         exec android-volume $@
     fi
 fi
+
+[ -n "$_LOCK" ] || _LOCK=taken exec flock -n $0 $0 "${@}"
 
 sound_control_name=$(amixer scontrols | head -n1 | cut -f4- -d' ')
 
