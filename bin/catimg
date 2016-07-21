@@ -1,0 +1,43 @@
+#!/bin/bash
+
+if [[ ! "$1" ]]; then
+    echo "Usage:
+    $0 <filename>"
+
+    exit 1
+fi
+
+filename=$1
+
+w3mimgdisplay="/usr/lib/w3m/w3mimgdisplay"
+terminal_columns=$(tput cols)
+terminal_rows=$(tput lines)
+
+geometry=$(
+    xdotool getactivewindow getwindowgeometry \
+        | awk '/Geometry/ { print $2 }'
+)
+
+IFS='x' read terminal_width terminal_height <<< "$geometry"
+IFS=' ' read width height <<< "$($w3mimgdisplay <<< "5;$filename")"
+
+font_width=$(( $terminal_width / $terminal_columns ))
+font_height=$(( $terminal_height / $terminal_rows ))
+
+max_width=$(( $font_width * $terminal_columns ))
+max_height=$(( $font_height * $(( $terminal_rows - 2 )) ))
+
+if [[ $width -gt $max_width ]]; then
+    height=$(($height * $max_width / $width))
+    width=$max_width
+fi
+
+if [[ $height -gt $max_height ]]; then
+    width=$(($width * $max_height / $height))
+    height=$max_height
+fi
+
+w3m_command="0;1;0;0;$width;$height;;;;;$filename\n4;\n3;"
+
+tput cup $(($height/$font_height)) 0
+echo -e $w3m_command | $w3mimgdisplay
