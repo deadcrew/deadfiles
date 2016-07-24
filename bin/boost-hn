@@ -11,10 +11,10 @@ sleep=60
     local __target_id__="$1"
     shift
 
-    eval set -- "$(getopt -o vhs -l help -- "${@}")"
+    eval set -- "$(getopt -o vhs: -l help -- "${@}")"
 
-    for arg in "${@}"; do
-        case "$arg" in
+    while [ "${*}" ]; do
+        case "$1" in
             -h|--help)
                 :usage
 
@@ -329,7 +329,7 @@ BASH
         local end_time
         :value end_time date +%s
 
-        local sleep_time="$(( sleep - (end_time - start_time) ))"
+        local sleep_time="$(( $sleep - $end_time + $start_time ))"
         if [ "$sleep_time" -gt "0" ]; then
             :info "Sleeping for $sleep_time seconds till next vote"
 
