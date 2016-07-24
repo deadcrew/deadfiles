@@ -5,12 +5,13 @@ set -euo pipefail
 config=~/.config/boost-hn.conf
 
 verbose=0
+sleep=60
 
 :parse-args() {
     local __target_id__="$1"
     shift
 
-    eval set -- "$(getopt -o vh -l help -- "${@}")"
+    eval set -- "$(getopt -o vhs -l help -- "${@}")"
 
     for arg in "${@}"; do
         case "$arg" in
@@ -21,6 +22,10 @@ verbose=0
                 ;;
             -v)
                 verbose=$((verbose + 1))
+                ;;
+            -s)
+                shift
+                sleep=$1
                 ;;
             --)
                 shift
@@ -44,11 +49,14 @@ verbose=0
     cat <<HELP
 Usage:
 
-    boost-hn [-v] <id>
+    boost-hn [options] <id>
+    boost-hn -h | --help
 
 Options:
 
     -h --help  Show this help.
+    -s <sec>   Sleep at least <sec> seconds between votes.
+               [default: 60]
     -v         Increase verbosity.
 HELP
 }
@@ -288,6 +296,9 @@ BASH
     for user in "${hn_users[@]}"; do
         IFS=':' read login password <<< "$user"
 
+        local start_time
+        :value start_time date +%s
+
         :info "Running vote process from login '$login'"
 
         local region="${regions[$(( RANDOM % ${#regions[@]} ))]}"
@@ -313,6 +324,16 @@ BASH
         then
             :info "Can't destroy droplet '$droplet_id'"
             exit 1
+        fi
+
+        local end_time
+        :value end_time date +%s
+
+        local sleep_time="$(( sleep - (end_time - start_time) ))"
+        if [ "$sleep_time" -gt "0" ]; then
+            :info "Sleeping for $sleep_time seconds till next vote"
+
+            sleep "$sleep_time"
         fi
     done
 
