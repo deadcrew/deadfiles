@@ -112,8 +112,8 @@ HELP
         exit 1
     fi
 
-    static_remotes=("${static_remotes:-}")
-    proxy_list=("${proxy_list:-}")
+    static_remotes=("${static_remotes[@]:-}")
+    proxy_list=("${proxy_list[@]:-}")
 
     hn_users=("${hn_users[@]:$users_offset}")
 
