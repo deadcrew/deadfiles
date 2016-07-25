@@ -236,7 +236,7 @@ HELP
             -o /dev/null \
             https://news.ycombinator.com/login
 
-        for where in {news,shownew,newest}; do
+        for where in {news,shownew,newest,item?id=$3}; do
             curl -svX GET -b /tmp/curl.cookie-jar -c /tmp/curl.cookie-jar \
                     -A '$user_agent' \
                     "https://news.ycombinator.com/\$where" \
