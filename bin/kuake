@@ -1,37 +1,203 @@
 #!/bin/bash
 
-[ -n "$_LOCK" ] || _LOCK=x exec flock -n $0 $0
+[ -n "$_LOCK" ] || _LOCK=x exec flock -n $0 $0 "$@"
 
-NAME=kuake_${1:-terminal}
-shift
+set -euo pipefail
 
-main() {
-    if [[ "$1" == "1" ]]; then
-        while [[ -z "$terminal_id" ]]; do
-            local terminal_id=$(xdotool search --classname $NAME)
-        done
-        i3-msg -q '[instance="'$NAME'"] move scratchpad'
+:usage() {
+    cat <<CODE
+kuake
+
+Usage:
+    kuake [options] --terminal
+    kuake [options] --focus
+
+Options:
+    --terminal    Kuakize terminal.
+    --focus       Kuakize focused window.
+    --top         Show kuake at top of screen, default position.
+    --bottom      Show kuake at bottom of screen.
+    --height      Set kuake height as procent of screne height, default: 35.
+    -h --help     Show this screen.
+CODE
+}
+
+:main() {
+    local _terminal=false
+    local _focus=false
+    local _top=true
+    local _bottom=false
+    local _height=35
+
+    while [[ $# -ne 0 ]]; do
+        case "$1" in
+            --terminal)
+                _terminal=true
+                ;;
+
+            --focus)
+                _focus=true
+                ;;
+
+            --top)
+                _top=true
+                ;;
+
+            --bottom)
+                _bottom=true
+                ;;
+
+            --height)
+                _height="$2"
+                shift
+                ;;
+
+            -h | --help)
+                :usage
+                exit 0
+                ;;
+        esac
+
+        shift
+    done
+
+    local _classname=""
+    if $_terminal; then
+        _classname="kuake_terminal"
+    elif $_focus; then
+        _classname="kuake_focus"
     else
-        if pgrep -f $NAME; then
-            while [[ -z "$terminal_id" ]]; do
-                local terminal_id=$(xdotool search --classname $NAME)
-            done
-        fi
+        :usage
+        exit 1
     fi
 
-    shift
+    local window_geometry=$(:get-kuake-geometry $_height)
 
-    if [[ -z "$terminal_id" ]]; then
-        i3-msg -q "exec urxvt -name $NAME"
-        main 1 "${@}"
+    local window_id=$(:window-find $_classname)
+    if [[ "$window_id" ]]; then
+        :window-toggle $_classname
+        :window-kuakize $window_id $window_geometry
+        return
+    fi
+
+
+    if $_terminal; then
+        :spawn-terminal $_classname
+
+        while [[ ! "$window_id" ]]; do
+            local window_id=$(:window-find $_classname)
+        done
     else
-        read screen_num screen_x screen_y screen_width screen_height <<<$(xscreeninfo)
-        eval `xdotool getwindowgeometry --shell $terminal_id`
-        i3-msg -q '[instance="'$NAME'"] scratchpad show'
-        terminal_height=$(($screen_height*35/100))
-        xdotool windowmove --sync $terminal_id  $screen_x $((screen_height - terminal_height))
-        xdotool windowsize --sync $terminal_id $screen_width $terminal_height
+        local window_id=$(:window-get-active)
+        :window-set-classname $_classname
+    fi
+
+    :window-hide   $_classname
+    :window-toggle $_classname
+
+    :window-kuakize $window_id $window_geometry
+}
+
+:get-kuake-geometry() {
+    local height="$1"
+
+    read \
+        screen_number \
+        screen_x screen_y \
+        screen_width screen_height <<< $(:xscreeninfo)
+
+    local window_x=$screen_x
+    local window_y=$screen_y
+    local window_width=$screen_width
+    local window_height=$(($screen_height*$height/100))
+
+    echo $window_x $window_y $window_width $window_height $screen_number
+}
+
+:spawn-terminal() {
+    local name="$1"
+
+    i3-msg -q "exec urxvt -name $name"
+}
+
+:window-get-active() {
+    :xdotool getactivewindow | head -n1
+}
+
+:window-set-classname() {
+    local classname="$1"
+
+    :xdotool getactivewindow set_window --classname "$classname"
+}
+
+:window-hide() {
+    local window_name="$1"
+
+    i3-msg -q '[instance="^'$window_name'$"] move scratchpad'
+}
+
+:window-find() {
+    local window_name="$1"
+
+    :xdotool search --classname "$window_name" | head -n1
+}
+
+:window-toggle() {
+    local window_name="$1"
+
+    i3-msg -q '[instance="^'$window_name'$"] scratchpad show'
+}
+
+:window-kuakize() {
+    local window_id="$1"
+    local window_x="$2"
+    local window_y="$3"
+    local window_width="$4"
+    local window_height="$5"
+    local window_screen="$6"
+
+    local cache_path="/tmp/kuake.$window_id"
+    local cache_screen=$(cat $cache_path 2>/dev/null)
+
+    if [[ "$cache_screen" != "$window_screen" ]]; then
+        echo -n "$window_screen" > $cache_path
+        :xdotool windowmove --sync $window_id $window_x $window_y
+        :xdotool windowsize --sync $window_id $window_width $window_height
     fi
 }
 
-main 0 "${@}"
+:xdotool() {
+    local iteration=0
+    while :; do
+        local content=$(xdotool "$@" 2>&1)
+        echo "$content"
+        if ! grep -q 'BadWindow' <<< "$content"; then
+            echo "$content"
+            break
+        fi
+
+        iteration=$((iteration+1))
+        if [[ "$iteration" -gt 5 ]]; then
+            break
+        fi
+    done
+}
+
+:xscreeninfo() {
+    python2 <<PYTHON
+import gtk.gdk
+
+screen   = gtk.gdk.screen_get_default()
+monitors = int(screen.get_n_monitors())
+display  = gtk.gdk.display_get_default()
+pointer  = display.get_pointer()
+
+cursor_monitor = screen.get_monitor_at_point(pointer[1], pointer[2])
+geometry = screen.get_monitor_geometry(cursor_monitor)
+print "%d %d %d %d %d" % (
+    cursor_monitor, geometry.x, geometry.y, geometry.width, geometry.height
+)
+PYTHON
+}
+
+:main "${@}"
