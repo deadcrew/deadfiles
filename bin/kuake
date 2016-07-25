@@ -41,10 +41,12 @@ CODE
 
             --top)
                 _top=true
+                _bottom=false
                 ;;
 
             --bottom)
                 _bottom=true
+                _top=false
                 ;;
 
             --height)
@@ -71,15 +73,16 @@ CODE
         exit 1
     fi
 
-    local window_geometry=$(:get-kuake-geometry $_height)
+    local window_geometry=$(:get-kuake-geometry $_height $_bottom)
 
     local window_id=$(:window-find $_classname)
     if [[ "$window_id" ]]; then
         :window-toggle $_classname
-        :window-kuakize $window_id $window_geometry
+        if :is-another-screen $window_geometry; then
+            :window-kuakize $window_id $window_geometry
+        fi
         return
     fi
-
 
     if $_terminal; then
         :spawn-terminal $_classname
@@ -100,6 +103,7 @@ CODE
 
 :get-kuake-geometry() {
     local height="$1"
+    local bottom=$2
 
     read \
         screen_number \
@@ -110,6 +114,10 @@ CODE
     local window_y=$screen_y
     local window_width=$screen_width
     local window_height=$(($screen_height*$height/100))
+
+    if $bottom; then
+        window_y=$(($screen_height-$window_height))
+    fi
 
     echo $window_x $window_y $window_width $window_height $screen_number
 }
@@ -156,14 +164,26 @@ CODE
     local window_height="$5"
     local window_screen="$6"
 
+    :xdotool windowmove --sync $window_id $window_x $window_y
+    :xdotool windowsize --sync $window_id $window_width $window_height
+}
+
+:is-another-screen() {
+    local window_x="$1"
+    local window_y="$2"
+    local window_width="$3"
+    local window_height="$4"
+    local window_screen="$5"
+
     local cache_path="/tmp/kuake.$window_id"
     local cache_screen=$(cat $cache_path 2>/dev/null)
 
     if [[ "$cache_screen" != "$window_screen" ]]; then
         echo -n "$window_screen" > $cache_path
-        :xdotool windowmove --sync $window_id $window_x $window_y
-        :xdotool windowsize --sync $window_id $window_width $window_height
+        return 0
     fi
+
+    return 1
 }
 
 :xdotool() {
