@@ -5,13 +5,20 @@ set -euo pipefail
 config=~/.config/boost-hn.conf
 
 verbose=0
+use_static_remotes=false
+use_proxy=false
+use_droplets=false
+
+users_offset=0
+
 sleep=60
 
 :parse-args() {
     local __target_id__="$1"
-    shift
+    local __parent_id__="$2"
+    shift 2
 
-    eval set -- "$(getopt -o vhs: -l help -- "${@}")"
+    eval set -- "$(getopt -o vhs:DRPo: -l help -- "${@}")"
 
     while [ "${*}" ]; do
         case "$1" in
@@ -19,6 +26,19 @@ sleep=60
                 :usage
 
                 exit 1
+                ;;
+            -o)
+                shift
+                users_offset=$1
+                ;;
+            -D)
+                use_droplets=true
+                ;;
+            -R)
+                use_static_remotes=true
+                ;;
+            -P)
+                use_proxy=true
                 ;;
             -v)
                 verbose=$((verbose + 1))
@@ -43,14 +63,19 @@ sleep=60
     fi
 
     :value $__target_id__ echo "$1"
+    :value $__parent_id__ echo "${2:-}"
 }
 
 :usage() {
     cat <<HELP
 Usage:
 
-    boost-hn [options] <id>
+    boost-hn [options] [-D] [-S] [-P] <id> [<parent-id>]
     boost-hn -h | --help
+
+Notes:
+
+    Use <parent-id> when <id> is a comment ID.
 
 Options:
 
@@ -70,11 +95,34 @@ HELP
 
         digitalocean_token=<token>
         public_key=<ssh_key>
+        static_remotes=(
+            <host>
+            ...
+        )
+        proxy_list=(
+            <host>
+            ...
+        )
         hn_users=(
             <user>:<password>
             ...
         )
 HELP
+
+        exit 1
+    fi
+
+    static_remotes=("${static_remotes:-}")
+    proxy_list=("${proxy_list:-}")
+
+    hn_users=("${hn_users[@]:$users_offset}")
+
+    if ! { $use_static_remotes || $use_proxy || $use_droplets; }; then
+        echo 'Run mode (-D, -R, -P) is not specified.'
+        echo
+
+        :usage
+
 
         exit 1
     fi
@@ -226,27 +274,46 @@ HELP
         "Mozilla/5.0 (Windows NT 6.1; WOW64; Trident/7.0; rv:11.0) like Gecko"
     )
 
+    local headers=(
+        -H '"origin: https://news.ycombinator.com"'
+        -H '"accept-encoding: gzip, deflate, br"'
+        -H '"accept-language: en-US,en;q=0.8"'
+        -H '"upgrade-insecure-requests: 1"'
+        -H '"accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8"'
+        -H '"cache-control: max-age=0"'
+        -H '"authority: news.ycombinator.com"'
+    )
+
     local user_agent="${user_agents[$(( RANDOM % ${#user_agents[@]} ))]}"
 
     :ssh "$1" "$2" <<BASH
         set -o pipefail
 
-        curl -svLX POST -c /tmp/curl.cookie-jar -d 'acct=$4&pw=$5' \
+        set -x
+
+        curl -svLX POST -c /tmp/curl.cookie-jar -d 'acct=$5&pw=$6' \
             -A '$user_agent' \
             -o /dev/null \
+            ${headers[@]} \
+            --compressed \
             https://news.ycombinator.com/login
 
-        for where in {news,shownew,newest,item?id=$3}; do
+        for where in {news,shownew,newest,item?id=${4:-3}}; do
             curl -svX GET -b /tmp/curl.cookie-jar -c /tmp/curl.cookie-jar \
                     -A '$user_agent' \
+                    ${headers[@]} \
+                    --compressed \
                     "https://news.ycombinator.com/\$where" \
                 | grep -Po "vote\\?[^'\\"]+" \
-                | sed -u 's/&amp;/\\&/g' \
+                | sed -u -e 's/&amp;/\\&/g' \
                 | grep -F 'how=up' \
                 | grep -F 'id=$3' \
                 | xargs -n1 -I{} curl -svLX GET -b /tmp/curl.cookie-jar \
                     -e "https://news.ycombinator.com/\$where" \
                     -A '$user_agent' \
+                    ${7:+-x '$7'} \
+                    ${headers[@]} \
+                    --compressed \
                     "https://news.ycombinator.com/{}"
 
             if [ \$? -eq 0 ]; then
@@ -258,85 +325,169 @@ BASH
 }
 
 :ssh() {
-    while ! \
-        ssh \
-            -o ControlPath=none -o StrictHostKeyChecking=no \
-            -i "$1" "root@$2" "bash -s ; exit 0"
-    do
-        sleep 5
-    done 2>&1 | sed -u 's/^/{remote} /' | :trace
+    {
+        if [ "$2" = "localhost" ]; then
+            bash -s
+        else
+            while ! \
+                ssh \
+                    -o ControlPath=none -o StrictHostKeyChecking=no \
+                    -i "$1" "$2" "bash -s ; exit 0"
+            do
+                sleep 5
+            done
+        fi 2>&1
+    } | sed -u 's/^/{remote} /' | :trace
 }
 
 :main() {
-    :parse-args target_id "${@}"
+    local target_id
+    local parent_id
+    :parse-args target_id parent_id "${@}"
 
     :read-config "$config"
 
-    local fingerprint
-    :value fingerprint :ssh-keygen:fingerprint "$public_key"
+    :info "Available ${#hn_users[@]} HN accounts"
 
-    :info "Checking SSH key with fingerprint '$fingerprint'"
+    if "$use_static_remotes"; then
+        local remote_index="0"
+        for user in "${hn_users[@]}"; do
+            IFS=':' read login password <<< "$user"
 
-    if ! :digitalocean:is-key-exists "$digitalocean_token" "$fingerprint"; then
-        :info "SSH key is not found, adding"
+            local remote="${static_remotes[$remote_index]:-}"
+            if [ -z "${remote:-}" ]; then
+                break
+            fi
 
-        local keys
-        :array keys :digitalocean:list-keys "$digitalocean_token"
+            remote_index=$(( remote_index + 1 ))
 
-        :digitalocean:add-key "$digitalocean_token" < "$public_key"
+            local start_time
+            :value start_time date +%s
+
+            :info "Running vote process from login '$login' (remote '$remote')"
+
+            :do-remote-vote "${public_key%*.pub}" "$remote" \
+                "$target_id" "$parent_id" "$login" "$password"
+
+            local end_time
+            :value end_time date +%s
+
+            local sleep_time="$(( $sleep - $end_time + $start_time ))"
+            if [ "$sleep_time" -gt "0" ]; then
+                :info "Sleeping for $sleep_time seconds till next vote"
+
+                sleep "$sleep_time"
+            fi
+        done
+
+        hn_users=("${hn_users[@]:$remote_index}")
+        :info "Remaining ${#hn_users[@]} HN accounts"
     fi
 
-    :info "Obtaining list of regions from Digital Ocean"
+    if "$use_proxy"; then
+        local proxy_index="0"
+        for user in "${hn_users[@]}"; do
+            IFS=':' read login password <<< "$user"
 
-    local regions
-    :array regions :digitalocean:list-regions "$digitalocean_token"
+            local proxy="${proxy_list[$proxy_index]:-}"
+            if [ -z "${proxy}" ]; then
+                break
+            fi
 
-    :info "Available regions list: [${regions[@]}]"
+            proxy_index=$(( proxy_index + 1 ))
 
-    for user in "${hn_users[@]}"; do
-        IFS=':' read login password <<< "$user"
+            local start_time
+            :value start_time date +%s
 
-        local start_time
-        :value start_time date +%s
+            :info "Running vote process from login '$login' (proxy '$proxy')"
 
-        :info "Running vote process from login '$login'"
+            :do-remote-vote "${public_key%*.pub}" "localhost" \
+                "$target_id" "$parent_id" "$login" "$password" \
+                "$proxy"
 
-        local region="${regions[$(( RANDOM % ${#regions[@]} ))]}"
+            local end_time
+            :value end_time date +%s
 
-        local droplet_id
-        :info "Creating Droplet in the '$region' region"
-        :value droplet_id :digitalocean:create-droplet \
-            "$digitalocean_token" "$region" "$fingerprint"
+            local sleep_time="$(( $sleep - $end_time + $start_time ))"
+            if [ "$sleep_time" -gt "0" ]; then
+                :info "Sleeping for $sleep_time seconds till next vote"
 
-        :info "Waiting Droplet '$droplet_id' to activate"
-        :digitalocean:wait-droplet-active "$digitalocean_token" "$droplet_id"
+                sleep "$sleep_time"
+            fi
+        done
 
-        :info "Retrieving Droplet '$droplet_id' IP Address"
-        :value droplet_ip :digitalocean:get-droplet-ip \
-            "$digitalocean_token" "$droplet_id"
+        hn_users=("${hn_users[@]:$proxy_index}")
+        :info "Remaining ${#hn_users[@]} HN accounts"
+    fi
 
-        :info "Opening SSH session into Droplet '$droplet_id' ($droplet_ip)"
-        :do-remote-vote "${public_key%*.pub}" "$droplet_ip" \
-            "$target_id" "$login" "$password"
+    if "$use_droplets"; then
+        local fingerprint
+        :value fingerprint :ssh-keygen:fingerprint "$public_key"
 
-        :info "Destroying Droplet '$droplet_id'"
-        if ! :digitalocean:delete-droplet "$digitalocean_token" "$droplet_id"
-        then
-            :info "Can't destroy droplet '$droplet_id'"
-            exit 1
+        :info "Checking SSH key with fingerprint '$fingerprint'"
+
+        if ! :digitalocean:is-key-exists "$digitalocean_token" "$fingerprint"; then
+            :info "SSH key is not found, adding"
+
+            local keys
+            :array keys :digitalocean:list-keys "$digitalocean_token"
+
+            :digitalocean:add-key "$digitalocean_token" < "$public_key"
         fi
 
-        local end_time
-        :value end_time date +%s
+        :info "Obtaining list of regions from Digital Ocean"
 
-        local sleep_time="$(( $sleep - $end_time + $start_time ))"
-        if [ "$sleep_time" -gt "0" ]; then
-            :info "Sleeping for $sleep_time seconds till next vote"
+        local regions
+        :array regions :digitalocean:list-regions "$digitalocean_token"
 
-            sleep "$sleep_time"
-        fi
-    done
+        :info "Available regions list: [${regions[@]}]"
 
+        for user in "${hn_users[@]}"; do
+            IFS=':' read login password <<< "$user"
+
+            local start_time
+            :value start_time date +%s
+
+            :info "Running vote process from login '$login'"
+
+            local region="${regions[$(( RANDOM % ${#regions[@]} ))]}"
+
+            local droplet_id
+            :info "Creating Droplet in the '$region' region"
+            :value droplet_id :digitalocean:create-droplet \
+                "$digitalocean_token" "$region" "$fingerprint"
+
+            :info "Waiting Droplet '$droplet_id' to activate"
+            :digitalocean:wait-droplet-active "$digitalocean_token" "$droplet_id"
+
+            :info "Retrieving Droplet '$droplet_id' IP Address"
+            :value droplet_ip :digitalocean:get-droplet-ip \
+                "$digitalocean_token" "$droplet_id"
+
+            :info "Opening SSH session into Droplet '$droplet_id' ($droplet_ip)"
+            :do-remote-vote "${public_key%*.pub}" "root@$droplet_ip" \
+                "$target_id" "$parent_id" "$login" "$password"
+
+            :info "Destroying Droplet '$droplet_id'"
+            if ! :digitalocean:delete-droplet "$digitalocean_token" "$droplet_id"
+            then
+                :info "Can't destroy droplet '$droplet_id'"
+                exit 1
+            fi
+
+            local end_time
+            :value end_time date +%s
+
+            local sleep_time="$(( $sleep - $end_time + $start_time ))"
+            if [ "$sleep_time" -gt "0" ]; then
+                :info "Sleeping for $sleep_time seconds till next vote"
+
+                sleep "$sleep_time"
+            fi
+        done
+    fi
+
+    :info "Vote ring is done!"
 }
 
 :main "${@}" </dev/null
