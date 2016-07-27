@@ -39,6 +39,7 @@ window_pid=$(xdotool getactivewindow getwindowpid)
 window_command=$(ps -o comm= "$window_pid")
 
 filter_command=("dmenu -b -i -p '>' -l 20")
+paste_command=("xdotool type --clearmodifiers --delay 1 --file -")
 
 if [ "$window_command" = "urxvt" ]; then
     read terminal_command_pid terminal_command \
@@ -56,6 +57,8 @@ if [ "$window_command" = "urxvt" ]; then
                 "&& cat $fifo_out &"
                 "tee $fifo_in >/dev/null"
         )
+
+        paste_command=('tmux send "$(cat)"')
     fi
 fi
 
@@ -64,4 +67,4 @@ choice=$(
         | head -n1
 )
 
-tmux send "$choice"
+eval "${paste_command[@]}" <<< "$choice"
