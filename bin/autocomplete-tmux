@@ -10,11 +10,28 @@ mkfifo "$fifo_in" "$fifo_out"
 candidates=("$(
     tmux ls -F '#S' \
         | xargs -n1 tmux capture-pane -pt \
-        | grep -wPo '[\w-/:.]{3,}' \
-        | grep -P '^[\w/]' \
+        | grep -wPo '[\w/:.@~_-]{5,}' \
+        | grep -vPx '\d\d[:/-]\d\d([:/-]\d\d)?' \
+        | grep -vPx '[a-z]{5}' \
+        | grep -P '^[\w/~]' \
+        | grep -vPx '[A-Z][a-z]+' \
+        | grep -vP '@conference' \
+        | grep -vP '\.xmpp' \
         | grep -P '[\w/]$' \
         | sort \
-        | uniq
+        | uniq \
+        | {
+            tee \
+                >(grep -Px '[\w_-]{7,}') \
+                >(grep -P '^[\w.]+@') \
+                >(grep '^/') \
+                >(grep '^~') \
+                >(grep -P '://') \
+                >(grep -Px '([\da-f]+:)+[\da-f]+') \
+                >(grep -Po '(\d{1,3}\.){3}\d{1,3}/\d{1,4}') \
+                >(grep -Po '(\d{1,3}\.){3}\d{1,3}') \
+                >/dev/null
+        }
 )")
 
 window_pid=$(xdotool getactivewindow getwindowpid)
