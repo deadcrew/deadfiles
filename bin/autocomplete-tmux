@@ -64,4 +64,4 @@ choice=$(
         | head -n1
 )
 
-xdotool type --clearmodifiers --delay 1 --file - <<< "$choice"
+tmux send "$choice"
