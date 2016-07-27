@@ -286,6 +286,10 @@ HELP
 
     local user_agent="${user_agents[$(( RANDOM % ${#user_agents[@]} ))]}"
 
+    local proxy="${7:-}"
+    local proxy_addr="${proxy#*@}"
+    local proxy_auth="${proxy%@*}"
+
     :ssh "$1" "$2" <<BASH
         set -o pipefail
 
@@ -294,13 +298,17 @@ HELP
         curl -svLX POST -c /tmp/curl.cookie-jar -d 'acct=$5&pw=$6' \
             -A '$user_agent' \
             -o /dev/null \
+            ${proxy_auth+-U '$proxy_auth'} \
+            ${proxy_addr:+-x '$proxy_addr'} \
             ${headers[@]} \
             --compressed \
             https://news.ycombinator.com/login
 
-        for where in {news,shownew,newest,item?id=${4:-3}}; do
+        for where in {news,show,shownew,newest,item?id=${4:-$3}}; do
             curl -svX GET -b /tmp/curl.cookie-jar -c /tmp/curl.cookie-jar \
                     -A '$user_agent' \
+                    ${proxy_auth+-U '$proxy_auth'} \
+                    ${proxy_addr:+-x '$proxy_addr'} \
                     ${headers[@]} \
                     --compressed \
                     "https://news.ycombinator.com/\$where" \
@@ -311,7 +319,8 @@ HELP
                 | xargs -n1 -I{} curl -svLX GET -b /tmp/curl.cookie-jar \
                     -e "https://news.ycombinator.com/\$where" \
                     -A '$user_agent' \
-                    ${7:+-x '$7'} \
+                    ${proxy_auth+-U '$proxy_auth'} \
+                    ${proxy_addr:+-x '$proxy_addr'} \
                     ${headers[@]} \
                     --compressed \
                     "https://news.ycombinator.com/{}"
