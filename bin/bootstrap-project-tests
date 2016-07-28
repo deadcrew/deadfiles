@@ -48,8 +48,8 @@ HELP
         :exec touch tests/teardown.sh
     fi
 
-    if [ ! -f run_tests ]; then
-        :exec cat > run_tests <<RUN_TESTS
+    if [ ! -f tests/run_tests ]; then
+        :exec cat > tests/run_tests <<RUN_TESTS
 #!/bin/bash
 
 set -euo pipefail
@@ -74,7 +74,7 @@ import:source "github.com/reconquest/test-runner.bash"
 :main "\${@}"
 RUN_TESTS
 
-        chmod +x run_tests
+        chmod +x tests/run_tests
     fi
 
     if [ ! -d vendor/github.com/reconquest/import.bash ]; then
@@ -82,7 +82,7 @@ RUN_TESTS
             vendor/github.com/reconquest/import.bash
     fi
 
-    ./run_tests -h > /dev/null
+    ./tests/run_tests -h > /dev/null
 
     :exec echo ".last-testcase" >> .gitignore
 
