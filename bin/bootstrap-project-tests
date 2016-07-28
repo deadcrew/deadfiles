@@ -55,7 +55,7 @@ HELP
 set -euo pipefail
 
 cd "\$(dirname "\$(readlink -f "\${BASH_SOURCE[0]}")")"
-source vendor/github.com/reconquest/import.bash/import.bash
+source ../vendor/github.com/reconquest/import.bash/import.bash
 
 import:source "github.com/reconquest/test-runner.bash"
 
@@ -65,6 +65,9 @@ import:source "github.com/reconquest/test-runner.bash"
         :
     }
 
+    test-runner:set-local-setup setup.sh
+    test-runner:set-local-teardown teardown.sh
+    test-runner:set-testcases-dir testcases
     test-runner:run "\${@}"
 }
 
