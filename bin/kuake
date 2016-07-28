@@ -4,6 +4,8 @@
 
 set -euo pipefail
 
+set -x
+
 :usage() {
     cat <<CODE
 kuake
@@ -179,7 +181,7 @@ CODE
     local cache_screen=$(cat $cache_path 2>/dev/null)
 
     if [[ "$cache_screen" != "$window_screen" ]]; then
-        echo -n "$window_screen" > $cache_path
+        echo -n "$window_screen" > "$cache_path"
         return 0
     fi
 
@@ -190,7 +192,6 @@ CODE
     local iteration=0
     while :; do
         local content=$(xdotool "$@" 2>&1)
-        echo "$content"
         if ! grep -q 'BadWindow' <<< "$content"; then
             echo "$content"
             break
