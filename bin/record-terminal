@@ -15,12 +15,14 @@ else
     initial_command="-e tmux new -s record-terminal"
 fi
 
+tmux kill-session -t record-terminal
+
 urxvt -name $terminal_name $initial_command &
 
 urxvt_pid=$!
 
 attempts=10
-while ! urxvt_window_id=$(xdotool search --name $terminal_name 2>/dev/null); do
+while ! urxvt_window_id=$(xdotool search --classname $terminal_name 2>/dev/null); do
     tmux set-window-option -t record-terminal set-titles-string $terminal_name
 
     attempts=$(($attempts-1))
