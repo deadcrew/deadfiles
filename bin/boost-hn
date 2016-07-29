@@ -8,6 +8,7 @@ verbose=0
 use_static_remotes=false
 use_proxy=false
 use_droplets=false
+vote_type=up
 
 users_offset=0
 
@@ -18,7 +19,7 @@ sleep=60
     local __parent_id__="$2"
     shift 2
 
-    eval set -- "$(getopt -o vhs:DRPo: -l help -- "${@}")"
+    eval set -- "$(getopt -o vhs:DRPo:x -l help -- "${@}")"
 
     while [ "${*}" ]; do
         case "$1" in
@@ -42,6 +43,9 @@ sleep=60
                 ;;
             -v)
                 verbose=$((verbose + 1))
+                ;;
+            -x)
+                vote_type=down
                 ;;
             -s)
                 shift
@@ -75,14 +79,22 @@ Usage:
 
 Notes:
 
-    Use <parent-id> when <id> is a comment ID.
+    Use <parent-id> (post ID) when <id> is a comment ID.
+
+Modes:
+
+    -P  Use HTTP/HTTPS proxy lists (with possible auth).
+    -S  Use static remote hosts with auth via SSH.
+    -D  Use DigitalOcean Droplets (banned).
 
 Options:
 
-    -h --help  Show this help.
-    -s <sec>   Sleep at least <sec> seconds between votes.
-               [default: 60]
-    -v         Increase verbosity.
+    -h --help    Show this help.
+    -o <offset>  Start at given offset in users list.
+    -s <sec>     Sleep at least <sec> seconds between votes.
+                  [default: 60]
+    -x           Pin dat beach down.
+    -v           Increase verbosity.
 HELP
 }
 
@@ -298,7 +310,7 @@ HELP
         curl -svLX POST -c /tmp/curl.cookie-jar -d 'acct=$5&pw=$6' \
             -A '$user_agent' \
             -o /dev/null \
-            ${proxy_auth+-U '$proxy_auth'} \
+            ${proxy_auth:+-U '$proxy_auth'} \
             ${proxy_addr:+-x '$proxy_addr'} \
             ${headers[@]} \
             --compressed \
@@ -307,19 +319,19 @@ HELP
         for where in {news,show,shownew,newest,item?id=${4:-$3}}; do
             curl -svX GET -b /tmp/curl.cookie-jar -c /tmp/curl.cookie-jar \
                     -A '$user_agent' \
-                    ${proxy_auth+-U '$proxy_auth'} \
+                    ${proxy_auth:+-U '$proxy_auth'} \
                     ${proxy_addr:+-x '$proxy_addr'} \
                     ${headers[@]} \
                     --compressed \
                     "https://news.ycombinator.com/\$where" \
                 | grep -Po "vote\\?[^'\\"]+" \
                 | sed -u -e 's/&amp;/\\&/g' \
-                | grep -F 'how=up' \
+                | grep -F 'how=${8:-up}' \
                 | grep -F 'id=$3' \
                 | xargs -n1 -I{} curl -svLX GET -b /tmp/curl.cookie-jar \
                     -e "https://news.ycombinator.com/\$where" \
                     -A '$user_agent' \
-                    ${proxy_auth+-U '$proxy_auth'} \
+                    ${proxy_auth:+-U '$proxy_auth'} \
                     ${proxy_addr:+-x '$proxy_addr'} \
                     ${headers[@]} \
                     --compressed \
@@ -376,7 +388,7 @@ BASH
             :info "Running vote process from login '$login' (remote '$remote')"
 
             :do-remote-vote "${public_key%*.pub}" "$remote" \
-                "$target_id" "$parent_id" "$login" "$password"
+                "$target_id" "$parent_id" "$login" "$password" "" "${vote_type}"
 
             local end_time
             :value end_time date +%s
@@ -412,7 +424,7 @@ BASH
 
             :do-remote-vote "${public_key%*.pub}" "localhost" \
                 "$target_id" "$parent_id" "$login" "$password" \
-                "$proxy"
+                "$proxy" "${vote_type}"
 
             local end_time
             :value end_time date +%s
@@ -475,7 +487,7 @@ BASH
 
             :info "Opening SSH session into Droplet '$droplet_id' ($droplet_ip)"
             :do-remote-vote "${public_key%*.pub}" "root@$droplet_ip" \
-                "$target_id" "$parent_id" "$login" "$password"
+                "$target_id" "$parent_id" "$login" "$password" "" "${vote_type}"
 
             :info "Destroying Droplet '$droplet_id'"
             if ! :digitalocean:delete-droplet "$digitalocean_token" "$droplet_id"
