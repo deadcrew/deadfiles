@@ -70,7 +70,7 @@ set -euo pipefail
 
     shift 1
 
-    eval set -- $(getopt -o "hvxt:d:r:" -- "${@}")
+    eval set -- $(getopt -o "hvxt:d:r:b:" -- "${@}")
     while [ $# -gt 0 ]; do
         case $1 in
             -x)
@@ -86,6 +86,10 @@ set -euo pipefail
             -d)
                 shift
                 eval $_opts\[description\]="\$1"
+                ;;
+            -b)
+                shift
+                eval $_opts\[destination\]="\$1"
                 ;;
             -h)
                 :usage
@@ -106,7 +110,7 @@ set -euo pipefail
 :usage() {
         cat <<HELP
 Usage:
-    stacket-pull-request-create [-h] [-d] [-v]
+    stacket-pull-request-create [-h] [-d] [-v] [-b=]
 
 Examples:
     $ stacket-pull-request-create
@@ -119,9 +123,10 @@ Examples:
         > will create pull-request and set title to "hello world"
 
 Options:
-    -v  Be verbose.
-    -x  Dry run mode.
-    -h  Print this text.
+    -b <branch>  Specify destination branch.
+    -v           Be verbose.
+    -x           Dry run mode.
+    -h           Print this text.
 HELP
 
 }
@@ -134,6 +139,7 @@ HELP
     opts[verbose]=false
     opts[title]=""
     opts[description]=""
+    opts[destination]=""
 
     :parse-opts opts "${@}"
 
@@ -142,8 +148,17 @@ HELP
         echo source branch: $source
     fi
 
-    local destination=$(:get-destination-branch HEAD)
+    local destination=${opts[destination]}
+    local destination=${destination:-$(:get-destination-branch HEAD)}
     local destination=${destination:-master}
+
+    if [[ "$source" == "$destination" ]]; then
+        echo
+        echo "can't determine destination for: $source"
+        echo "please, specify manually via -b flag"
+        exit 1
+    fi
+
     if ${opts[verbose]}; then
         echo "destination branch: $destination"
     fi
