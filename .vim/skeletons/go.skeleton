@@ -5,4 +5,4 @@ except:
     import px.langs.go.packages
 `package ${1:`!p snip.rv=px.langs.go.packages.guess_package_name_from_file_name(snip.fn)`}
 
-$2
+$0
