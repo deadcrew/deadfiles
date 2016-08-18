@@ -37,8 +37,16 @@
     sed 's/.*\.//g' <<< "$file_name"
 }
 
-:colorize-output() {
-    echo -e '\e[1;44;1;37m'"${@}"'\e[0m'
+:blue() {
+    echo -e '\e[1;44;1;37m '"${@}"' \e[0m'
+}
+
+:red() {
+    echo -e '\e[1;41;1;37m '"${@}"' \e[0m'
+}
+
+:green() {
+    echo -e '\e[1;42;1;30m '"${@}"' \e[0m'
 }
 
 :is-run-step() {
@@ -134,7 +142,7 @@ HELP
     )
 
 
-    :colorize-output "$2 killed after ${1}sec timeout"
+    :red "$2 killed after ${1}sec timeout"
 }
 
 :lock() {
@@ -154,6 +162,8 @@ HELP
     local command="$2"
     local wait="$3"
 
+    local exitcode="0"
+
     if [ "$wait" -gt 0 ]; then
         ( :eval-command-on-file-name "$file_name" "$command" ) &
         local child=$!
@@ -164,12 +174,17 @@ HELP
 
         {
             wait $child
+            exitcode="$?"
+
             kill $watchdog
             wait $watchdog
         } 2>/dev/null
     else
         :eval-command-on-file-name "$file_name" "$command"
+        exitcode="$?"
     fi
+
+    return "$exitcode"
 }
 
 :main() {
@@ -225,12 +240,20 @@ HELP
         if :lock; then
             {
                 if [ $run_step -gt 1 ]; then
-                    :colorize-output "($current_step % $run_step)" "$file_name"
+                    :blue "($current_step % $run_step)" "$file_name"
                 else
-                    :colorize-output "$file_name"
+                    :blue "$file_name"
                 fi
 
                 :run-command "$file_name" "$command" ${opts[wait]}
+                exitcode="$?"
+
+                if [[ "$exitcode" -gt 0 ]]; then
+                    :red "exit code $exitcode"
+                else
+                    :green "ok"
+                fi
+
                 :unlock
             } &
         fi
