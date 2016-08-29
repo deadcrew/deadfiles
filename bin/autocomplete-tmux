@@ -38,7 +38,7 @@ window_pid=$(xdotool getactivewindow getwindowpid)
 
 window_command=$(ps -o comm= "$window_pid")
 
-filter_command=("dmenu -b -i -p '>' -l 20")
+filter_command=("modal")
 paste_command=("xdotool type --clearmodifiers --delay 1 --file -")
 
 if [ "$window_command" = "urxvt" ]; then
