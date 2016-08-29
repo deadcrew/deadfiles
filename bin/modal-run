@@ -2,8 +2,8 @@
 
 OLDPATH="$PATH"
 
-if [ -n "$DMENU_PATH" ]; then
-    PATH="$DMENU_PATH:$PATH"
+if [ -n "$MODAL_PATH" ]; then
+    export PATH="$MODAL_PATH:$PATH"
 fi
 
 RUN="$(modal-apps | modal -dmenu "$@")"
