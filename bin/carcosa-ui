@@ -18,7 +18,7 @@ active_window_id=$(xdotool getwindowfocus)
 
 if output=$(carcosa -Lc \
     | sort \
-    | dmenu -f -i -b -l 20 2>/dev/null \
+    | modal 2>/dev/null \
     | perl -p -e 'chomp if eof' \
     | xargs -r0 carcosa -Gc 2>&1)
 then
