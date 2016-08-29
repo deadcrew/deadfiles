@@ -8,6 +8,7 @@ exec rofi \
     -width 30 \
     -location 0 \
     -hide-scrollbar \
+    -color-enabled \
     -separator-style none \
     -i \
     -p "" \
