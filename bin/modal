@@ -1,13 +1,15 @@
 #!/bin/bash
 
 exec rofi \
-    -font "Monaco 10" \
+    -font "Monaco 12" \
     -bw 0 \
     -padding 1 \
     -line-margin 1 \
     -width 30 \
     -location 0 \
     -hide-scrollbar \
+    -separator-style none \
+    -i \
     -p "" \
     -dmenu \
     "$@"

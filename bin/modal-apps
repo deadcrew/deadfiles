@@ -1,7 +1,6 @@
 #!/bin/sh
 
 IFS=:
-(
-    stest -lfx $PATH
-    stest -lhx $PATH
-) | sort -u
+
+stest -lfx $PATH
+stest -lhx $PATH
