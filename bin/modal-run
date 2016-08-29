@@ -6,7 +6,7 @@ if [ -n "$DMENU_PATH" ]; then
     PATH="$DMENU_PATH:$PATH"
 fi
 
-RUN="$(dmenu_path | dmenu "$@")"
+RUN="$(modal-apps | modal -dmenu "$@")"
 COMMAND=($RUN)
 RUNPATH="$(which "$COMMAND")"
 
