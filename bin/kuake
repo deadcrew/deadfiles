@@ -40,7 +40,6 @@ CODE
             --focus)
                 _focus=true
                 ;;
-
             --top)
                 _top=true
                 _bottom=false
@@ -127,7 +126,7 @@ CODE
 :spawn-terminal() {
     local name="$1"
 
-    i3-msg -q "exec urxvt -name $name"
+    i3-msg -q "exec marvex --class $name"
 }
 
 :window-get-active() {
