@@ -1,15 +1,7 @@
 #!/bin/sh
 
-OLDPATH="$PATH"
-
-if [ -n "$MODAL_PATH" ]; then
-    export PATH="$MODAL_PATH:$PATH"
-fi
-
 RUN="$(modal-apps | modal -dmenu "$@")"
 COMMAND=($RUN)
 RUNPATH="$(which "$COMMAND")"
-
-PATH="$OLDPATH"
 
 exec $RUNPATH "${COMMAND[@]:1}"

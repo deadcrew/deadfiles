@@ -2,5 +2,11 @@
 
 IFS=:
 
-stest -lfx $PATH
-stest -lhx $PATH
+if [ -n "$MODAL_PATH" ]; then
+    stest -lfx $MODAL_PATH
+fi
+
+{
+    stest -lfx $PATH
+    test -lhx $PATH
+} | sort -u
