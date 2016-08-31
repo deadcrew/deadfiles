@@ -1,0 +1,35 @@
+#!/bin/bash
+
+template='
+    <span font_weight="bold">
+        \(.title)
+    </span>
+    <br>
+        &#187; \(.url)
+    <br>
+    <span color="#aaa">
+        &#160;&#160;
+        <span font="DejaVu Sans Condensed 8">
+            \(.abstract)
+        </span>
+    </span>
+    <end>
+'
+
+template=$(
+    tr -d '\n' <<< "$template" \
+        | sed -r 's/\s+(<)|(>)\s+/\1\2/g' \
+        | sed 's/"/\\"/g'
+)
+
+query=$(modal <&-)
+
+googler --json "$query" \
+    | jq -r '.[] | "'"$template"'"' \
+    | tr -d '\n' \
+    | sed 's/<end>/\x0/g' \
+    | sed 's/<br>/\n/g' \
+    | modal -markup-rows -no-custom -eh 3 -sep '\0' \
+    | sed -n '2p' \
+    | cut -f2 -d' ' \
+    | xargs -n1 xdg-open
