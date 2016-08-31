@@ -1,6 +1,6 @@
 #!/bin/sh
 
-RUN="$(modal-apps | modal -dmenu "$@")"
+RUN="$(modal-apps | modal "$@")"
 COMMAND=($RUN)
 RUNPATH="$(which "$COMMAND")"
 
