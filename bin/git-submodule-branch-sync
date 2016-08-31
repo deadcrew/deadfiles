@@ -11,30 +11,18 @@ cd "$(git rev-parse --show-toplevel)"
         exit 0
     fi
 
-    submodules=$(mktemp)
-    directories=$(mktemp)
-    trap "rm $submodules $directories" EXIT
 
     tasks=()
     while read name path branch
     do
         (
-            if :update "$name" "$path" "$branch"; then
-                echo "$path" >> "$directories"
-                echo "$name" >> "$submodules"
-            fi
+            :update "$name" "$path" "$branch"
         ) &
         tasks+=($!)
     done < <(:get-submodules .gitmodules)
 
     if [[ ${#tasks} -ne 0 ]]; then
         wait ${tasks[@]}
-        cat "$submodules"
-        submodules=($(cat "$submodules"))
-        directories=($(cat "$directories"))
-        if [[ -v submodules ]]; then
-            :commit
-        fi
     fi
 }
 
@@ -71,15 +59,6 @@ cd "$(git rev-parse --show-toplevel)"
 :indent() {
     local name="$1"
     sed -r "s|^|[$name]: |" >&2
-}
-
-:commit() {
-    local index=$(git status --porcelain | grep -v '^?? ' | awk '{print $2}')
-
-    git update-index -q --assume-unchanged --stdin <<< "$index"
-    git add "${directories[@]}"
-    git commit -q -m "submodules: update ${submodules[*]}"
-    git update-index -q --no-assume-unchanged --stdin <<< "$index"
 }
 
 :get-submodules() {
