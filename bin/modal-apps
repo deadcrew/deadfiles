@@ -8,5 +8,5 @@ fi
 
 {
     stest -lfx $PATH
-    test -lhx $PATH
+    stest -lhx $PATH
 } | sort -u
