@@ -1,0 +1,82 @@
+#!/bin/bash
+
+set -euo pipefail
+
+:usage() {
+    cat <<EOF
+guess is summoned to find usage information about any program.
+
+Usage:
+    guess <program>
+    guess -h | --help
+
+Options:
+    -h --help   Show this screen.
+EOF
+}
+
+:main() {
+    local program="${1:--h}"
+
+    if [[ "$program" == "--help" || "$program" == "-h" ]]; then
+        :usage
+        exit 0
+    fi
+
+    local launchers=(
+        "$program --help"
+        "$program -h"
+        "man $program"
+        "$program -help"
+        "$program help"
+    )
+
+    for launcher in "${launchers[@]}"; do
+        if :spawn "$launcher"; then
+            $launcher
+            exit $?
+        fi
+    done
+}
+
+:spawn() {
+    local output
+    exec {output}<>$(mktemp)
+
+    :log " -> $@"
+
+    (
+        if ! $@ &>${output}; then
+            :
+        fi
+    ) &
+
+    local process="$!"
+
+    for _ in {1..10}; do
+        sleep 0.05
+        if ! kill -0 "$process" &>/dev/null; then
+            break
+        fi
+    done
+
+    if kill -0 "$process" &>/dev/null; then
+        :log " <- sigint"
+        kill -9 "$process"
+        return 1
+    fi
+
+    local contents="$(cat ${output})"
+    grep \
+        --quiet \
+        --word-regexp \
+        --extended-regexp \
+        --ignore-case \
+        '(synopsis|usage:|options:|commands:)' <<< "$contents"
+}
+
+:log() {
+    echo -e "\e[38;5;4;1m$@\e[0m" >&2
+}
+
+:main "$@"
