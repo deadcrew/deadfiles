@@ -55,7 +55,7 @@ set -euo pipefail
     local source="$3"
     local destination="$4"
     local title="$5"
-    local description="$6"
+    local description="${6:-}"
 
     stacket pull-requests create \
         $project $repository \
