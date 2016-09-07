@@ -32,3 +32,4 @@ set! javascript.options.jit.content=true
 set! signon.rememberSignons=false
 set! browser.tabs.closeWindowWithLastTab=false
 set! gfx.font_rendering.fontconfig.fontlist.enabled=false
+set! browser.tabs.remote.autostart=true
