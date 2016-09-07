@@ -33,6 +33,9 @@ set! signon.rememberSignons=false
 set! browser.tabs.closeWindowWithLastTab=false
 set! gfx.font_rendering.fontconfig.fontlist.enabled=false
 
+set! browser.cache.disk.enable=true
+set! browser.cache.disk.capacity=102400
+
 " multiprocessing
 set! browser.tabs.remote.autostart=false
 set! browser.tabs.remote.force-enable=false
