@@ -34,5 +34,6 @@ set! browser.tabs.closeWindowWithLastTab=false
 set! gfx.font_rendering.fontconfig.fontlist.enabled=false
 
 " multiprocessing
-set! browser.tabs.remote.autostart=true
-set! browser.tabs.remote.force-enable=true
+set! browser.tabs.remote.autostart=false
+set! browser.tabs.remote.force-enable=false
+set! dom.ipc.processCount=1
