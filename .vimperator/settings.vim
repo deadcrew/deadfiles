@@ -38,6 +38,9 @@ set! browser.cache.disk.capacity=102400
 
 set! browser.cache.memory.capacity=102400
 
+" disable pause before page rendering
+set! nglayout.ititialpaint.delay=0
+
 " multiprocessing
 set! browser.tabs.remote.autostart=false
 set! browser.tabs.remote.force-enable=false
