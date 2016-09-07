@@ -45,3 +45,12 @@ set! nglayout.ititialpaint.delay=0
 set! browser.tabs.remote.autostart=false
 set! browser.tabs.remote.force-enable=false
 set! dom.ipc.processCount=1
+
+
+set! network.http.pipelining=true
+set! network.http.proxy.pipelining=true
+set! network.http.pipelining.maxrequests=32
+set! network.http.pipelining.firstrequest=true
+set! network.http.proxy.firstrequest=true
+set! network.http.max-connections=64
+set! network.http.max-connections-per-server=24
