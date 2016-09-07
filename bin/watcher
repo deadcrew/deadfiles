@@ -20,7 +20,7 @@
 
     echo "$ $command"
     (
-        eval "$command"
+        eval -- "$command"
     )
 }
 
