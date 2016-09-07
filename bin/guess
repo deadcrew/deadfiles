@@ -40,8 +40,9 @@ EOF
 }
 
 :spawn() {
-    local output
-    exec {output}<>$(mktemp)
+    local output=$(mktemp --suffix=.guess)
+
+    trap "rm $output" EXIT
 
     :log " -> $@"
 
