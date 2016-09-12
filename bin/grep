@@ -1,0 +1,3 @@
+#!/bin/bash
+
+GREP_COLORS="mt=48;5;92:sl=38;5;253" /bin/grep --color=auto "${@}"
