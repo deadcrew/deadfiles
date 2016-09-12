@@ -1,13 +1,14 @@
 #!/bin/bash
 
-
 :execute-command-template() {
     local file_name="$1"
     shift
 
-    local command_template="$@"
+    local name
 
-    sed "s|%s|$file_name|g" <<< $command_template
+    for name in "${@}"; do
+        printf "%q " "${name//%s/\$file_name}"
+    done
 }
 
 :eval-command-on-file-name() {
@@ -68,7 +69,7 @@
 
     shift 2
 
-    eval set -- $(getopt -o w:he:d: -- "${@}")
+    eval set -- "$(getopt -o w:he:d: -- "${@}")"
     while [ $# -gt 0 ]; do
         case $1 in
             -w)
@@ -97,7 +98,7 @@
         shift
     done
 
-    eval $_args=\$@
+    eval $_args='("$@")'
 }
 
 :usage() {
@@ -159,13 +160,13 @@ HELP
 
 :run-command() {
     local file_name="$1"
-    local command="$2"
-    local wait="$3"
+    local wait="$2"
+    local command=("${@:3}")
 
     local exitcode="0"
 
     if [ "$wait" -gt 0 ]; then
-        ( :eval-command-on-file-name "$file_name" "$command" ) &
+        ( :eval-command-on-file-name "$file_name" "${command[@]}" ) &
         local child=$!
 
         ( :watchdog $wait $child ) &
@@ -180,7 +181,7 @@ HELP
             wait $watchdog
         } 2>/dev/null
     else
-        :eval-command-on-file-name "$file_name" "$command"
+        :eval-command-on-file-name "$file_name" "${command[@]}"
         exitcode="$?"
     fi
 
@@ -199,7 +200,7 @@ HELP
 
     :parse-opts opts args "${@}"
 
-    set -- ${args[@]}
+    set -- "${args[@]}"
 
     if [ $# -eq 0 ]; then
         :usage
@@ -221,12 +222,13 @@ HELP
         shift
     fi
 
-    local command="${@:-echo %s}"
+    local command=("${@:-echo %s}")
 
     local current_step=0
 
     :wait-changed-files "${opts[events]}" "${opts[dir]}" \
-        | while read file_name; do
+        | while read file_name
+    do
         if ! grep -qE "$pattern" <<< "$file_name"; then
             continue
         fi
@@ -245,7 +247,7 @@ HELP
                     :blue "$file_name"
                 fi
 
-                :run-command "$file_name" "$command" ${opts[wait]}
+                :run-command "$file_name" ${opts[wait]} "${command[@]}"
                 exitcode="$?"
 
                 if [[ "$exitcode" -gt 0 ]]; then
