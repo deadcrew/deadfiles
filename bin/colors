@@ -1,0 +1,22 @@
+#!/bin/bash
+
+for fgbg in 38 48 ; do
+    for color in {0..256} ; do
+        label="${color}"
+        if [[ $color -lt 100 ]]; then
+            if [[ $color -lt 10 ]]; then
+                label="${color}  "
+            else
+                label="${color} "
+            fi
+        fi
+
+        echo -en "\e[${fgbg};5;${color}m ${label}\t\e[0m"
+
+        if [ $((($color + 1) % 10)) == 0 ] ; then
+            echo #New line
+        fi
+    done
+
+    echo
+done
