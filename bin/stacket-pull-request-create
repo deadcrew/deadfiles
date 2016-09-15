@@ -35,7 +35,7 @@ set -euo pipefail
 }
 
 :get-project() {
-    git remote get-url origin | sed 's/.git$//' | sed 's/:/\//' \
+    git remote get-url origin | sed 's/.git$//' | sed 's|://||' \
         | cut -d'/' -f2
 }
 
