@@ -1,0 +1,58 @@
+#!/bin/bash
+
+declare -A opts
+
+eval $(args opts -m:,--message -n,--no-description -h,--help -- "${@}")
+
+if [[ "${opts[--help]}" ]]; then
+    cat <<HELP
+Usage:
+
+    rofi-template -h | --help
+    rofi-template <template>
+HELP
+
+    exit 1
+fi
+
+template='
+    <span font_weight="bold">
+        \(.title)
+    </span>
+    <br>
+        &#8250; \(.item)
+'
+
+rows=2
+
+if [[ ! "${opts[--no-description]}" ]]; then
+    rows=3
+
+    template+='
+        <br>
+        <span color="#bbb">
+            &#160;&#160;
+            <span font="Tahoma 8">
+                \(.description)
+            </span>
+        </span>
+    '
+fi
+
+template+='<end>'
+
+template=$(
+    tr -d '\n' <<< "${1:-$template}" \
+        | sed -r 's/\s+(<)|(>)\s+/\1\2/g' \
+        | sed 's/"/\\"/g'
+)
+
+shift
+
+jq -r '.[] | "'"$template"'"' \
+    | tr -d '\n' \
+    | sed -u 's/<end>/\x0/g' \
+    | sed -u 's/<br>/\n/g' \
+    | modal -markup-rows -eh "$rows" -sep '\0' -mesg "${opts[--message]:-}" "${@}" \
+    | sed -n '2p' \
+    | cut -f2- -d' '
