@@ -30,7 +30,8 @@ USAGE
     local url="$(git config --local pull-request.$branch.url)"
 
     local response=""
-    curl -s "http://snob.s/hsd:rn:ngs:engineers/$url"
+    curl -s "http://snob.s/hsd:rn:ngs:engineers/$url" 2>&1 \
+        | spin --status ":: adding reviewers "
     echo "$url"
 
     exit 0
