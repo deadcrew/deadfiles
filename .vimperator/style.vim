@@ -12,4 +12,4 @@ hi InfoMsg      font-family: Monaco; font-size: 12px; color: magenta; line-heigh
 hi Filter       background: #ffdf00; border-radius: 2px; border-width: 1px; border-color: #ff8700; border-style: solid; padding: 1px 2px 1px 2px; margin: 0 1px 0 2px; font-weight: bold;
 
 hi CompGroup:not(:first-of-type) padding-top: 1ex; background: white;
-hi PromptText line-height: 12px; padding: 3px 3px 0 3px; padding-left: 3px; background: magenta; color: white;
+hi PromptText line-height: 12px; padding: 2px 3px 0 3px; padding-left: 3px; background: magenta; color: white;
