@@ -4,10 +4,14 @@
     local file_name="$1"
     shift
 
-    local name
+    local arg
 
-    for name in "${@}"; do
-        printf "%q " "${name//%s/\$file_name}"
+    for arg in "${@}"; do
+        if [[ "$arg" =~ "[\d<>&|]+" ]]; then
+            printf "%q " "${arg//%s/\$file_name}"
+        else
+            printf "%s " "$arg"
+        fi
     done
 }
 
