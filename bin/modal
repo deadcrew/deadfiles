@@ -1,5 +1,10 @@
 #!/bin/bash
 
+mode="-dmenu"
+if printf '%s\n' "$@" | grep -xE -- '-e'; then
+    mode=""
+fi
+
 exec rofi \
     -font "Monaco 12" \
     -bw 0 \
@@ -12,5 +17,5 @@ exec rofi \
     -separator-style none \
     -i \
     -p "" \
-    -dmenu \
+    "$mode" \
     "$@"

@@ -1,53 +1,91 @@
 #!/bin/bash
 
 set -x
+
 HISTORY=~/.engrus_history
 
-no_blank_header=false
+:main() {
+    if (( $# )); then
+        local input=$*
+    else
+        local input=$(modal <&-)
+    fi
 
-while getopts "e" key; do
-    case "$key" in
-        e)
-            no_blank_header=true
-            shift
-            ;;
-    esac
-done
+    local input_lang="en-ru"
+    if ! grep -qiE '[a-z]' <<< "$input"; then
+        input_lang="ru-en"
+    fi
 
-if [[ $# -ne 0 ]]; then
-    INPUT="$@"
-else
-    INPUT=$(modal <&-)
-fi
+    if ! :dictionary:lookup "$input" "$input_lang"; then
+        if ! :translate "$input" "$input_lang"; then
+            modal \
+                -color-window "#ff0000 #ff0000" \
+                -color-normal "#ff0000, #ffffff, #ff0000, #ff0000" \
+                -e "$input: no translation found"
+            
+            return 1
+        fi
+    fi \
+        | while read result; do
+            :history:add "$input" "$result"
+        done
+}
 
-INPUT_LANG="en-ru"
-if ! grep -qiE '[a-z]' <<< "$INPUT"; then
-    INPUT_LANG="ru-en"
-fi
+:dictionary:lookup() {
+    local input="$1"
+    local input_lang=$2
 
-header=" "
-if $no_blank_header; then
-    header="$INPUT"
-fi
+    local result=$(runki --lang $input_lang 2>/dev/null <<< "$input")
+    if [[ ! "$result" ]]; then
+        return 1
+    fi
 
-if [ "$(wc -w <<< "$INPUT")" == "1" ]; then
-    while read result; do
-        notify-send -t 2000 "$header" -- "$result"
-        echo "$INPUT"$'\t'$result >> $HISTORY
-        echo $result
-        exit 0
-    done < <(runki --lang $INPUT_LANG 2>/dev/null <<< "$INPUT")
-fi
+    local transcription=$(grep -Eo '\[[^]]+\]' <<< "$result")
 
-curl -k -s \
-        -d "key=trnsl.1.1.20150807T071843Z.319e163bafb5d806.f17c493a466253265a817c9f96a74db85f6b556b" \
-        -d "lang=$INPUT_LANG" \
-        -d "text=$INPUT" \
-        -G "https://translate.yandex.net/api/v1.5/tr.json/translate" \
-    | jq -r '.text[0]' \
-    | \
-    while read result; do
-        notify-send -t 2000 "$header" -- "$result"
-        echo "$INPUT"$'\t'$result >> $HISTORY
-        echo $result
-    done
+    sed -r <<< "$result" \
+        -e 's/\[[^]]+\] //' \
+        -e 's/ \(/\n&/g' \
+        -e 's/\), /\n/g' \
+        -e 's/\)$//g' \
+        | sed -r 's/ \(/\t/' \
+        | sed -r \
+            -e '/^\S/s/.*/{"title": "&",/' \
+            -e '/^\s/{s/^\t(.*)/"item": "\1"},/}' \
+        | sed -e '1i[' -e '$s/,$/]/' \
+        | modal-template \
+            --no-description \
+            --message "<span font=\"Tahoma 9\">&#8226; $input &#8212; $transcription</span>"
+
+    printf '%s\n' "$result"
+}
+
+:history:add() {
+    local input=$1
+    local result=$2
+
+    printf '%s\t%s\n' "$input" "$result" >> $HISTORY
+
+}
+
+:translate() {
+    local input=$1
+    local input_lang=$2
+
+    local result=$(curl -k -s  \
+            -d "key=trnsl.1.1.20150807T071843Z.319e163bafb5d806.f17c493a466253265a817c9f96a74db85f6b556b" \
+            -d "lang=$input_lang" \
+            -d "text=$input" \
+            -G "https://translate.yandex.net/api/v1.5/tr.json/translate" \
+        | jq -r '.text[0]'
+    )
+
+    if [[ "$result" == "$input" ]]; then
+        return 1
+    fi
+
+    modal-message "$input"$'\n\n› '"$result"
+
+    printf '%s\n' "$result"
+}
+
+:main "$@"
