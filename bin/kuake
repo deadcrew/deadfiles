@@ -4,8 +4,6 @@
 
 set -euo pipefail
 
-set -x
-
 :usage() {
     cat <<CODE
 kuake
@@ -19,7 +17,11 @@ Options:
     --focus       Kuakize focused window.
     --top         Show kuake at top of screen, default position.
     --bottom      Show kuake at bottom of screen.
+    --right       Show kuake at right of screen.
+    --left        Show kuake at left of screen.
     --height      Set kuake height as procent of screne height, default: 35.
+    --width       Set kuake height as procent of screne height, default: 50.
+    --opacity     Set kuake opacity, default: 1.
     -h --help     Show this screen.
 CODE
 }
@@ -28,8 +30,12 @@ CODE
     local _terminal=false
     local _focus=false
     local _top=true
+    local _right=true
     local _bottom=false
+    local _left=false
     local _height=35
+    local _width=50
+    local _opacity=1
 
     while [[ $# -ne 0 ]]; do
         case "$1" in
@@ -50,10 +56,30 @@ CODE
                 _top=false
                 ;;
 
+            --right)
+                _right=true
+                _left=false
+                ;;
+
+            --left)
+                _left=true
+                _right=false
+                ;;
+
             --height)
                 _height="$2"
                 shift
                 ;;
+
+            --width)
+                _width="$2"
+                shift
+                ;;
+
+            --opacity)
+                _opacity="$2"
+                shift
+            ;;
 
             -h | --help)
                 :usage
@@ -74,7 +100,9 @@ CODE
         exit 1
     fi
 
-    local window_geometry=$(:get-kuake-geometry $_height $_bottom)
+    local window_geometry=$(
+        :get-kuake-geometry $_width $_height $_bottom $_left
+    )
 
     local window_id=$(:window-find $_classname)
     if [[ "$window_id" ]]; then
@@ -99,12 +127,14 @@ CODE
     :window-hide   $_classname
     :window-toggle $_classname
 
-    :window-kuakize $window_id $window_geometry
+    :window-kuakize $window_id $_opacity $window_geometry
 }
 
 :get-kuake-geometry() {
-    local height="$1"
-    local bottom=$2
+    local width="$1"
+    local height="$2"
+    local bottom=$3
+    local left=$4
 
     read \
         screen_number \
@@ -113,11 +143,15 @@ CODE
 
     local window_x=$screen_x
     local window_y=$screen_y
-    local window_width=$screen_width
+    local window_width=$(($screen_width*$width/100))
     local window_height=$(($screen_height*$height/100))
 
     if $bottom; then
         window_y=$(($screen_height-$window_height))
+    fi
+
+    if ! $left; then
+        window_x=$(($screen_width-$window_width))
     fi
 
     echo $window_x $window_y $window_width $window_height $screen_number
@@ -159,14 +193,19 @@ CODE
 
 :window-kuakize() {
     local window_id="$1"
-    local window_x="$2"
-    local window_y="$3"
-    local window_width="$4"
-    local window_height="$5"
-    local window_screen="$6"
+    local opacity="$2"
+    local window_x="$3"
+    local window_y="$4"
+    local window_width="$5"
+    local window_height="$6"
+    local window_screen="$7"
 
     :xdotool windowmove --sync $window_id $window_x $window_y
     :xdotool windowsize --sync $window_id $window_width $window_height
+
+    if [[ "$opacity" != "1" ]]; then
+        transset-df -i "$window_id" "$opacity"
+    fi
 }
 
 :is-another-screen() {
