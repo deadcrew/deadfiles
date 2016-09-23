@@ -7,8 +7,8 @@ hi Hint         font-family: Monaco; font-size: 12px; font-weight: bold; text-tr
 hi Normal       font-family: Monaco; font-size: 12px;
 hi CompResult>* opacity: 1; background: white;
 hi CompItem     opacity: 1; background: white;
-hi ModeMsg      font-family: Monaco; font-size: 12px; background: green; color: white; padding: 1px;
-hi InfoMsg      font-family: Monaco; font-size: 12px; color: magenta; line-height: 12px; padding-top: 1px; padding-bottom: 2px;
+hi ModeMsg      font-family: Monaco; font-size: 12px; background: green; color: white; padding: 0 1px 0 2px; border-radius: 2px; font-weight: bold;
+hi InfoMsg      font-family: Monaco; font-size: 12px; color: magenta; line-height: 12px; padding-top: 1px; padding-bottom: 1px;
 hi Filter       background: #ffdf00; border-radius: 2px; border-width: 1px; border-color: #ff8700; border-style: solid; padding: 1px 2px 1px 2px; margin: 0 1px 0 2px; font-weight: bold;
 
 hi CompGroup:not(:first-of-type) padding-top: 1ex; background: white;
