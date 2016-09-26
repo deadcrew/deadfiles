@@ -3,7 +3,7 @@
 if [[ "$BACKGROUND" == "light" ]]; then
     export GREP_COLORS="mt=48;5;230"
 else
-    export GREP_COLORS="mt=48;5;92:sl=38;5;253"
+    export GREP_COLORS="mt=48;5;226;01;38;5;232"
 fi
 
 exec /bin/grep --color=auto "${@}"
