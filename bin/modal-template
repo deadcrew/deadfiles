@@ -8,8 +8,8 @@ if [[ "${opts[--help]}" ]]; then
     cat <<HELP
 Usage:
 
-    rofi-template -h | --help
-    rofi-template <template>
+    modal-template -h | --help
+    modal-template <template>
 HELP
 
     exit 1
