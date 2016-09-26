@@ -1,3 +1,9 @@
 #!/bin/bash
 
-GREP_COLORS="mt=48;5;92:sl=38;5;253" /bin/grep --color=auto "${@}"
+if [[ "$BACKGROUND" == "light" ]]; then
+    export GREP_COLORS="mt=48;5;230"
+else
+    export GREP_COLORS="mt=48;5;92:sl=38;5;253"
+fi
+
+exec /bin/grep --color=auto "${@}"
