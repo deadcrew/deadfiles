@@ -1,0 +1,58 @@
+[global]
+    font = Monaco 12
+    allow_markup = yes
+    format = "%b"
+    sort = no
+    indicate_hidden = yes
+    alignment = left
+    bounce_freq = 0
+    show_age_threshold = -1
+    word_wrap = yes
+    ignore_newline = no
+    # 46: skip numbers in vim from left
+    # 40: skip few lines from top
+    geometry = "300x50+46+40"
+    transparency = 0
+    idle_threshold = 0
+    follow = keyboard
+    sticky_history = yes
+    line_height = 4
+    separator_height = 1
+    padding = 6
+    horizontal_padding = 8
+    separator_color = frame
+    startup_notification = false
+    dmenu = /usr/bin/dmenu -p dunst:
+    browser = browser
+
+[frame]
+    width = 1
+    # vim primary gray (airline arrows)
+    color = "#4E4E4E"
+
+[shortcuts]
+    close = ctrl+space
+    close_all = ctrl+shift+space
+    history = ctrl+grave
+    context = ctrl+shift+period
+
+[urgency_low]
+    # vim text background
+    background = "#1c1c1c"
+     # vim text white
+    foreground = "#dadada"
+    timeout = 1
+
+[urgency_normal]
+    # vim secondary gray (airline right section)
+    background = "#262626"
+    # vim text white
+    foreground = "#dadada"
+    timeout = 4
+
+[urgency_critical]
+    # unique gray-red color
+    background = "#3d0d0d"
+    # vim text white
+    foreground = "#dadada"
+    timeout = 6
