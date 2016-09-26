@@ -7,7 +7,7 @@ fi
 
 exec rofi \
     -font "Monaco 12" \
-    -bw 0 \
+    -bw 1 \
     -padding 1 \
     -line-margin 1 \
     -width 30 \
