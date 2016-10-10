@@ -9,7 +9,7 @@ template='
     <br>
     <span color="#aaa">
         &#160;&#160;
-        <span font="DejaVu Sans Condensed 8">
+        <span font="Helvetica 8">
             \(.abstract)
         </span>
     </span>
