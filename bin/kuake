@@ -100,15 +100,15 @@ CODE
         exit 1
     fi
 
+    local window_id=$(:window-find $_classname)
     local window_geometry=$(
         :get-kuake-geometry $_width $_height $_bottom $_left
     )
 
-    local window_id=$(:window-find $_classname)
     if [[ "$window_id" ]]; then
         :window-toggle $_classname
         if :is-another-screen $window_geometry; then
-            :window-kuakize $window_id $window_geometry
+            :window-kuakize $window_id $_opacity $window_geometry
         fi
         return
     fi
@@ -151,7 +151,7 @@ CODE
     fi
 
     if ! $left; then
-        window_x=$(($screen_width-$window_width))
+        window_x=$(($window_x+$screen_width-$window_width))
     fi
 
     echo $window_x $window_y $window_width $window_height $screen_number
