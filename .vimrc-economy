@@ -21,10 +21,10 @@ nnoremap <Leader><Leader>u :PlugUpdate<CR>
 
 call plug#begin('~/$RUNTIME/bundle')
 
-Plug 'vim-airline/vim-airline-themes'
+Plug 'reconquest/vim-colorscheme'
 
 Plug 'vim-airline/vim-airline'
-    let g:airline_theme = 'papercolor'
+    let g:airline_theme = 'reconquest'
     let g:airline#extensions#whitespace#symbol = '☼'
     let g:airline_powerline_fonts = 1
 
@@ -32,8 +32,6 @@ Plug 'godlygeek/tabular', { 'on': 'Tabularize' }
     vnoremap <C-T> :Tabularize /
 
 Plug 'seletskiy/vim-nunu'
-
-Plug 'NLKNguyen/papercolor-theme'
 
 Plug 'vim-utils/vim-man'
 
@@ -140,81 +138,6 @@ imap <C-T> <C-R>=strpart(search("[)}\"'`\\]]", "c"), -1, 0)<CR><Right>
 inoremap <C-H> <C-O>o
 
 imap <C-U> <ESC>ua
-
-fun! g:LightRoom()
-    set background=light
-    call s:ApplyColorscheme()
-    hi underlined cterm=underline
-    hi CursorLineNr ctermfg=241 ctermbg=none
-    hi LineNr ctermfg=249 ctermbg=none
-    hi SignColumn ctermfg=none ctermbg=none
-    hi ColorColumn ctermbg=15
-    hi SpecialKey term=bold cterm=bold ctermfg=1 ctermbg=none
-    hi NonText ctermfg=254 cterm=none term=none
-    hi Search cterm=none ctermfg=none ctermbg=226
-    hi IncSearch cterm=none ctermfg=none ctermbg=230
-    hi Visual ctermbg=231 cterm=none ctermfg=none
-
-    hi Cursor ctermbg=0 ctermfg=15
-    hi PmenuSel ctermbg=136 ctermfg=15 cterm=bold
-endfun
-
-fun! g:DarkRoom()
-    set background=dark
-    call s:ApplyColorscheme()
-    hi underlined cterm=underline
-    hi CursorLineNr ctermfg=242 ctermbg=none
-    hi LineNr ctermfg=238 ctermbg=none
-    hi SignColumn ctermfg=none ctermbg=none
-    hi ColorColumn ctermbg=235
-    hi SpecialKey term=bold cterm=bold ctermfg=1 ctermbg=none
-    hi NonText ctermfg=235 cterm=none term=none
-    hi IncSearch cterm=bold ctermfg=234 ctermbg=220
-    hi Visual ctermbg=17 cterm=none ctermfg=none
-
-    hi Cursor ctermbg=15 ctermfg=0
-    hi PmenuSel ctermbg=136 ctermfg=16 cterm=bold
-    hi Pmenu ctermfg=245 ctermbg=235 cterm=none
-endfun
-
-fun! s:ApplyColorscheme()
-    colorscheme PaperColor
-    hi! link WildMenu PmenuSel
-    hi erlangEdocTag cterm=bold ctermfg=14
-    hi erlangFunHead cterm=bold ctermfg=4
-    hi SPM1 ctermbg=1 ctermfg=7
-    hi SPM2 ctermbg=2 ctermfg=7
-    hi SPM3 ctermbg=3 ctermfg=7
-    hi SPM4 ctermbg=4 ctermfg=7
-    hi SPM5 ctermbg=5 ctermfg=7
-    hi SPM6 ctermbg=6 ctermfg=7
-    hi VertSplit cterm=none ctermbg=none ctermfg=16
-
-    " disable weird standout mode
-    hi ErrorMsg term=none
-    hi Todo term=none
-    hi SignColumn term=none
-    hi FoldColumn term=none
-    hi Folded term=none
-    hi WildMenu term=none
-    hi WarningMsg term=none
-    hi Question term=none
-    hi ErrorMsg term=none
-
-    hi SneakPluginTarget cterm=none ctermbg=190 ctermfg=88
-    hi SneakStreakMask ctermbg=190 ctermfg=190 cterm=bold
-    hi SneakStreakTarget ctermbg=190 ctermfg=88 cterm=bold
-endfun
-
-if system('background') == "light\n"
-    call g:LightRoom()
-elseif system('background') == "dark\n"
-    call g:DarkRoom()
-elseif $BACKGROUND == 'light'
-    call g:LightRoom()
-else
-    call g:LightRoom()
-endif
 
 noh
 
