@@ -7,11 +7,7 @@
     local arg
 
     for arg in "${@}"; do
-        if [[ "$arg" =~ "[\d<>&|]+" ]]; then
-            printf "%q " "${arg//%s/\$file_name}"
-        else
-            printf "%s " "$arg"
-        fi
+        printf "%q " "${arg//%s/$file_name}"
     done
 }
 
@@ -111,20 +107,30 @@ Usage:
     watcher [-we] <pattern> [<run_step>] <command>...
 
 Examples:
-    $ watcher *.sh
+    $ watcher .sh$
         > will echo modified .sh filename
 
-    $ watcher *.sh bash
+    $ watcher .sh$ bash %s
         > will run modified .sh filename
 
-    $ watcher -e close_write *.sh bash
+    $ watcher -e close_write .sh$ bash %s
         > will run modified .sh filename only on close_write
 
-    $ watcher *.sh 2 bash
+    $ watcher .sh$ 2 bash %s
         > will run every second .sh filename
+
+    $ watcher .
+        > will watch current directiory for changes
+
+    $ watcher ./bin/watcher
+        > will watch ./bin/watcher for changes
 
 Options:
     <pattern>     Used to match file name and run command only if matched.
+                   Can be:
+                   - regular expression (like in "grep -P");
+                   - "." to watch all files;
+                   - filename, if it contains "/".
     <command>     Command to run, '%s' will be replaced with file name.
     <run_step>    Used, if passed as number. Command will run only after
                    <pattern> get matched specified number of times.
@@ -151,15 +157,15 @@ HELP
 }
 
 :lock() {
-    if [ -f "$_lockfile" ]; then
+    if [ -f "$1" ]; then
         return 1
     else
-        touch $_lockfile
+        touch $1
     fi
 }
 
 :unlock() {
-    rm -f $_lockfile
+    rm -f "$1"
 }
 
 :run-command() {
@@ -212,7 +218,7 @@ HELP
         exit 1
     fi
 
-    local _lockfile=/tmp/watcher.$(md5sum <<< "$(pwd): $@" | awk '{print $1}')
+    local lockfile=/tmp/watcher.$(md5sum <<< "$(pwd): $@" | awk '{print $1}')
     trap :unlock EXIT
 
     if [ "$1" ]; then
@@ -226,14 +232,22 @@ HELP
         shift
     fi
 
-    local command=("${@:-echo %s}")
+    local grep_pattern_type='P'
+    if [[ "$pattern" =~ "/" ]]; then
+        grep_pattern_type='F'
+    fi
 
+    local command=("echo" "%s")
     local current_step=0
+
+    if [[ "$*" ]]; then
+        command=("$@")
+    fi
 
     :wait-changed-files "${opts[events]}" "${opts[dir]}" \
         | while read file_name
     do
-        if ! grep -qE "$pattern" <<< "$file_name"; then
+        if ! grep -q${grep_pattern_type} "$pattern" <<< "$file_name"; then
             continue
         fi
 
@@ -243,7 +257,7 @@ HELP
             continue
         fi
 
-        if :lock; then
+        if :lock "$lockfile"; then
             {
                 if [ $run_step -gt 1 ]; then
                     :blue "($current_step % $run_step)" "$file_name"
@@ -260,7 +274,7 @@ HELP
                     :green "ok"
                 fi
 
-                :unlock
+                :unlock "$lockfile"
             } &
         fi
     done
