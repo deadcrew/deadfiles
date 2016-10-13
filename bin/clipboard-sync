@@ -7,7 +7,7 @@
     local content=""
     while :; do
         if content=$(xsel "$@" 2>&1); then
-            echo "$content"
+            printf '%s' "$content"
             break
         fi
 
@@ -28,15 +28,16 @@
 }
 
 :sync() {
-    local selection="$1"
+    local target="$1"
+    local selection="$2"
 
-    case "$selection" in
+    case "$target" in
         "primary")
-            :xsel -ib <<< "${now[$selection]}"
+            :xsel -ip <<< "${now[$selection]}"
             ;;
 
         "clipboard")
-            :xsel -ob <<< "${now[$selection]}"
+            :xsel -ib <<< "${now[$selection]}"
             ;;
 
         \?)
@@ -55,12 +56,14 @@
 while :; do
     :read now
 
-    if [[ "${now[primary]}" != "${memory[primary]}" \
-        && "${now[clipboard]}" == "${memory[clipboard]}"
+    if [[
+        "${now[primary]}" != "${memory[primary]}" \
+        && "${now[clipboard]}" == "${memory[clipboard]}" \
+        && "${now[primary]}" != "${memory[clipboard]}"
     ]]; then
-        :sync primary
+        :sync clipboard primary
         :remember
     fi
 
-    sleep 0.1
+    sleep 1
 done
