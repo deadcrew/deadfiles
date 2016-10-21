@@ -1,7 +1,7 @@
 [global]
     font = Monaco 12
     allow_markup = yes
-    format = "%b"
+    format = "<b>%b</b>"
     sort = no
     indicate_hidden = yes
     alignment = left
@@ -28,7 +28,7 @@
 [frame]
     width = 1
     # vim primary gray (airline arrows)
-    color = "#4E4E4E"
+    color = "#3760fc"
 
 [shortcuts]
     close = ctrl+space
@@ -38,14 +38,14 @@
 
 [urgency_low]
     # vim text background
-    background = "#1c1c1c"
+    background = "#163ccb"
      # vim text white
     foreground = "#dadada"
     timeout = 1
 
 [urgency_normal]
     # vim secondary gray (airline right section)
-    background = "#262626"
+    background = "#163ccb"
     # vim text white
     foreground = "#dadada"
     timeout = 4
