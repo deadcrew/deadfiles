@@ -7,7 +7,7 @@
     local arg
 
     for arg in "${@}"; do
-        printf "%q " "${arg//%s/$file_name}"
+        printf "%s " "${arg//%s/$file_name}"
     done
 }
 
