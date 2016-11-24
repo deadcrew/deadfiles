@@ -122,7 +122,7 @@ set -Eeuo pipefail
         :debug "{bash} $line"
     done
 
-    sudo -i unshare -m bash -s <<< "$(printf "%s\n" "${namespace[@]}")"
+    sudo -i unshare -m bash -c "$(printf "%s;" "${namespace[@]}")"
 }
 
 :resolvconf:new() {
