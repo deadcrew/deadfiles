@@ -7,7 +7,9 @@
     local arg
 
     for arg in "${@}"; do
-        printf "%s " "${arg//%s/$file_name}"
+        # %q for commands like:
+        #   watcher . -- zsh -ic 'echo 1 2 3'
+        printf "%q " "${arg//%s/$file_name}"
     done
 }
 
