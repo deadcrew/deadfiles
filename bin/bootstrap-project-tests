@@ -59,15 +59,19 @@ source ../vendor/github.com/reconquest/import.bash/import.bash
 
 import:source "github.com/reconquest/test-runner.bash"
 
+:cleanup() {
+    :
+}
+
 :main() {
     trap :cleanup EXIT
-    :cleanup() {
-        :
-    }
 
-    test-runner:set-local-setup setup.sh
-    test-runner:set-local-teardown teardown.sh
-    test-runner:set-testcases-dir testcases
+    cd ..
+
+    test-runner:set-local-setup tests/setup.sh
+    test-runner:set-local-teardown tests/teardown.sh
+    test-runner:set-testcases-dir tests/testcases
+
     test-runner:run "\${@}"
 }
 
@@ -77,6 +81,16 @@ RUN_TESTS
         chmod +x tests/run_tests
     fi
 
+    if [[ ! -f Makefile ]]; then
+        :exec cat > Makefile <<MAKEFILE
+vendor/%/Makefile:
+    bash -c 'source vendor/github.com/reconquest/import.bash/import.bash && \\
+		import "\$*"'
+
+include vendor/github.com/reconquest/test-runner.bash/Makefile
+MAKEFILE
+    fi
+
     if [ ! -d vendor/github.com/reconquest/import.bash ]; then
         git submodule add https://github.com/reconquest/import.bash \
             vendor/github.com/reconquest/import.bash
@@ -84,7 +98,13 @@ RUN_TESTS
 
     ./tests/run_tests -h > /dev/null
 
-    :exec echo ".last-testcase" >> .gitignore
+    if [[ ! -f .gitignore ]] || ! grep -qFx ".last-testcase" .gitignore; then
+        :exec echo ".last-testcase" >> .gitignore
+    fi
+
+    if [[ ! -f .gitignore ]] || ! grep -qFx ".cover" .gitignore; then
+        :exec echo ".cover" >> .gitignore
+    fi
 
     if [ ! -f vendor/.gitignore ]; then
         :exec find vendor -mindepth 3 -maxdepth 3 \
