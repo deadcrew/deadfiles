@@ -2,15 +2,15 @@
 
 template='
     <span font_weight="bold">
-        \(.title)
+        \(.title | @html)
     </span>
     <br>
-        &#187; \(.url)
+        &#187; \(.url | @html)
     <br>
     <span color="#aaa">
         &#160;&#160;
         <span font="Helvetica 8">
-            \(.abstract)
+            \(.abstract | @html)
         </span>
     </span>
     <end>
@@ -27,8 +27,10 @@ query=$(modal <&-)
 googler --json "$query" \
     | jq -r '.[] | "'"$template"'"' \
     | tr -d '\n' \
-    | sed 's/<end>/\x0/g' \
-    | sed 's/<br>/\n/g' \
+    | tee /dev/stderr \
+    | sed \
+        -e 's/<end>/\x0/g' \
+        -e 's/<br>/\n/g' \
     | modal -markup-rows -no-custom -eh 3 -sep '\0' \
     | sed -n '2p' \
     | cut -f2 -d' ' \
