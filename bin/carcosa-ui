@@ -41,6 +41,12 @@ token=$(carcosa -Lc \
     | perl -p -e 'chomp if eof'
 )
 
+if [[ ! "$token" ]]; then
+    token=$(carcosa -Lc \
+        | sort \
+        | head -n1)
+fi
+
 if output=$(carcosa -Gc "$token" 2>&1); then
     password=$output
 
