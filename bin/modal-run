@@ -1,7 +1,26 @@
-#!/bin/sh
+#!/bin/bash
+
+terminal=false
+if [[ "$1" == "--terminal" ]]; then
+    terminal=true
+    shift
+fi
 
 RUN="$(modal-apps | modal "$@")"
+if [[ ! "$RUN" ]]; then
+    exit 2
+fi
+
 COMMAND=($RUN)
+
 RUNPATH="$(which "$COMMAND")"
 
-exec $RUNPATH "${COMMAND[@]:1}"
+if [[ ! "$RUNPATH" ]]; then
+    exit 2
+fi
+
+if [[ $terminal ]]; then
+    exec marvex -s -e $RUNPATH "${COMMAND[@]:1}"
+else
+    exec $RUNPATH "${COMMAND[@]:1}"
+fi
