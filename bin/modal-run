@@ -19,7 +19,7 @@ if [[ ! "$RUNPATH" ]]; then
     exit 2
 fi
 
-if [[ $terminal ]]; then
+if $terminal; then
     exec marvex -s -e $RUNPATH "${COMMAND[@]:1}"
 else
     exec $RUNPATH "${COMMAND[@]:1}"
