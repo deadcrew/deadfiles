@@ -45,7 +45,7 @@ if [ "$window_command" = "urxvt" ]; then
     read terminal_command_pid terminal_command \
         <<< "$(ps -o pid=,comm= --ppid="$window_pid")"
 
-    if [ "$terminal_command" = "tmux" ]; then
+    if [[ "$terminal_command" =~ ^tmux.* ]]; then
         pane_id=$(
             tmux list-clients -F '#{client_pid} #{pane_id}' \
                 | awk "\$1 == $terminal_command_pid { print \$2 }"
