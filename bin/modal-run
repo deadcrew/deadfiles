@@ -1,5 +1,9 @@
 #!/bin/bash
 
+for dir in /run/user/$UID/*/bin/; do
+    export PATH=$PATH:$dir
+done
+
 terminal=false
 if [[ "$1" == "--terminal" ]]; then
     terminal=true
