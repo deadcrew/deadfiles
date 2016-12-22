@@ -1,7 +1,9 @@
 #!/bin/bash
 
+set -euo pipefail
+
 :execute-command-template() {
-    local file_name="$1"
+    local filename="$1"
     shift
 
     local arg
@@ -9,47 +11,51 @@
     for arg in "${@}"; do
         # %q for commands like:
         #   watcher . -- zsh -ic 'echo 1 2 3'
-        printf "%q " "${arg//%s/$file_name}"
+        printf "%q " "${arg//%s/$filename}"
     done
 }
 
 :eval-command-on-file-name() {
-    local file_name="$1"
+    local filename="$1"
     shift
 
-    local command=$(:execute-command-template "$file_name" "$@")
+    local command=$(:execute-command-template "$filename" "$@")
 
-    :export-environment "$file_name"
+    :export-environment "$filename"
 
-    echo "$ $command"
-    (
-        eval -- "$command"
-    )
+    printf " > \e[1m%s\e[0m\n" "$command"
+    { { {
+        ( eval -- "$command" ) 2>&3
+    } | :indent >&4; } 3>&1 | :indent >&2; } 4>&1
 }
 
 :export-environment() {
-    local file_name="$1"
+    local filename="$1"
 
-    export FILE=$file_name
-    export EXT=$(:get-file-extension $file_name)
+    export FILE=$filename
+    export EXT=$(:get-file-extension $filename)
 }
 
 :get-file-extension() {
-    local file_name="$1"
+    local filename="$1"
 
-    sed 's/.*\.//g' <<< "$file_name"
+    sed 's/.*\.//g' <<< "$filename"
+}
+
+:indent() {
+    sed -ur 's/^/   /'
 }
 
 :blue() {
-    echo -e '\e[1;44;1;37m '"${@}"' \e[0m'
+    echo -e '\e[48;5;18m:: \e[1m'"${@}"' \e[0m'
 }
 
 :red() {
-    echo -e '\e[1;41;1;37m '"${@}"' \e[0m'
+    echo -e '\e[48;5;124;38;5;209m:: \e[1m'"${@}"' \e[0m'
 }
 
 :green() {
-    echo -e '\e[1;42;1;30m '"${@}"' \e[0m'
+    echo -e '\e[48;5;28;38;5;83m:: \e[1m'"${@}"' \e[0m'
 }
 
 :is-run-step() {
@@ -71,7 +77,7 @@
 
     shift 2
 
-    eval set -- "$(getopt -o w:he:d: -- "${@}")"
+    eval set -- "$(getopt -o w:he:d:t: -- "${@}")"
     while [ $# -gt 0 ]; do
         case $1 in
             -w)
@@ -85,6 +91,10 @@
             -d)
                 shift
                 eval $_opts\[dir\]=$1
+                ;;
+            -t)
+                shift
+                eval $_opts\[delay\]=$1
                 ;;
             --)
                 shift
@@ -142,6 +152,9 @@ Options:
                   Most usable are: modify, close_write.
     -d <dir>      Specify directory where watcher should
                    wait for events in. [default: .].
+    -t <timeout>  Wait for <timeout> before running command, effectively
+                   discarding all file change bursts that occur in short
+                   period of time.
 HELP
 
 }
@@ -171,14 +184,14 @@ HELP
 }
 
 :run-command() {
-    local file_name="$1"
+    local filename="$1"
     local wait="$2"
     local command=("${@:3}")
 
     local exitcode="0"
 
     if [ "$wait" -gt 0 ]; then
-        ( :eval-command-on-file-name "$file_name" "${command[@]}" ) &
+        ( :eval-command-on-file-name "$filename" "${command[@]}" ) &
         local child=$!
 
         ( :watchdog $wait $child ) &
@@ -193,11 +206,8 @@ HELP
             wait $watchdog
         } 2>/dev/null
     else
-        :eval-command-on-file-name "$file_name" "${command[@]}"
-        exitcode="$?"
+        :eval-command-on-file-name "$filename" "${command[@]}"
     fi
-
-    return "$exitcode"
 }
 
 :main() {
@@ -209,6 +219,7 @@ HELP
     opts[wait]=0
     opts[events]="modify"
     opts[dir]="."
+    opts[delay]=0
 
     :parse-opts opts args "${@}"
 
@@ -221,7 +232,7 @@ HELP
     fi
 
     local lockfile=/tmp/watcher.$(md5sum <<< "$(pwd): $@" | awk '{print $1}')
-    trap :unlock EXIT
+    trap ":unlock $lockfile" EXIT
 
     if [ "$1" ]; then
         local pattern=${1:-.}
@@ -246,34 +257,57 @@ HELP
         command=("$@")
     fi
 
-    :wait-changed-files "${opts[events]}" "${opts[dir]}" \
-        | while read file_name
-    do
-        if ! grep -q${grep_pattern_type} "$pattern" <<< "$file_name"; then
-            continue
-        fi
+    local runner
 
-        current_step=$(( $current_step + 1 ))
+    { coproc runner {
+        :runner "$lockfile" "${opts[wait]}" "${command[@]}"
+    } >&3; } 3>&1
 
-        if ! :is-run-step $current_step $run_step; then
-            continue
-        fi
+    local pending_pid
 
+    { :wait-changed-files "${opts[events]}" "${opts[dir]}" \
+        | while read filename; do
+            if ! grep -q${grep_pattern_type} "$pattern" <<< "$filename"
+            then
+                continue
+            fi
+
+            current_step=$(( $current_step + 1 ))
+
+            if ! :is-run-step $current_step $run_step; then
+                continue
+            fi
+
+            if [[ "${opts[delay]}" > 0 ]]; then
+                if kill -PIPE "${pending_pid:-}" 2>/dev/null; then
+                    : delayed
+                fi
+            fi
+
+            { sleep "${opts[delay]}" && printf '%s\n' "$filename" >&3; } &
+
+            pending_pid=$!
+        done; } 3>&${runner[1]}
+}
+
+:runner() {
+    local lockfile=$1
+    local wait=$2
+    shift 2
+
+    local command=("$@")
+
+    local filename
+
+    while read filename; do
         if :lock "$lockfile"; then
             {
-                if [ $run_step -gt 1 ]; then
-                    :blue "($current_step % $run_step)" "$file_name"
-                else
-                    :blue "$file_name"
-                fi
+                :blue "$filename"
 
-                :run-command "$file_name" ${opts[wait]} "${command[@]}"
-                exitcode="$?"
-
-                if [[ "$exitcode" -gt 0 ]]; then
-                    :red "exit code $exitcode"
-                else
+                if :run-command "$filename" $wait "${command[@]}"; then
                     :green "ok"
+                else
+                    :red "exit code $?"
                 fi
 
                 :unlock "$lockfile"
@@ -281,6 +315,5 @@ HELP
         fi
     done
 }
-
 
 :main "${@}"
