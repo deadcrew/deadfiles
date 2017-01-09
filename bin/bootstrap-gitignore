@@ -1,0 +1,27 @@
+#!/bin/bash
+
+set -euo pipefail
+
+ignore=()
+
+if grep -q "$GOPATH" <<< "$(pwd)"; then
+    project=$(basename "$(pwd)")
+    ignore+=("/$project")
+    ignore+=("/$project.test")
+fi
+
+if [[ -f .gitmodules ]]; then
+    if grep -q 'reconquest/tests.sh' .gitmodules; then
+        ignore+=('.last-testcase')
+        ignore+=('/.cover')
+    fi
+fi
+
+touch .gitignore
+
+for line in "${ignore[@]}"; do
+    if ! grep -qF "$line" .gitignore; then
+        echo ":: -> $line"
+        echo "$line" >> .gitignore
+    fi
+done
