@@ -27,6 +27,7 @@ set -Eeuo pipefail
             -o:,--overlay \
             -v \
             -s:,--resolv-search \
+            -n:,--resolv-nameserver \
             -- "$@"
     )
 
@@ -58,6 +59,12 @@ set -Eeuo pipefail
         :debug "{resolv} search ${opts[--resolv-search]}"
 
         :resolvconf:set-search-domain resolvconf "${opts[--resolv-search]}"
+    fi
+
+    if [[ "${opts[--resolv-nameserver]:-}" ]]; then
+        :debug "{resolv} nameserver ${opts[--resolv-nameserver]}"
+
+        :resolvconf:set-nameserver resolvconf "${opts[--resolv-nameserver]}"
     fi
 
     local tmpfs
@@ -142,6 +149,19 @@ set -Eeuo pipefail
         sed -r \
             -e '/^search / { ' \
             -e "a\\search $*" \
+            -e 'd }' \
+            <<< "$contents"
+    )
+}
+
+:resolvconf:set-nameserver() {
+    local -n contents="$1"
+    shift
+
+    contents=$(
+        sed -r \
+            -e '/^nameserver / { ' \
+            -e "a\\nameserver $*" \
             -e 'd }' \
             <<< "$contents"
     )
