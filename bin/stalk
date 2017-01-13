@@ -11,6 +11,7 @@
 ###
 ### Options:
 ###   -s --resolv-search=<domain>  Use specified domain as search domain.
+###   -n --resolv-nameserver=<ns>  Use specified nameserver.
 ###   -o --overlay=<directory>     Use specified directory as overlay
 ###                                 filesystem for specified <command>.
 
