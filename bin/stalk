@@ -123,7 +123,8 @@ set -Eeuo pipefail
         set -- "$SHELL" -i "< $(tty)"
     fi
 
-    namespace+=("exec sudo -iu $USER $*")
+    namespace+=("cd $PWD")
+    namespace+=("exec sudo -u $USER $*")
 
     printf '%s\n' "${namespace[@]}" | while read line; do
         :debug "{bash} $line"
