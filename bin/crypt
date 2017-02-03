@@ -19,7 +19,7 @@ set -euo pipefail
 
     local name=$(md5sum <<< $disk | awk '{print $1}')
     local target="/var/run/user/$UID/crypt-$name"
-    
+
     if findmnt "$target" > /dev/null; then
         :shell "$target"
     fi
@@ -28,7 +28,9 @@ set -euo pipefail
 
     mkdir -p "$target"
 
-    sudo mount -o uid=$UID "/dev/mapper/$name" "$target"
+    if ! sudo mount "/dev/mapper/$name" "$target"; then
+        sudo mount -o uid=$UID "/dev/mapper/$name" "$target"
+    fi
 
     trap ":cleanup $name" EXIT
 
