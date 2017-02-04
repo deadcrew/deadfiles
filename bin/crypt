@@ -21,7 +21,12 @@ set -euo pipefail
     local target="/var/run/user/$UID/crypt-$name"
 
     if findmnt "$target" > /dev/null; then
-        :shell "$target"
+        local link="$(:get_link "$target")"
+        if [[ "$link" ]]; then
+            :shell "$link"
+        else
+            :shell "$target"
+        fi
     fi
 
     sudo cryptsetup open "$path" "$name"
@@ -32,6 +37,13 @@ set -euo pipefail
         sudo mount -o uid=$UID "/dev/mapper/$name" "$target"
     fi
 
+    local link="$(:get_link "$target")"
+    if [[ "$link" ]]; then
+        :link "$target" "$link"
+
+        target="$link"
+    fi
+
     trap ":cleanup $name" EXIT
 
     printf 'Starting shell at encrypted device.\n'
@@ -40,6 +52,26 @@ set -euo pipefail
     ( :shell "$target" )
 
     printf 'Closing encrypted device.\n'
+}
+
+
+:get_link() {
+    local target=$1
+
+    if [[ -f "$target/.link" ]]; then
+        cat "$target/.link"
+    fi
+}
+
+:link() {
+    local target=$1
+    local link=$2
+
+    if [[ -e "$link" ]]; then
+        sudo unlink "$link"
+    fi
+
+    sudo ln -s "$target" "$link"
 }
 
 :shell() {
