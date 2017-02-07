@@ -1,0 +1,3 @@
+#!/bin/bash
+
+exec ssh -o "StrictHostKeyChecking=no" localhost -p2222 -luser "$@"
