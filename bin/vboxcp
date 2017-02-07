@@ -1,0 +1,8 @@
+#!/bin/bash
+
+if [[ $# -ne 2 ]]; then
+    echo "$0 <local> <remote>" >&2
+    exit 2
+fi
+
+exec scp -P2222 -o "StrictHostKeyChecking=no" -r "$1" user@localhost:"$2"
