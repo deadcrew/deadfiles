@@ -14,6 +14,7 @@ set -euo pipefail
     done
 
     if [[ ! "${path:-}" ]]; then
+        :info 'Encrypted device not found.'
         exit 1
     fi
 
@@ -46,14 +47,22 @@ set -euo pipefail
 
     trap ":cleanup $name" EXIT
 
-    printf 'Starting shell at encrypted device.\n'
-    printf 'Device will be closed after shell exit.\n'
+    :info 'Starting shell at encrypted device.'
+    :info 'Device will be closed after shell exit.'
 
     ( :shell "$target" )
 
-    printf 'Closing encrypted device.\n'
+    :info 'Closing encrypted device.'
 }
 
+
+:info() {
+    echo "$(highlight bold)$*$(highlight reset)"
+}
+
+:debug() {
+    echo "$*"
+}
 
 :get_link() {
     local target=$1
