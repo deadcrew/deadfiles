@@ -57,7 +57,7 @@ set -euo pipefail
 cd "\$(dirname "\$(readlink -f "\${BASH_SOURCE[0]}")")"
 source ../vendor/github.com/reconquest/import.bash/import.bash
 
-import:source "github.com/reconquest/test-runner.bash"
+import:use "github.com/reconquest/test-runner.bash"
 
 :cleanup() {
     :
@@ -85,7 +85,7 @@ RUN_TESTS
         :exec cat > Makefile <<MAKEFILE
 vendor/%/Makefile:
     bash -c 'source vendor/github.com/reconquest/import.bash/import.bash && \\
-		import "\$*"'
+		import:use "\$*"'
 
 include vendor/github.com/reconquest/test-runner.bash/Makefile
 MAKEFILE
