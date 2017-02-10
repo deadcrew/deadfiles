@@ -1,6 +1,6 @@
 #!/bin/bash
 
-mkdir -p ~/.config/devdocs.io/
+mkdir -p $HOME/.config/devdocs.io/
 
-exec google-chrome-stable --user-data-dir=~/.config/devdocs.io/ --kiosk \
+exec google-chrome-stable --user-data-dir=$HOME/.config/devdocs.io/ --kiosk \
     http://devdocs.io/
