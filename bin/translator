@@ -43,7 +43,8 @@ HISTORY=~/.engrus_history
         return 1
     fi
 
-    local transcription=$(grep -Eo '\[[^]]+\]' <<< "$result")
+    local transcription=$(grep -Eo '\[[^]]+\]' <<< "$result" \
+        | sed -r -e 's/\[/\&\#x5B;/' -e 's/\]/\&\#x5D;/')
 
     sed -r <<< "$result" \
         -e 's/\[[^]]+\] //' \
@@ -54,7 +55,7 @@ HISTORY=~/.engrus_history
         | sed -r \
             -e '/^\S/s/.*/{"title": "&",/' \
             -e '/^\s/{s/^\t(.*)/"item": "\1"},/}' \
-        | sed -e '1i[' -e '$s/,$/]/' \
+        | sed -r -e '1i[' -e '$s/,$/}]/' \
         | modal-template \
             --no-description \
             --message "<span font=\"Tahoma 9\">&#8226; $input &#8212; $transcription</span>"
