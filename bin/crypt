@@ -19,7 +19,7 @@ set -euo pipefail
     fi
 
     local name=$(md5sum <<< $disk | awk '{print $1}')
-    local target="/var/run/user/$UID/crypt-$name"
+    local target="/mnt/crypt-$name"
 
     if findmnt "$target" > /dev/null; then
         local link="$(:get_link "$target")"
@@ -32,10 +32,10 @@ set -euo pipefail
 
     sudo cryptsetup open "$path" "$name"
 
-    mkdir -p "$target"
+    sudo mkdir -p "$target"
 
-    if ! sudo mount "/dev/mapper/$name" "$target"; then
-        sudo mount -o uid=$UID "/dev/mapper/$name" "$target"
+    if ! sudo mount -o uid=$UID "/dev/mapper/$name" "$target"; then
+        sudo mount "/dev/mapper/$name" "$target"
     fi
 
     local link="$(:get_link "$target")"
