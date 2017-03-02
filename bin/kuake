@@ -112,9 +112,11 @@ CODE
 
     if [[ "$window_id" ]]; then
         :window-toggle $_classname
+
         if :is-another-screen $window_geometry; then
             :window-kuakize $window_id $_opacity $window_geometry
         fi
+
         return
     fi
 
@@ -157,11 +159,11 @@ CODE
             ;;
 
         center)
-            window_y=$((($screen_height-$window_height)/2))
+            window_y=$(($screen_y+($screen_height-$window_height)/2))
             ;;
 
         bottom)
-            window_y=$(($screen_height-$window_height))
+            window_y=$(($screen_y+$screen_height-$window_height))
             ;;
     esac
 
@@ -171,11 +173,11 @@ CODE
             ;;
 
         middle)
-            window_x=$((($screen_width-$window_width)/2))
+            window_x=$(($screen_x+($screen_width-$window_width)/2))
             ;;
 
         right)
-            window_x=$(($screen_width-$window_width))
+            window_x=$(($screen_x+$screen_width-$window_width))
             ;;
     esac
 
