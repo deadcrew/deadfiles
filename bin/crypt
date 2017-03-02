@@ -26,7 +26,6 @@ set -euo pipefail
 
     if [[ "${opts[-h]:-}" || "${opts[--help]:-}" ]]; then
         :help
-
         exit 0
     fi
 
