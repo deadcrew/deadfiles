@@ -2,4 +2,4 @@
 
 exec ssh \
     -o "StrictHostKeyChecking=no" \
-    localhost -p2222 -luser "cmd.exe /c $@" | iconv -f cp866 -t utf-8
+    127.0.0.1 -p2222 -luser "cmd.exe /c $@"
