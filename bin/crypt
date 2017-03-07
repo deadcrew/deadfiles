@@ -72,6 +72,8 @@ set -euo pipefail
 
         target="$link"
     fi
+
+    :shell "$target"
 }
 
 :help() {
@@ -117,7 +119,37 @@ set -euo pipefail
 :close() {
     local name=$1
 
-    sudo umount "/dev/mapper/$name"
+    local mountpoint="/dev/mapper/$name"
+
+    if [[ ! -e "$mountpoint" ]]; then
+        printf "Encrypted device is not opened.\n"
+
+        exit 1
+    fi
+
+    local pids=$(lsof -Fpc "$mountpoint" | grep -Po 'p\K\d+')
+
+    if [[ "$pids" ]]; then
+        printf "Device is busy, because it's used by following PIDs:\n\n"
+
+        ps -o user,pid,start,command f $pids
+
+        printf "\nDo you want to kill them before umount? [Y/n] "
+
+        local answer
+
+        read answer
+
+        if [[ "${answer:-Y}" == "Y" ]]; then
+            kill -1 $pids
+
+            while kill -0 $pids 2>/dev/null; do
+                sleep 0.5
+            done
+        fi
+    fi
+
+    sudo umount "$mountpoint"
     sudo cryptsetup close "$name"
 }
 
