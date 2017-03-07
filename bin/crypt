@@ -1,10 +1,34 @@
 #!/bin/bash
 
+### crypt — encrypted device helper.
+###
+### Usage:
+###     crypt [-O]
+###     crypt -C
+###     crypt -h | --help
+###
+### Options:
+###     -O  Autodetect and open encrypted device.
+###     -C  Close previously opened encryped device
+
+source /usr/share/bash/opts/opts.bash
+
 set -euo pipefail
 
 :main() {
     local disk
     local path
+
+    local -A opts
+    local -a args
+
+    opts:parse opts args -O -C -h --help -- "$@"
+
+    if [[ "${opts[-h]:-}" || "${opts[--help]:-}" ]]; then
+        :help
+
+        exit 0
+    fi
 
     for disk in /dev/disk/by-path/*; do
         if sudo cryptsetup isLuks "$disk"; then
@@ -21,8 +45,14 @@ set -euo pipefail
     local name=$(md5sum <<< $disk | awk '{print $1}')
     local target="/mnt/crypt-$name"
 
+    if [[ "${opts[-C]:-}" ]]; then
+        :close "$name"
+
+        exit 0
+    fi
+
     if findmnt "$target" > /dev/null; then
-        local link="$(:get_link "$target")"
+        local link="$(:get-link "$target")"
         if [[ "$link" ]]; then
             :shell "$link"
         else
@@ -34,25 +64,18 @@ set -euo pipefail
 
     sudo mkdir -p "$target"
 
-    if ! sudo mount -o uid=$UID "/dev/mapper/$name" "$target"; then
-        sudo mount "/dev/mapper/$name" "$target"
-    fi
+    sudo mount "/dev/mapper/$name" "$target"
 
-    local link="$(:get_link "$target")"
+    local link="$(:get-link "$target")"
     if [[ "$link" ]]; then
         :link "$target" "$link"
 
         target="$link"
     fi
+}
 
-    trap ":cleanup $name" EXIT
-
-    :info 'Starting shell at encrypted device.'
-    :info 'Device will be closed after shell exit.'
-
-    ( :shell "$target" )
-
-    :info 'Closing encrypted device.'
+:help() {
+    sed -rn 's/^### ?//;T;p' "$0"
 }
 
 
@@ -64,7 +87,7 @@ set -euo pipefail
     echo "$*"
 }
 
-:get_link() {
+:get-link() {
     local target=$1
 
     if [[ -f "$target/.link" ]]; then
@@ -86,10 +109,12 @@ set -euo pipefail
 :shell() {
     local dir=$1
 
+    :info 'Starting shell at encrypted device.'
+
     cd "$dir" && exec $SHELL -i
 }
 
-:cleanup() {
+:close() {
     local name=$1
 
     sudo umount "/dev/mapper/$name"
