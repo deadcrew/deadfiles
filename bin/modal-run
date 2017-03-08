@@ -1,6 +1,6 @@
 #!/bin/bash
 
-for dir in /run/user/$UID/*/bin/; do
+for dir in /mnt/crypt-*/bin/; do
     export PATH=$PATH:$dir
 done
 
