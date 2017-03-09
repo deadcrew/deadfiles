@@ -50,6 +50,8 @@ set -euo pipefail
         exit 0
     fi
 
+    :info "Device: $name"
+
     if findmnt "$target" > /dev/null; then
         local link="$(:get-link "$target")"
         if [[ "$link" ]]; then
