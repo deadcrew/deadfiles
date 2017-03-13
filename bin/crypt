@@ -22,19 +22,23 @@ set -euo pipefail
     local -A opts
     local -a args
 
-    opts:parse opts args -O -C -h --help -- "$@"
+    opts:parse opts args -O: -C -h --help -- "$@"
 
     if [[ "${opts[-h]:-}" || "${opts[--help]:-}" ]]; then
         :help
         exit 0
     fi
 
-    for disk in /dev/disk/by-path/*; do
-        if sudo cryptsetup isLuks "$disk"; then
-            path=$(readlink -f "$disk")
-            break
-        fi
-    done
+    disk="${opts[-O]:-}"
+    path="$disk"
+    if [[ ! "${path:-}" ]]; then
+        for disk in /dev/disk/by-path/*; do
+            if sudo cryptsetup isLuks "$disk"; then
+                path=$(readlink -f "$disk")
+                break
+            fi
+        done
+    fi
 
     if [[ ! "${path:-}" ]]; then
         :info 'Encrypted device not found.'
@@ -104,6 +108,7 @@ set -euo pipefail
 
     if [[ -e "$link" ]]; then
         sudo unlink "$link"
+        sudo rm -f "$link"
     fi
 
     sudo ln -s "$target" "$link"
