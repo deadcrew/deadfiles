@@ -45,7 +45,8 @@ git-commit() {
         fi
 
         if [ "$subject" ]; then
-            message="${subject//\\n/, }: $message"
+            subject="${subject//$'\n'/, }"
+            message="$subject: $message"
         fi
 
         unset MATCH
