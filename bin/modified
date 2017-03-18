@@ -1,0 +1,125 @@
+#!/bin/bash
+
+### modified — check that file has been modified
+###
+### exits with 0 if passed file has been changed after previous run.
+###
+### Usage:
+###   modified [options] <filename>
+###
+### Options:
+###   -h --help Show this screen.
+###   -x <file> Specify dataset file. [default: .modified]
+
+set -Eeuo pipefail
+
+:main() {
+    local -A opts
+
+    eval $(
+        args opts \
+            -h,--help \
+            -x \
+            -l \
+            -- "$@"
+    )
+
+    if [[ "${opts[-h]:-}" ]]; then
+        :usage
+
+        exit 0
+    fi
+
+    local dataset=".modified"
+    if [[ "${opts[-x]:-}" ]]; then
+        dataset="${opts[-x]}"
+    fi
+
+    if [[ ! -f "$dataset" ]]; then
+        touch "$dataset"
+    fi
+
+    local lock=".modified.lock"
+    if [[ "${opts[-l]:-}" ]]; then
+        lock="${opts[-l]}"
+    fi
+
+    if [[ $# -ne 1 ]]; then
+        echo "modified [options] <filename>" >&2
+        exit 2
+    fi
+
+    local filename="$1"
+    if [[ ! -f "$filename" ]]; then
+        echo "no such file: $filename" >&2
+        exit 2
+    fi
+
+    local entry_hash=$(:get_entry_hash "$filename")
+    local actual_hash="$(:hash "$filename")"
+
+    if [[ "$entry_hash" == "$actual_hash" ]]; then
+        exit 1
+    fi
+
+    if [[ ! "$entry_hash" ]]; then
+        :write_entry "$filename" "$actual_hash"
+        exit 1
+    fi
+
+    :remove_entry "$filename"
+    :write_entry "$filename" "$actual_hash"
+
+    exit 0
+}
+
+:flock() {
+    exec 200>$lock
+    flock 200
+}
+
+:write_entry() {
+    local filename=$1
+    local hash=$2
+
+    (
+        :flock
+
+        echo "$filename:$hash" >> "$dataset"
+    )
+}
+
+:remove_entry() {
+    local filename=$1
+
+    (
+        :flock
+
+        local contents=""
+        if contents="$(grep -v "^$filename:" "$dataset")"; then
+            :
+        fi
+
+        echo "$contents" > "$dataset"
+    )
+}
+
+:get_entry_hash() {
+    local filename=$1
+    (
+        :flock
+
+        grep "^$filename:" $dataset | cut -d: -f2
+    )
+}
+
+:hash() {
+    sha512sum "$1" | awk '{print $1}'
+}
+
+:usage() {
+    sed -nr '/^###/p' "$0" | cut -b5-
+}
+
+
+:main "$@"
