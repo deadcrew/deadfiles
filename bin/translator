@@ -38,7 +38,7 @@ HISTORY=~/.engrus_history
     local input="$1"
     local input_lang=$2
 
-    local result=$(runki --lang $input_lang 2>/dev/null <<< "$input")
+    local result=$(runki --dry --lang $input_lang 2>/dev/null <<< "$input")
     if [[ ! "$result" ]]; then
         return 1
     fi
