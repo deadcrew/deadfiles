@@ -1,7 +1,5 @@
 #!/bin/bash
 
-set -x
-
 HISTORY=~/.engrus_history
 
 :main() {
