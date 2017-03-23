@@ -1,0 +1,15 @@
+#!/bin/bash
+
+:main() {
+    local workspace=$1
+
+    local session=$(tmux-get-active | awk '{print $3}')
+
+    i3-msg move container to workspace "$workspace"
+
+    if [[ "$session" ]]; then
+        marvex-update-workspace "$session" "$workspace"
+    fi
+}
+
+:main "$@"

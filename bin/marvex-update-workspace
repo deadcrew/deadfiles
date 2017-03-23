@@ -1,0 +1,35 @@
+#!/bin/bash
+
+:main() {
+    local session=$1
+    local workspace=$2
+
+    if [[ ! "$session" ]]; then
+        session=$(
+            tmux-get-active \
+                | awk '{print $3}'
+        )
+    fi
+
+    if [[ ! "$session" ]]; then
+        return
+    fi
+
+    if [[ ! "$workspace" ]]; then
+        workspace=$(
+            i3-msg -t get_workspaces \
+                | jq -r '.[] | select(.focused==true).name'
+        )
+    fi
+
+    local last_index=$(
+        tmux ls -F '#{session_name}' \
+            | grep -Po "^marvex-$workspace-\K\d+"
+    )
+
+    local index=$(($last_index + 1))
+
+    tmux rename-session -t "$session" "marvex-$workspace-$index"
+}
+
+:main "$@"
