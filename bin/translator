@@ -57,7 +57,7 @@ HISTORY=~/.engrus_history
         | tee /dev/stderr \
         | modal-template \
             --no-description \
-            --message "<span font=\"Tahoma 9\">&#8226; $input &#8212; $transcription</span>"
+            --message "<span font=\"Verdana 8\">&#8226; $input &#8212; $transcription</span>"
 
     printf '%s\n' "$result"
 }
