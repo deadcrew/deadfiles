@@ -19,11 +19,7 @@ USAGE
     local window_id=$(xdotool getactivewindow)
     local window_pid=$(xdotool getactivewindow getwindowpid)
     local window_child=$(pgrep -n -P "$window_pid")
-    local tmux_pid=$(
-        tmux list-clients -F '#{client_pid} #{pane_pid}' \
-            | grep -P "^$window_child " \
-            | awk '{print $2}'
-    )
+    local tmux_pid=$(tmux-get-active | awk '{print $2}')
 
     if [[ ! "$tmux_pid" ]]; then
         xkill -id "$window_id"
