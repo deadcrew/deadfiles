@@ -1,0 +1,12 @@
+#!/bin/bash
+
+:main() {
+    local window_id=$(xdotool getactivewindow)
+    local window_pid=$(xdotool getactivewindow getwindowpid)
+    local window_child=$(pgrep -n -P "$window_pid")
+
+    tmux list-clients -F '#{client_pid} #{pane_pid} #{session_name}' \
+        | grep --color=never -P "^$window_child "
+}
+
+:main "$@"
