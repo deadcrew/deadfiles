@@ -19,7 +19,7 @@ let mapleader=g:mapleader
 nnoremap <Leader><Leader>i :PlugInstall<CR>
 nnoremap <Leader><Leader>u :PlugUpdate<CR>
 
-call plug#begin('~/$RUNTIME/bundle')
+call plug#begin('$RUNTIME/bundle')
 
 Plug 'reconquest/vim-colorscheme'
     let g:colors_name = 'reconquest'
