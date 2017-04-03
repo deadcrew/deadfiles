@@ -6,7 +6,7 @@ HISTORY=~/.engrus_history
     if (( $# )); then
         local input=$*
     else
-        local input=$(modal -lines 1 <&-)
+        local input=$(modal -input /dev/null -no-fixed-num-lines <&-)
     fi
 
     if [[ "$input" == "" ]]; then
