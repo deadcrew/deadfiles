@@ -1,5 +1,9 @@
 #!/bin/bash
 
-exec ssh \
-    -o "StrictHostKeyChecking=no" \
-    127.0.0.1 -p2222 -luser "cmd.exe /c $@"
+:ssh() {
+    exec ssh \
+        -o "StrictHostKeyChecking=no" \
+        127.0.0.1 -p2222 -luser "$@"
+}
+
+:ssh "$@"
