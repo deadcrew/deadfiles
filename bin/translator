@@ -44,7 +44,7 @@ HISTORY=~/.engrus_history
     local transcription=$(grep -Eo '\[[^]]+\]' <<< "$result" \
         | sed -r -e 's/\[/\&\#x5B;/' -e 's/\]/\&\#x5D;/')
 
-    sed -r <<< "$result" \
+    local json=$(sed -r <<< "$result" \
         -e 's/\[[^]]+\] //' \
         -e 's/ \(/\n&/g' \
         -e 's/\), /\n/g' \
@@ -54,10 +54,18 @@ HISTORY=~/.engrus_history
             -e '/^\S/s/.*/{"title": "&",/' \
             -e '/^\s/{s/^\t(.*)/"item": "\1"},/}' \
         | sed -r -e '1i[' -e '$s/,$/]/' \
-        | tee /dev/stderr \
-        | modal-template \
-            --no-description \
-            --message "<span font=\"Verdana 8\">&#8226; $input &#8212; $transcription</span>"
+        | tee /dev/stderr)
+
+    local length=$(jq -r '. | length' <<< "$json")
+
+    if (( "$length" > 7 )); then
+        length=7
+    fi
+
+    modal-template <<< "$json" \
+        --args "-lines $length" \
+        --no-description \
+        --message "<span font=\"Verdana 8\">&#8226; $input &#8212; $transcription</span>"
 
     printf '%s\n' "$result"
 }
