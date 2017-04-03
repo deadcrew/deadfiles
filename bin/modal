@@ -17,5 +17,6 @@ exec rofi \
     -separator-style none \
     -i \
     -p "" \
+    -matching fuzzy \
     "$mode" \
     "$@"
