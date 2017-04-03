@@ -25,6 +25,7 @@ Options:
     --width       Set kuake height as procent of screne height, default: 50.
     --opacity     Set kuake opacity, default: 1.
     --class       Specify kuake window class name, default: kuake.
+    --exec        Exec command in spawned kuake terminal.
     -h --help     Show this screen.
 CODE
 }
@@ -38,6 +39,7 @@ CODE
     local _width=50
     local _opacity=1
     local _classname=kuake
+    local _exec=
 
     while [[ $# -ne 0 ]]; do
         case "$1" in
@@ -93,6 +95,11 @@ CODE
                 shift
                 ;;
 
+            --exec)
+                _exec="$2"
+                shift
+                ;;
+
             -h | --help)
                 :usage
                 exit 0
@@ -127,7 +134,7 @@ CODE
     fi
 
     if $_terminal; then
-        :spawn-terminal $_classname
+        :spawn-terminal $_classname "$_exec"
 
         while [[ ! "$window_id" ]]; do
             local window_id=$(:window-find $_classname)
@@ -192,6 +199,7 @@ CODE
 
 :spawn-terminal() {
     local name="$1"
+    local command=$2
 
     if ! tmux has-session -t $name; then
         tmux new-session -d -s $name
@@ -199,6 +207,10 @@ CODE
 
     i3-msg -q "exec urxvt -name $name -title $name -e \
         tmux attach-session -t $name"
+
+    if [[ "$command" ]]; then
+        tmux send -t "$name" "$command"$'\n'
+    fi
 }
 
 :window-get-active() {
