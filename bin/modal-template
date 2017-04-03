@@ -2,7 +2,7 @@
 
 declare -A opts
 
-eval $(args opts -m:,--message -n,--no-description -h,--help -- "${@}")
+eval $(args opts -m:,--message -n,--no-description -h,--help -a:,--args -- "${@}")
 
 if [[ "${opts[--help]}" ]]; then
     cat <<HELP
@@ -53,6 +53,6 @@ jq -r '.[] | "'"$template"'"' \
     | tr -d '\n' \
     | sed -u 's/<end>/\x0/g' \
     | sed -u 's/<br>/\n/g' \
-    | modal -markup-rows -eh "$rows" -sep '\0' -mesg "${opts[--message]:-}" "${@}" \
+    | modal -markup-rows -eh "$rows" -sep '\0' -mesg "${opts[--message]:-}" ${opts[--args]:-} "${@}" \
     | sed -n '2p' \
     | cut -f2- -d' '
