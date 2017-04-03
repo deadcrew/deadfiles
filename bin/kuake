@@ -24,6 +24,7 @@ Options:
     --height      Set kuake height as procent of screne height, default: 35.
     --width       Set kuake height as procent of screne height, default: 50.
     --opacity     Set kuake opacity, default: 1.
+    --class       Specify kuake window class name, default: kuake.
     -h --help     Show this screen.
 CODE
 }
@@ -36,6 +37,7 @@ CODE
     local _height=35
     local _width=50
     local _opacity=1
+    local _classname=kuake
 
     while [[ $# -ne 0 ]]; do
         case "$1" in
@@ -84,7 +86,12 @@ CODE
             --opacity)
                 _opacity="$2"
                 shift
-            ;;
+                ;;
+
+            --class)
+                _classname="$2"
+                shift
+                ;;
 
             -h | --help)
                 :usage
@@ -95,11 +102,10 @@ CODE
         shift
     done
 
-    local _classname=""
     if $_terminal; then
-        _classname="kuake_terminal"
+        _classname="${_classname}_terminal"
     elif $_focus; then
-        _classname="kuake_focus"
+        _classname="${_classname}_focus"
     else
         :usage
         exit 1
