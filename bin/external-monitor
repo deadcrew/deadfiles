@@ -20,7 +20,7 @@
     done
 }
 
-udevadm settle --quiet --timeout=5
+udevadm settle --timeout=5
 
 output=$(
     xrandr \
