@@ -38,5 +38,5 @@ xrandr \
     | awk '{ print $1 }' \
     | xargs -n1 -I{} xrandr --output {} --off
 
-systemctl --user restart i3
-systemctl --user restart keynav
+i3-msg reload
+#systemctl --user restart keynav
