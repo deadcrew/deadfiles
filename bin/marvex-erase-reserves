@@ -1,0 +1,9 @@
+#!/bin/bash
+
+:main() {
+    tmux list-session -F '#S' \
+        | grep -P '^marvex-reserve-' \
+        | xargs -n1 tmux kill-session -t
+}
+
+:main
