@@ -19,7 +19,7 @@ set -Eeuo pipefail
     eval $(
         args opts \
             -h,--help \
-            -x \
+            -x: \
             -l \
             -- "$@"
     )
