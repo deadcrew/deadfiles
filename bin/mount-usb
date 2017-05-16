@@ -1,0 +1,52 @@
+#!/bin/bash
+
+:main() {
+    declare -A handlers
+
+    handlers[exfat]=:mount:fat
+    handlers[vfat]=:mount:fat
+    handlers[ext2]=:mount:generic
+    handlers[ext4]=:mount:generic
+
+    lsblk -fnr -o name,fstype,subsystems,mountpoint \
+        | while read -r device fs subsystems mountpoint; do
+            if [[ "$subsystems" != *:usb:* ]]; then
+                continue
+            fi
+
+            if [[ ! "$fs" ]]; then
+                continue
+            fi
+
+            handler=${handlers[$fs]:-}
+            if [[ "$handler" ]]; then
+                if [[ ! "$mountpoint" ]]; then
+                    mountpoint=$(:path "$device")
+
+                    $handler "$device" "$mountpoint"
+                fi
+
+                printf "%s\n" "$mountpoint"
+            fi
+        done
+}
+
+:path() {
+    printf "/var/run/user/%s/usb/%s" "$UID" "$(basename "$device")"
+}
+
+:mount:generic() {
+    local device=$1
+    local path=$2
+    local options=${3:-defaults}
+
+    mkdir -p "$path"
+
+    sudo mount -o "$options" "/dev/$1" "$path"
+}
+
+:mount:fat() {
+    :mount:generic "$@" "gid=users,fmask=113,dmask=002"
+}
+
+:main "$@"

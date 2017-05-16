@@ -1,0 +1,27 @@
+#!/bin/bash
+
+:main() {
+    local mountpoint=$(mount-usb)
+
+    if [[ ! "$mountpoint" ]]; then
+        printf "No mountpoints found.\n"
+
+        exit 1
+    fi
+
+    if [[ "$(wc -l <<< "$mountpoint")" > 1 ]]; then
+        printf "Several USB mountpoints found.\n"
+
+        exit 1
+    fi
+
+    cd "$mountpoint"
+
+    $SHELL -i
+
+    cd
+
+    sudo umount "$mountpoint"
+}
+
+:main "$@"

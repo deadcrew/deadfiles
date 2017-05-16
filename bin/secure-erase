@@ -1,0 +1,13 @@
+#!/bin/bash
+
+drive="$1"
+
+printf '[%s] will be ERASED!\n\n' "$drive"
+printf 'Type YES to continue: '
+
+read answer
+
+if [[ "$answer" == "YES" ]]; then
+    hdparm --security-set-pass password "$drive"
+    hdparm --security-erase password "$drive"
+fi
