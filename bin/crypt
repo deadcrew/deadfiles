@@ -127,9 +127,6 @@ set -euo pipefail
 
     :info 'Starting shell at encrypted device.'
 
-    export PATH_PREPEND=$dir/bin
-    export ENCRYPTED=1
-
     cd "$dir" && exec $SHELL -i
 }
 
