@@ -1,8 +1,12 @@
 #!/bin/bash
 
+source /usr/share/bash/opts/opts.bash
+
+declare -a args
 declare -A opts
 
-eval $(args opts -m:,--message -n,--no-description -h,--help -a:,--args -- "${@}")
+opts:parse opts args \
+    --message: --no-description -h --help --args: -- "${@}"
 
 if [[ "${opts[--help]}" ]]; then
     cat <<HELP
@@ -48,6 +52,8 @@ template=$(
 )
 
 shift
+
+set -x
 
 jq -r '.[] | "'"$template"'"' \
     | tr -d '\n' \
