@@ -13,14 +13,23 @@ if [ "$devices" ]; then
     fi
 fi
 
+# do not move upper, because adb can get lock
 [ -n "$_LOCK" ] || _LOCK=taken exec flock -n $0 $0 "${@}"
 
 sound_control_name=$(amixer scontrols | head -n1 | cut -f4- -d' ')
 
 if [ "$1" == "up" ]; then
-    exec amixer set $sound_control_name 2%+
+    amixer set $sound_control_name 2%+
 fi
 
 if [ "$1" == "down" ]; then
-    exec amixer set $sound_control_name 2%-
+    amixer set $sound_control_name 2%-
 fi
+
+volume_level=$(amixer get $sound_control_name | grep -oPm1 '\d+%')
+
+id_file=/tmp/volume.notification.id
+
+last_id=$(cat $id_file 2>/dev/null)
+
+notify-desktop -r "$last_id" "VOLM » $volume_level" > $id_file
