@@ -16,7 +16,7 @@ if ! cd "${secrets_repository}"; then
 fi
 
 if ! carcosa -Fc; then
-    notify-send "carcosa" "Master password key cache file is not found."
+    notify-send "Master password key cache file is not found."
     exit 1
 fi
 
@@ -79,6 +79,6 @@ if output=$(carcosa -Gc "$token" 2>&1); then
     fi
 else
     if [ "$output" ]; then
-        notify-send carcosa "$output"
+        notify-send "$output"
     fi
 fi
