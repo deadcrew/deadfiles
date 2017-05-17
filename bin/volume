@@ -1,9 +1,5 @@
 #!/bin/bash
 
-if [ "$1" = "-c" ]; then
-    shift
-fi
-
 devices=$(adb devices -l | tail -n+3)
 if [ "$devices" ]; then
     adb_state=$(adb get-state)
@@ -16,17 +12,15 @@ fi
 # do not move upper, because adb can get lock
 [ -n "$_LOCK" ] || _LOCK=taken exec flock -n $0 $0 "${@}"
 
-sound_control_name=$(amixer scontrols | head -n1 | cut -f4- -d' ')
-
 if [ "$1" == "up" ]; then
-    amixer set $sound_control_name 2%+
+    amixer_result=$(amixer set Master 2%+)
 fi
 
 if [ "$1" == "down" ]; then
-    amixer set $sound_control_name 2%-
+    amixer_result=$(amixer set Master 2%-)
 fi
 
-volume_level=$(amixer get $sound_control_name | grep -oPm1 '\d+%')
+volume_level=$(grep -oPm1 '\d+%' <<< "$amixer_result")
 
 id_file=/tmp/volume.notification.id
 
