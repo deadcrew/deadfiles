@@ -2,6 +2,8 @@
 
 source /usr/share/bash/opts/opts.bash
 
+set -x
+
 declare -a args
 declare -A opts
 
@@ -46,7 +48,7 @@ fi
 template+='<end>'
 
 template=$(
-    tr -d '\n' <<< "${1:-$template}" \
+    tr -d '\n' <<< "${args[1]:-$template}" \
         | sed -r 's/\s+(<)|(>)\s+/\1\2/g' \
         | sed 's/"/\\"/g'
 )
