@@ -1,9 +1,16 @@
 #!/bin/bash
 
+set -euo pipefail
+
 :main() {
-    tmux list-session -F '#S' \
-        | grep -P '^marvex-reserve-' \
-        | xargs -n1 tmux kill-session -t
+    local sessions=$(tmux list-session -F '#S')
+    local reserves=$(grep -P '^marvex-reserve-' <<< "$sessions")
+    if [[ "$reserves" ]]; then
+        xargs -n1 tmux kill-session -t <<< "$reserves"
+        printf \
+            "%d tmux sessions has been killed\n" \
+            $(wc -l <<< "$reserves") >&2
+    fi
 }
 
 :main
