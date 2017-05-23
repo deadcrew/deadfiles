@@ -36,33 +36,24 @@ HISTORY=~/.engrus_history
     local input="$1"
     local input_lang=$2
 
-    local result=$(runki --dry --lang $input_lang 2>/dev/null <<< "$input")
-    if [[ ! "$result" ]]; then
+    local out=$(runki --dry --json --lang $input_lang 2>/dev/null <<< "$input")
+    if [[ ! "$out" ]]; then
         return 1
     fi
 
-    local transcription=$(grep -Eo '\[[^]]+\]' <<< "$result" \
-        | sed -r -e 's/\[/\&\#x5B;/' -e 's/\]/\&\#x5D;/')
+    local transcription=$(jq -r '.transcript' <<< "$out")
 
-    local json=$(sed -r <<< "$result" \
-        -e 's/\[[^]]+\] //' \
-        -e 's/ \(/\n&/g' \
-        -e 's/\), /\n/g' \
-        -e 's/\)$//g' \
-        | sed -r 's/ \(/\t/' \
-        | sed -r \
-            -e '/^\S/s/.*/{"title": "&",/' \
-            -e '/^\s/{s/^\t(.*)/"item": "\1"},/}' \
-        | sed -r -e '1i[' -e '$s/,$/]/' \
-        | tee /dev/stderr)
-
-    local length=$(jq -r '. | length' <<< "$json")
-
+    local length=$(jq -r '.meanings | length' <<< "$out")
     if (( "$length" > 7 )); then
         length=7
     fi
 
-    modal-template <<< "$json" \
+    local meanings=$(jq <<< "$out" \
+        '.meanings | .[] | {title: .translation, item: .references | join(", ")}' \
+            | jq -s . \
+            | tee /dev/stderr)
+
+    modal-template <<< "$meanings" \
         --args "-lines $length" \
         --no-description \
         --message "<span font=\"Verdana 8\">&#8226; $input &#8212; $transcription</span>"
