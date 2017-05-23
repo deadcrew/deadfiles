@@ -82,13 +82,18 @@ HISTORY=~/.engrus_history
     local input=$1
     local input_lang=$2
 
-    local result=$(curl -k -s  \
+    local response=$(curl --fail -k -s  \
             -d "key=trnsl.1.1.20150807T071843Z.319e163bafb5d806.f17c493a466253265a817c9f96a74db85f6b556b" \
             -d "lang=$input_lang" \
-            -d "text=$input" \
-            -G "https://translate.yandex.net/api/v1.5/tr.json/translate" \
-        | jq -r '.text[0]'
+            --data-urlencode "text=$input" \
+            -G "https://translate.yandex.net/api/v1.5/tr.json/translate"
     )
+    if [[ ! "$response" ]]; then
+        echo "request to translate.yandex.net failed" >&2
+        exit 1
+    fi
+
+    local result="$(jq -r '.text[0]' <<< "$response")"
 
     if [[ "$result" == "$input" ]]; then
         return 1
