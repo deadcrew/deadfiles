@@ -1,0 +1,65 @@
+#!/bin/bash
+
+### vboxresize - resize vbox window
+###
+### Usage:
+###     vboxresize <name> [<width>] [<height>]
+###     vboxresize -h | --help
+
+source /usr/share/bash/opts/opts.bash
+
+set -euo pipefail
+
+:main() {
+    local -A opts
+    local -a args
+
+    opts:parse opts args -h --help -- "$@"
+
+    if [[ "${opts[-h]:-}" || "${opts[--help]:-}" ]]; then
+        :help
+        exit 0
+    fi
+
+    local name="${1:-}"
+    local width="${2:-auto}"
+    local height="${3:-auto}"
+
+    local window_id="$(xdotool search "$name")"
+    if [[ ! "$window_id" ]]; then
+        echo "unable to find window with such name: $name" >&2
+        exit 1
+    fi
+
+    if [[ "$width" == "auto" || "$height" == "auto" ]]; then
+        local window_width=""
+        local window_height=""
+        :get_window_geometry window_width window_height "$window_id"
+        if [[ "$width" == "auto" ]]; then
+            width=$window_width
+        fi
+        if [[ "$height" == "auto" ]]; then
+            height=$window_height
+        fi
+    fi
+
+    vboxmanage controlvm ${name} setvideomodehint ${width} ${height} 32
+}
+
+:get_window_geometry() {
+    local var_width=$1
+    local var_height=$2
+    local window_id=$3
+
+    eval "$(xdotool getwindowgeometry --shell "$window_id")"
+    eval $var_width=\$WIDTH
+    eval $var_height=\$HEIGHT
+}
+
+:help() {
+    sed -rn 's/^### ?//;T;p' "$0"
+}
+
+:main "${@}"
+
+#
