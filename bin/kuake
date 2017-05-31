@@ -134,7 +134,7 @@ CODE
     fi
 
     if $_terminal; then
-        :spawn-terminal $_classname "$_exec"
+        :spawn-terminal $_classname "$_exec" $window_geometry
 
         while [[ ! "$window_id" ]]; do
             local window_id=$(:window-find $_classname)
@@ -200,12 +200,26 @@ CODE
 :spawn-terminal() {
     local name="$1"
     local command=$2
+    local window_x="$3"
+    local window_y="$4"
+    local window_width="$5"
+    local window_height="$6"
+
+    # prevents blinking at startup
+    # font size (8x12) is hardcoded, no way to know font width without complex
+    # python code
+    window_x=$((window_x - 1))
+    window_y=$((window_y - 1))
+    window_width=$((window_width / 8))
+    window_height=$((window_height / 12 + 1))
+
+    local geometry="${window_width}x${window_height}+${window_x}+${window_y}"
 
     if ! tmux has-session -t $name; then
         tmux new-session -d -s $name
     fi
 
-    i3-msg -q "exec urxvt -name $name -title $name -e \
+    i3-msg -q "exec urxvt -geometry $geometry -name $name -title $name -e \
         tmux attach-session -t $name"
 
     if [[ "$command" ]]; then
