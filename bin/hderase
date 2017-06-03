@@ -1,0 +1,12 @@
+#!/bin/bash
+
+echo "erase $1? type YES"
+read answer
+
+if [[ "$answer" != "YES" ]]; then
+    exit 1
+fi
+
+sudo hdparm --user-master u --security-set-pass Eins $1
+sudo hdparm --user-master u --security-erase Eins $1
+sudo hdparm -I $1
