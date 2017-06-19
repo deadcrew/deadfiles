@@ -10,13 +10,15 @@ fi
 
 secrets_repository=${secrets_repository:-$HOME/.secrets/}
 
-if ! cd "${secrets_repository}"; then
-    notify-send "$secrets_repository does not exist."
+if [[ ! -d "${secrets_repository}" ]]; then
+    notify-send "carcosa-ui" "$secrets_repository does not exist."
     exit 1
 fi
 
+cd "${secrets_repository}"
+
 if ! carcosa -Fc; then
-    notify-send "Master password key cache file is not found."
+    notify-send "carcosa-ui" "Master password key cache file is not found."
     exit 1
 fi
 
