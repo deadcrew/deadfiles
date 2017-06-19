@@ -76,6 +76,8 @@ set -euo pipefail
         else
             :shell "$target" "$exec"
         fi
+
+        return
     fi
 
     sudo cryptsetup open "$path" "$name"
@@ -89,6 +91,16 @@ set -euo pipefail
         :link "$target" "$link"
 
         target="$link"
+    fi
+
+    if [[ -d "${target}/systemd/" ]]; then
+        find "${target}/systemd/" -name "*.service" | while read filename; do
+            local service="$(basename "${filename}")"
+            if [[ !  -e /var/run/systemd/system/${service} ]]; then
+                :info "Service linked-runtime: ${service}"
+                sudo ln -s "${filename}"" /var/run/systemd/system/${service}"
+            fi
+        done
     fi
 
     :shell "$target" "$exec"
