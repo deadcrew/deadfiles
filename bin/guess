@@ -24,9 +24,9 @@ EOF
     fi
 
     local launchers=(
+        "man $program"
         "$program --help"
         "$program -h"
-        "man $program"
         "$program -help"
         "$program help"
     )
