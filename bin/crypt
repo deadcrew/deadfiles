@@ -96,8 +96,8 @@ set -euo pipefail
     if [[ -d "${target}/systemd/" ]]; then
         find "${target}/systemd/" -name "*.service" | while read filename; do
             local service="$(basename "${filename}")"
+            :info "Service linked-runtime: ${service}"
             if [[ !  -e /var/run/systemd/system/${service} ]]; then
-                :info "Service linked-runtime: ${service}"
                 sudo ln -s "${filename}"" /var/run/systemd/system/${service}"
             fi
         done
@@ -186,8 +186,26 @@ set -euo pipefail
         if [[ "${answer:-Y}" == "Y" ]]; then
             kill -1 $pids
 
+            local try_max=10
+            local try=0
             while kill -0 $pids 2>/dev/null; do
+                try=$((try+1))
+
                 sleep 0.5
+
+                if [[ $try -ge $try_max ]]; then
+                    printf "\nDo you want to kill them using SIGKILL? [Y/n] "
+                    read answer
+
+                    if [[ "${answer:-Y}" == "Y" ]]; then
+                        kill -9 $pids
+                        try=0
+
+                        continue
+                    fi
+
+                    break
+                fi
             done
         fi
     fi
