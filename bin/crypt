@@ -98,7 +98,7 @@ set -euo pipefail
             local service="$(basename "${filename}")"
             :info "Service linked-runtime: ${service}"
             if [[ !  -e /var/run/systemd/system/${service} ]]; then
-                sudo ln -s "${filename}"" /var/run/systemd/system/${service}"
+                sudo ln -s "${filename}" "/var/run/systemd/system/${service}"
             fi
         done
     fi
