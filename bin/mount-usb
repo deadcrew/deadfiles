@@ -7,6 +7,7 @@
     handlers[vfat]=:mount:fat
     handlers[ext2]=:mount:generic
     handlers[ext4]=:mount:generic
+    handlers[ntfs]=:mount:generic
 
     lsblk -fnr -o name,fstype,subsystems,mountpoint \
         | while read -r device fs subsystems mountpoint; do
