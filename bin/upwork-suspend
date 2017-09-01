@@ -1,0 +1,7 @@
+#!/bin/bash
+
+if ps -C upwork -o s= | grep -qF T; then
+    pkill -x -CONT upwork
+else
+    pkill -x -STOP upwork
+fi
