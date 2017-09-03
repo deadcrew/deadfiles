@@ -2,6 +2,8 @@
 
 if ps -C upwork -o s= | grep -qF T; then
     pkill -x -CONT upwork
+    notify-send "upwork resumed"
 else
     pkill -x -STOP upwork
+    notify-send "upwork suspended"
 fi
