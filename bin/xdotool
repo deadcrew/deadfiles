@@ -19,7 +19,7 @@ attempts=0
             exit $exitcode
         fi
 
-        :exec "$@"
+        :run "$@"
     else
         cat "$stdout"
         cat "$stderr" >&2
