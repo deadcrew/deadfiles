@@ -1,9 +1,34 @@
 #!/bin/bash
 
-if ps -C upwork -o s= | grep -qF T; then
-    pkill -x -CONT upwork
-    notify-send "upwork resumed"
-else
-    pkill -x -STOP upwork
-    notify-send "upwork suspended"
-fi
+:is-suspened() {
+    ps -C upwork -o s= | grep -qF T
+}
+
+:main() {
+    if :is-suspened; then
+        pkill -x -CONT upwork
+        notify-send "upwork resumed"
+    else
+        pkill -x -STOP upwork
+        notify-send "upwork suspended"
+
+        {
+            counter=0
+            while sleep 1; do
+                if :is-suspened; then
+                    counter=$((counter + 1))
+
+                    if [[ "$counter" -gt 300 ]]; then
+                        counter=0
+
+                        notify-send "upwork still suspeneded"
+                    fi
+                else
+                    break
+                fi
+            done
+        }
+    fi
+}
+
+:main "$@"
