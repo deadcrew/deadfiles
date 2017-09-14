@@ -10,6 +10,9 @@ if [[ "$*" ]]; then
     while :; do
         { coproc { "$@"; } >&3; } 3>&1
         printf "%d\n" "$COPROC_PID" >$channel
+        if ! wait $COPROC_PID; then
+            :
+        fi
     done
 else
     channel=$(echo ${TMPDIR:-/tmp}/rebirth.*/pids)
@@ -18,5 +21,5 @@ else
         exit 1
     fi
 
-    kill -11 $(head -n1 "$channel") 2>&-
+    pkill -INT -P $(head -n1 "$channel") 2>&-
 fi
