@@ -1,5 +1,7 @@
 #!/bin/bash
 
+suspend_notify_timeout=${SUSPEND_NOTIFY_TIMEOUT:-120}
+
 :is-suspened() {
     ps -C upwork -o s= | grep -qF T
 }
@@ -7,10 +9,10 @@
 :main() {
     if :is-suspened; then
         pkill -x -CONT upwork
-        notify-send "upwork resumed"
+        notify-send "upwork" "<b>UPWORK</b> RESUMED"
     else
         pkill -x -STOP upwork
-        notify-send "upwork suspended"
+        notify-send "upwork" "<b>UPWORK</b> SUSPENDED"
 
         {
             counter=0
@@ -18,10 +20,10 @@
                 if :is-suspened; then
                     counter=$((counter + 1))
 
-                    if [[ "$counter" -gt 300 ]]; then
+                    if [[ "$counter" -gt ${suspend_notify_timeout} ]]; then
                         counter=0
 
-                        notify-send "upwork still suspeneded"
+                        notify-send "upwork" "<b>UPWORK</b> STILL SUSPENDED"
                     fi
                 else
                     break
