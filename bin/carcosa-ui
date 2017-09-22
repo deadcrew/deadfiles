@@ -66,15 +66,24 @@ if output=$(carcosa -Gc "$token" 2>&1); then
     xdotool \
         windowfocus --sync "$active_window_id"
 
+    noenter="0"
     if [[ "$mode" == "login-password" ]]; then
         login=${token##*/}
+
+        if [[ ${login:0:1} == "!" ]]; then
+            login=${login:1}
+            noenter="1"
+        fi
 
         :type "$login"
         :type:key "Tab"
     fi
 
     :type "$password"
-    :type:key "Return"
+
+    if [[ "$noenter" == "0" ]]; then
+        :type:key "Return"
+    fi
 
     if [[ "$screenkey_pid" ]]; then
         exec xargs -d'\n' sh -c 'exec "$0" "${@}"'<<< "$screenkey_cmdline"
