@@ -66,13 +66,13 @@ if output=$(carcosa -Gc "$token" 2>&1); then
     xdotool \
         windowfocus --sync "$active_window_id"
 
-    noenter="0"
+    noenter=false
     if [[ "$mode" == "login-password" ]]; then
         login=${token##*/}
 
         if [[ ${login:0:1} == "!" ]]; then
             login=${login:1}
-            noenter="1"
+            noenter=true
         fi
 
         :type "$login"
@@ -81,7 +81,7 @@ if output=$(carcosa -Gc "$token" 2>&1); then
 
     :type "$password"
 
-    if [[ "$noenter" == "0" ]]; then
+    if $noenter; then
         :type:key "Return"
     fi
 
