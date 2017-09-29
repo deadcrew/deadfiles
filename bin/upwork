@@ -1,8 +1,11 @@
 #!/bin/bash
 
+LIMIT=10
+
 notify-send "UPWORK" "<b>UPWORK</b> STARTING"
 # start initial upwork window
-/usr/bin/upwork &
+
+cpulimit -l $LIMIT /usr/bin/upwork &
 
 # show upwork window
-exec /usr/bin/upwork
+exec cpulimit -l $LIMIT /usr/bin/upwork
