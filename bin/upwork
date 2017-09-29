@@ -1,11 +1,13 @@
 #!/bin/bash
 
+sudo chmod 4755 /usr/share/upwork/chrome-sandbox
+
 LIMIT=10
 
 notify-send "UPWORK" "<b>UPWORK</b> STARTING"
 # start initial upwork window
 
-cpulimit -l $LIMIT /usr/bin/upwork &
+/usr/bin/upwork &
 
 # show upwork window
-exec cpulimit -l $LIMIT /usr/bin/upwork
+exec /usr/bin/upwork
