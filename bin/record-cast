@@ -36,28 +36,30 @@ else
     select_arg="-s"
 fi
 
-video=$1
+video="$1".avi
 
-{
-    echo "Press ScrollLock to stop recording."
-    killall -q -STOP screenkey
+if [[ "$window_id" ]]; then
+    {
+        echo "Press ScrollLock to stop recording."
+        killall -q -STOP screenkey
 
-    xdotool windowfocus $window_id
+        xdotool windowfocus $window_id
 
-    xev -id "$window_id" | while read line; do
-        if grep "keycode 78" <<< "$line"; then
-            break
-        fi
-    done
+        xev -id "$window_id" | while read line; do
+            if grep "keycode 78" <<< "$line"; then
+                break
+            fi
+        done
 
-    pkill -SIGINT ffmpeg
-    #pkill -SIGINT ffmpeg
-} &
+        pkill -SIGINT ffmpeg
+        #pkill -SIGINT ffmpeg
+    } &
+fi
 
 ffcast $select_arg % \
     ffmpeg -f x11grab -framerate 25 -video_size %s \
     -i %D+%c -codec:v libx264 -b:v 20000k \
-    -vf crop="iw-mod(iw\\,2):ih-mod(ih\\,2)" -y "${@}"
+    -vf crop="iw-mod(iw\\,2):ih-mod(ih\\,2)" -y "$video"
 
 sleep 1
 
