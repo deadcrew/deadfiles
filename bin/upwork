@@ -1,13 +1,25 @@
 #!/bin/bash
 
-sudo chmod 4755 /usr/share/upwork/chrome-sandbox
+QUOTA="10"
 
-LIMIT=10
+# use --pty with & is the way to easy kill upwork instance through pkill upwork
+# instead of finding and stopping systemd slices
+:upwork() {
+    sudo systemd-run \
+        --pty \
+        --setenv=DISPLAY=${DISPLAY} \
+        --property=CPUQuota=${QUOTA}% \
+        --slice=upwork-limited \
+            sudo -u ${USER} /usr/bin/upwork
+}
 
 notify-send "UPWORK" "<b>UPWORK</b> STARTING"
-# start initial upwork window
 
-/usr/bin/upwork &
+# start daemon
+:upwork &
 
-# show upwork window
-exec /usr/bin/upwork
+# daemon need some time to start
+sleep 5
+
+# show gui
+:upwork
