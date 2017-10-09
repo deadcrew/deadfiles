@@ -18,4 +18,5 @@ exec rofi \
     -i \
     -p "" \
     "$mode" \
+    -matching fuzzy \
     "$@"
