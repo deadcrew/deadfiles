@@ -1,0 +1,98 @@
+#!/usr/bin/env ruby
+
+edit_workspaces = [
+    'super+1',
+    #'super+2',
+]
+
+edit_switch = [
+  'ctrl+h',
+  'ctrl+j',
+  'ctrl+k',
+  'ctrl+l',
+]
+
+edit_keys = [
+  'super+h',
+  'super+k',
+  'super+j',
+  'super+l',
+
+  'ctrl+d', 'ctrl+d', 'ctrl+d',
+  'ctrl+u', 'ctrl+u', 'ctrl+u',
+
+  'h', 'h', 'h', 'h',
+  'j', 'j', 'j', 'j',
+  'k', 'k', 'k', 'k',
+  'l', 'l', 'l', 'l',
+]
+
+bro_workspaces = [
+    'super+s',
+]
+
+bro_keys = [
+  'F5',
+  'Prior',
+  'Next',
+  'Home',
+  'End',
+]
+
+
+def press(key)
+    print "#{key}\n"
+    `xdotool key #{key}`
+end
+
+sleep(5)
+
+loop do
+    value = rand
+    if 0 <= value && value < 0.7
+        press("#{edit_workspaces.sample}")
+
+        sleep(rand * 3 + 3)
+
+        (rand * 2).to_i.times{
+            press("#{edit_switch.sample}")
+            sleep(0.2)
+            press("ctrl+minus")
+            sleep(rand * 0.25 + 0.30)
+        }
+
+        sleep(rand * 4 + 1)
+
+        (rand * 7).to_i.times {
+            press("#{edit_keys.sample}")
+            sleep(rand * 0.25 + 0.25)
+        }
+    elsif 0.7 < value && value <= 0.75
+        press("#{bro_workspaces.sample}")
+
+        sleep(rand * 3 + 1)
+
+        press("#{['alt+1', 'alt+2', 'alt+3', 'alt+4', 'alt+5'].sample}")
+
+        sleep(rand * 3 + 1)
+
+        (rand * 3).to_i.times {
+            press("#{bro_keys.sample}")
+            sleep(rand * 0.25 + 0.25)
+        }
+
+        sleep(rand * 3 + 3)
+
+    elsif 0.75 < value
+        initial = `xdotool getmouselocation`.match(/x:(\d+) y:(\d+)/).to_a
+        (rand * 5).to_i.times {
+            `xdotool mousemove #{rand * 1000} #{rand * 1000}`
+            sleep(rand + 0.5)
+        }
+
+        `xdotool mousemove #{initial[1]} #{initial[2]} click 1`
+        sleep rand + 0.5
+    end
+
+    sleep(rand * 9 + 1)
+end
