@@ -31,7 +31,7 @@ config() {
 
     if [ -f $base_dir/token/$account ]; then
         channels=$(
-            slack-get-jabber-rooms postdevops $(cat ~/.mcabber/token/postdevops) \
+            slack-get-jabber-rooms $account $(cat ~/.mcabber/token/$account) \
                 | grep -v '^mpdm-' \
                 | sed -re '2~1 { s/@.+// }' \
                 | paste -sd,
