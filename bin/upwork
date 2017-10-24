@@ -2,7 +2,7 @@
 
 . systemd-cat-bash "upwork"
 
-QUOTA="10"
+QUOTA="${QUOTA:-10}"
 
 # use --pty with & is the way to easy kill upwork instance through pkill upwork
 # instead of finding and stopping systemd slices
