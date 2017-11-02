@@ -1,0 +1,11 @@
+#!/bin/bash
+
+while :; do
+    xdotool search --sync --class --onlyvisible upwork | while read win_id; do
+        if xwininfo -id "$win_id" | grep -qF 'Width: 360'; then
+            xdotool windowclose "$win_id"
+        fi
+    done
+
+    sleep 1
+done
