@@ -12,7 +12,7 @@ QUOTA="${QUOTA:-10}"
         --setenv=DISPLAY=${DISPLAY} \
         --property=CPUQuota=${QUOTA}% \
         --slice=upwork-limited \
-            sudo -u ${USER} /usr/bin/upwork
+            sudo -u ${USER} nice -n 19 /usr/bin/upwork
 }
 
 notify-send "UPWORK" "<b>UPWORK</b> STARTING"
