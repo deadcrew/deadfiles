@@ -1,0 +1,57 @@
+#!/bin/bash
+
+set -euo pipefail
+
+DATASET_EXT=~/dataset/upwork-ext4
+DATASET_RAM=~/dataset/upwork-ramfs
+DATASET_SIZE=128
+
+:main() {
+    if ! :is-dataset-mounted; then
+        if ! :is-dataset-exists; then
+            :create-dataset
+        fi
+
+        :mount-dataset
+    fi
+
+    /bin/upwork
+    sleep 2
+    /bin/upwork
+}
+
+:is-dataset-mounted() {
+    findmnt ~/.Upwork &>/dev/null
+}
+
+:is-dataset-exists() {
+    ls $DATASET_EXT &>/dev/null
+}
+
+:sudo() {
+    echo "{sudo} $*" >&2
+    sudo "${@}"
+}
+
+:create-dataset() {
+    local mount=/mnt/upwork-ext4
+
+    :sudo dd if=/dev/zero of=$DATASET_EXT count=$DATASET_SIZE bs=1M status=progress
+    :sudo mkfs.ext4 $DATASET_EXT
+    :sudo mkdir $mount
+    :sudo mount $DATASET_EXT $mount
+    :sudo cp -r ~/.Upwork/* $mount/
+    :sudo umount $mount
+    :sudo rmdir $mount
+}
+
+:mount-dataset() {
+    :sudo mkdir -p $DATASET_RAM
+    :sudo mount -t tmpfs -o size=$(($DATASET_SIZE+1))m tmpfs $DATASET_RAM
+    :sudo cp $DATASET_EXT $DATASET_RAM
+    :sudo mount $DATASET_RAM/upwork-ext4 ~/.Upwork
+    :sudo chown -R $(id -un):$(id -un) ~/.Upwork
+}
+
+
+:main "${@}"
