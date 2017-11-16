@@ -23,10 +23,6 @@ HISTORY=~/.engrus_history
     fi
 
     if ! :translate "$input" "$input_lang"; then
-        modal \
-            -color-window "#ff0000, #ff0000" \
-            -color-normal "#ff0000, #ffffff, #ff0000, #ff0000" \
-            -e "$input: no translation found"
         return 1
     fi | while read result; do
         if [[ ! "$result" ]]; then
@@ -39,12 +35,21 @@ HISTORY=~/.engrus_history
     done
 }
 
+:show-no-translation() {
+    local input="$1"
+    modal \
+        -color-window "#ff0000, #ff0000" \
+        -color-normal "#ff0000, #ffffff, #ff0000, #ff0000" \
+        -e "$input: no translation found"
+}
+
 :translate() {
     local input="$1"
     local input_lang=$2
 
     local out=$(transline -o json -l "$input_lang" "$input")
     if [[ ! "$out" ]]; then
+        :show-no-translation "$input"
         return 1
     fi
 
