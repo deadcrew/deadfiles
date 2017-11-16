@@ -23,7 +23,10 @@ HISTORY=~/.engrus_history
     fi
 
     if ! :translate "$input" "$input_lang"; then
-        modal -e "$input: no translation found"
+        modal \
+            -color-window "#ff0000, #ff0000" \
+            -color-normal "#ff0000, #ffffff, #ff0000, #ff0000" \
+            -e "$input: no translation found"
         return 1
     fi | while read result; do
         if [[ ! "$result" ]]; then
