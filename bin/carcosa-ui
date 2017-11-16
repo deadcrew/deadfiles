@@ -81,9 +81,6 @@ if output=$(carcosa -Gc "$token" 2>&1); then
                 :type:key "Tab"
             fi
         fi
-
-        :type "$login"
-        :type:key "Tab"
     fi
 
     :type "$password"
