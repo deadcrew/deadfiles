@@ -53,8 +53,6 @@ template=$(
 
 shift
 
-set -x
-
 jq -r '.[] | "'"$template"'"' \
     | tr -d '\n' \
     | sed -u 's/<end>/\x0/g' \

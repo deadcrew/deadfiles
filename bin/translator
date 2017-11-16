@@ -1,5 +1,9 @@
 #!/bin/bash
 
+set -euo pipefail
+
+ANKI_DECK=${ANKI_DECK:-desktop}
+
 HISTORY=~/.engrus_history
 
 :main() {
@@ -18,30 +22,45 @@ HISTORY=~/.engrus_history
         input_lang="ru-en"
     fi
 
-    if ! :dictionary:lookup "$input" "$input_lang"; then
-        if ! :translate "$input" "$input_lang"; then
-            modal \
-                -color-window "#ff0000 #ff0000" \
-                -color-normal "#ff0000, #ffffff, #ff0000, #ff0000" \
-                -e "$input: no translation found"
-            return 1
+    if ! :translate "$input" "$input_lang"; then
+        modal \
+            -color-window "#ff0000 #ff0000" \
+            -color-normal "#ff0000, #ffffff, #ff0000, #ff0000" \
+            -e "$input: no translation found"
+        return 1
+    fi | while read result; do
+        if [[ ! "$result" ]]; then
+            continue
         fi
-    fi \
-        | while read result; do
-            :history:add "$input" "$result"
-        done
+
+        :history:add "$input" "$result"
+
+        ankictl -A ${ANKI_DECK} <<< "${input}"$'\t'"${result}"
+    done
 }
 
-:dictionary:lookup() {
+:translate() {
     local input="$1"
     local input_lang=$2
 
-    local out=$(runki --dry --json --lang $input_lang 2>/dev/null <<< "$input")
+    local out=$(transline -o json -l "$input_lang" "$input")
     if [[ ! "$out" ]]; then
         return 1
     fi
 
-    local transcription=$(jq -r '.transcript' <<< "$out")
+    local transcription=$(jq -r '.transcript' 2>/dev/null <<< "$out")
+    if [[ ! "$transcription" ]]; then
+        local result=$(jq -r . <<< "$out")
+        if [[ ! "$result" ]]; then
+            return 1
+        fi
+
+        modal-message "$input"$'\n\n› '"$result"
+
+        printf '%s\n' "$result"
+
+        return 0
+    fi
 
     local length=$(jq -r '.meanings | length' <<< "$out")
     if (( "$length" > 7 )); then
@@ -49,14 +68,18 @@ HISTORY=~/.engrus_history
     fi
 
     local meanings=$(jq <<< "$out" \
-        '.meanings | .[] | {title: .translation, item: .references | join(", ")}' \
+        '.meanings | .[] | {item: .translation, title: .references | join(", ")}' \
             | jq -s . \
             | tee /dev/stderr)
 
-    modal-template <<< "$meanings" \
+    local result=$(modal-template <<< "$meanings" \
         --args "-lines $length" \
         --no-description \
-        --message "<span font=\"Verdana 8\">&#8226; $input &#8212; $transcription</span>"
+        --message "<span font=\"Verdana 8\">&#8226; $input &#8212; $transcription</span>")
+
+    if [[ ! "$result" ]]; then
+        return 1
+    fi
 
     printf '%s\n' "$result"
 }
@@ -67,32 +90,6 @@ HISTORY=~/.engrus_history
 
     printf '%s\t%s\n' "$input" "$result" >> $HISTORY
 
-}
-
-:translate() {
-    local input=$1
-    local input_lang=$2
-
-    local response=$(curl --fail -k -s  \
-            -d "key=trnsl.1.1.20150807T071843Z.319e163bafb5d806.f17c493a466253265a817c9f96a74db85f6b556b" \
-            -d "lang=$input_lang" \
-            --data-urlencode "text=$input" \
-            -G "https://translate.yandex.net/api/v1.5/tr.json/translate"
-    )
-    if [[ ! "$response" ]]; then
-        echo "request to translate.yandex.net failed" >&2
-        exit 1
-    fi
-
-    local result="$(jq -r '.text[0]' <<< "$response")"
-
-    if [[ "$result" == "$input" ]]; then
-        return 1
-    fi
-
-    modal-message "$input"$'\n\n› '"$result"
-
-    printf '%s\n' "$result"
 }
 
 :main "$@"
