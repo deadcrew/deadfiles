@@ -70,13 +70,17 @@ if output=$(carcosa -Gc "$token" 2>&1); then
     if [[ "$mode" == "login-password" ]]; then
         login=${token##*/}
 
-        if [[ ${login:0:1} == "!" ]]; then
-            login=${login:1}
-            enter=false
-        fi
+        if [[ "$login" != "$token" ]]; then
+            if [[ ${login:0:1} == "!" ]]; then
+                login=${login:1}
+                enter=false
+            fi
 
-        :type "$login"
-        :type:key "Tab"
+            if [[ "$login" ]]; then
+                :type "$login"
+                :type:key "Tab"
+            fi
+        fi
     fi
 
     :type "$password"
