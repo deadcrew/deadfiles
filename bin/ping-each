@@ -1,0 +1,20 @@
+#!/bin/bash
+
+addresses=($(host "$1" | awk '/has address /{print $4}'))
+
+not_working=()
+for address in "${addresses[@]}"; do
+    printf "ping %-15s" "$address"
+    if ping -W 1 -c 1 "$address" &>/dev/null; then
+        printf "OK\n"
+    else
+        printf "FAIL\n"
+        not_working+=("$address")
+    fi
+done
+
+if [[ ${#not_working} ]]; then
+    echo
+    echo "not working: ${not_working[@]}"
+fi
+
