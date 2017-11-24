@@ -1,0 +1,13 @@
+#!/bin/bash
+
+### Usage:
+###     utc — prints now
+###     utc tomorrow — understands relative time
+###     utc 22:23 — prints specified time in UTC
+###     utc +10 seconds tomorrow — quotes are not required
+
+format="%FT%TZ"
+tz=$(date +%Z)
+timestamp=$(date +$format -d "${*:-now}")
+
+date -u +$format -d "$timestamp $tz" 
