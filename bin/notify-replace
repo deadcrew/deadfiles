@@ -1,0 +1,10 @@
+#!/bin/bash
+
+namespace="${1:-default}"
+
+shift
+
+store=/tmp/$namespace.id.notify-replace
+id=$(cat $store 2>/dev/null)
+
+notify-desktop -r "$id" "$@" > "$store"
