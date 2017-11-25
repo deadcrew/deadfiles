@@ -1,0 +1,150 @@
+#!/bin/bash
+
+set -euo pipefail
+
+### Usage:
+###     counter pa — understands short names
+###     counter bara — understands aliases
+###     counter phantom — show heroes with matching name
+###     counter lancer — understands partial names
+###     counter storm spirit — quotes are not required
+
+if [[ ! "$*" ]]; then
+    sed -n 's/^### //;T;p' < "$0"
+    exit 1
+fi
+
+xpath=/usr/bin/vendor_perl/xpath
+cache=~/.cache/dota2-counter
+
+if ! which $xpath &>/dev/null; then
+    printf "xpath binary from 'perl-xml-path' is required.\n"
+    exit 2 
+fi
+
+:canonize() {
+    curl -Ls "http://dota2.gamepedia.com/api.php?action=query&list=search&srprop=&format=json&srsearch=$1" \
+        | jq -r '.query.search[0].title' \
+        | cut -f1 -d/
+}
+
+:page() {
+    curl -Ls "http://dota2.gamepedia.com/api.php?action=query&titles=$1&export&exportnowrap" \
+        | $xpath -e 'string(//page//text)' -q
+}
+
+:bad() {
+    awk '
+        /^==/ {include=0}
+        include {print}
+        /^==\s*Bad/ {include=1}
+    '
+}
+
+:disambiguation() {
+    perl -pe 's/\{\{Disambiguation\|([^}]+)\}\}/'$(:fg 1 "\1")':/gi' \
+        | perl -pe 's/\{\{(?:Hero ID|H)\|([^|]+)(\|[^}]+)?\}\}/'$(:bold "\1")'/gi' \
+        | perl -pe 's/\{\{[^}]+\}\}//gi' \
+        | perl -pe 's/\[\[\w+:([^]]+)\]\]//g' \
+        | perl -pe 's/\[\[([^]]+)\]\]/\1/gi' \
+        | :join:newlines
+}
+
+:to:console() {
+    perl -p0e 's/\n*\{\{hero label\|([^|]+)\|[^}]+\}\}/\n\n'$(:fg 1 "\1")'/gsi' \
+        | perl -pe 's/\{\{A\|([^|]+)\|[^}]+\}\}/'$(:bold "\1")'/gi' \
+        | perl -pe 's/\{\{I\|([^}]+)\}\}/'$(:fg 5 "\1")'/gi' \
+        | perl -pe 's/\[\[([^]|]+\|)?([^]]+)\]\]/'$(:fg 4 "\2")'/gi' \
+        | :join:newlines
+}
+
+:join:newlines() {
+    perl -p0e 's/^\n+//sg' \
+        | perl -p0e 's/\n+$//sg' \
+        | perl -p0e 's/\n{2,}/\n\n/smg'
+}
+
+:urlencode() {
+    sed -r 's/ /%20/g' <<< "$*"
+}
+
+:fold() {
+    fmt -stw 80 \
+        | :indent:list
+}
+
+:indent:list() {
+    awk '
+        /^\*/ {list=1; print}
+        /^[^*]/ && list {print "  " $0}
+        /^$/ {list=0}
+        !list {print}
+    '
+}
+
+:cache:id() {
+    perl -pe 's/\w+/\L$&/g' <<< "$*" \
+        | perl -pe 's/\n//gs' \
+        | perl -pe 's/\W/-/g'
+}
+
+:cache:store() {
+    mkdir -p $cache
+
+    cat > $cache/$(:cache:id "$*")
+}
+
+:cache:retrieve() {
+    cat $cache/$(:cache:id "$*") 2>/dev/null
+}
+
+:cache:link() {
+    mkdir -p $cache
+
+    from=$(:cache:id "$1")
+    to=$(:cache:id "$2")
+
+    if [[ "$from" != "$to" ]]; then
+        ln -sf $cache/$from $cache/$to
+    fi
+}
+
+:show() {
+    :bad | :to:console | :fold
+}
+
+:bold() {
+    printf '\e[1m%s\e[0m' "$*"
+}
+
+:fg() {
+    printf '\e[38;5;%sm%s\e[0m' "$1" "${*:2}"
+}
+
+request=$*
+
+if text=$(:cache:retrieve "$request"); then
+    :show <<< "$text"
+    exit
+fi
+
+name=$(:urlencode "$request")
+hero=$(:canonize "$name")
+
+:cache:link "$hero" "$request"
+
+if text=$(:cache:retrieve "$hero"); then
+    :show <<< "$text"
+    exit
+fi
+
+name=$(:urlencode "$hero")
+text=$(:page "$name/Counters")
+
+if [[ "$text" ]]; then
+    :cache:store "$hero" <<< "$text"
+
+    :show <<< "$text"
+else
+    :page "$name" | :disambiguation
+fi
