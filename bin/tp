@@ -1,0 +1,24 @@
+#!/bin/bash
+#
+# touch /tmp/log
+# tail -f /tmp/log | tp grep INFO | tp grep ERROR
+#
+# echo 'A' >> /tmp/log
+# echo 'INFO a' >> /tmp/log
+# echo 'ERROR b' >> /tmp/log
+# echo 'B' >> /tmp/log
+
+:fifo() {
+    name=$(mktemp -u -t tp.XXXXXXXXX)
+    mkfifo $name
+    echo "$name"
+}
+
+:main() {
+    cmd=("${@}")
+    stdin=$(:fifo)
+    tmux split-window $SHELL -ic "${cmd[*]} < $stdin"
+    tee "$stdin"
+}
+
+:main "${@}"
