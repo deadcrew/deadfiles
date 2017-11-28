@@ -1,0 +1,83 @@
+#!/bin/bash
+
+set -euo pipefail
+
+### kibana console client
+###
+### Usage:
+###     kibana -h <host> <pod>
+###
+### Options:
+###
+###     -h <host> Host with kibana.
+###     --help
+
+:main() {
+    source /usr/share/bash/opts/opts.bash
+
+    declare -a args
+    declare -A opts
+
+    opts:parse opts args \
+        -h: -p: -n: --help --args: -- "${@}"
+
+    if [[ "${opts[--help]:-}" ]]; then
+        :help
+        exit 1
+    fi
+
+    local host="${opts[-h]}"
+    local pod="${args[1]}"
+
+    local size=1000
+    local from=0
+
+    while :; do
+        local response
+        :request response "$host" "POST" "_search" <<REQUEST
+{
+    "from":"$from",
+    "size":"$size",
+    "query": {
+        "bool":{
+            "must": [
+                {
+                    "match":{
+                        "kubernetes.pod_name":"$pod"
+                    }
+                }
+            ]
+        }
+    }
+}
+REQUEST
+        if grep -qP '^{"error":' <<< "$response"; then
+            jq . <<< "$response"
+            exit 1
+        fi
+
+        jq  -r '.hits.hits | .[] | ._source.log' <<< "$response" \
+            | sed -r '/^$/d'
+        from=$((from+size))
+    done
+}
+
+:request() {
+    local response_var=$1
+    local host="$2"
+    local method="$3"
+    local path="$4"
+
+    output=$(curl -s --data "$(cat)" \
+        -H 'Content-Type: application/json' \
+        -H 'kbn-version: 5.5.2' \
+        "http://$host/api/console/proxy?path=$path&method=$method")
+
+    eval $response_var=\$output
+}
+
+:help() {
+    sed -rn 's/^### ?//;T;p' "$0"
+}
+
+:main "${@}"
