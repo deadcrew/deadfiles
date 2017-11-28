@@ -13,7 +13,7 @@ for address in "${addresses[@]}"; do
     fi
 done
 
-if [[ ${#not_working} ]]; then
+if [[ ${#not_working} -gt 0 ]]; then
     echo
     echo "not working: ${not_working[@]}"
 fi
