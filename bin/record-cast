@@ -15,6 +15,8 @@ if [[ $# -lt 1 || "$1" == "-h" ]]; then
     exit 1
 fi
 
+name="$1"
+
 if [[ "$select_window" ]]; then
     if [ -z "$window_id" ]; then
         window_id=$(xwininfo | awk '/Window id/{print $4}')
@@ -36,7 +38,7 @@ else
     select_arg="-s"
 fi
 
-video="$1".avi
+video="$name".avi
 
 if [[ "$window_id" ]]; then
     {
@@ -65,10 +67,5 @@ sleep 1
 
 clear
 
-printf "Enter name for new gif (stored in ~) [empty to abort]: "
-read gif_name
+video-to-gif "$video" "$name" && rm "$video"
 
-if [ "$gif_name" ]; then
-    cd
-    video-to-gif "$video" "$gif_name"
-fi
