@@ -1,0 +1,14 @@
+#!/bin/bash
+
+set -euo pipefail
+
+filename="deployment.yaml"
+
+contents=$(cat $filename)
+args=$(sed -n '/containers:/,/---/p' <<< "$contents" \
+        | grep -Po -- '- \K--.*')
+if [[ "$#" -ne 0 ]]; then
+    args=$(grep -P "${@}" <<< "$args")
+fi
+
+echo "$args"
