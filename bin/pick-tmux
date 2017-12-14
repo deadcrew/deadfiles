@@ -1,0 +1,27 @@
+#!/bin/bash
+
+if [[ ! which pick ]]; then
+    echo "program 'pick' is required" >&2
+    exit 1
+fi
+
+stdin=$(mktemp -u -t tp.XXXXXXXXX)
+stdout=$(mktemp -u -t tp.XXXXXXXXX)
+mkfifo $stdin
+mkfifo $stdout
+
+if [[ ! -p /dev/stdin ]]; then
+    echo "stdin is not pipe" >&2
+fi
+
+trap "rm $stdin $stdout" EXIT
+
+tmux split-window sh -ic "pick < $stdin > $stdout"
+
+tasks=()
+cat < $stdout &
+tasks+=($!)
+cat > "$stdin"
+tasks+=($!)
+
+wait "${tasks[@]}"
