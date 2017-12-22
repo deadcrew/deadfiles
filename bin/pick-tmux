@@ -1,6 +1,6 @@
 #!/bin/bash
 
-if [[ ! which pick ]]; then
+if ! which pick; then
     echo "program 'pick' is required" >&2
     exit 1
 fi
