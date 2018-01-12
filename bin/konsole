@@ -1,7 +1,3 @@
 #!/bin/bash
 
-if [[ "${BACKGROUND:-}" ]]; then
-    exec /bin/konsole -p "ColorScheme=${BACKGROUND}" "${@}"
-else
-    exec /bin/konsole "${@}"
-fi
+exec /bin/konsole -p "ColorScheme=$(background)" "${@}"
