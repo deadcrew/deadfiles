@@ -23,6 +23,7 @@ USAGE
 
     if [[ ! "$tmux_pid" ]]; then
         xkill -id "$window_id"
+        return
     fi
 
     local process=$(pgrep -P "$tmux_pid" -n)
