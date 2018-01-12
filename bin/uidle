@@ -6,10 +6,8 @@ edit_workspaces = [
 ]
 
 edit_switch = [
-  'ctrl+h',
-  'ctrl+j',
-  'ctrl+k',
-  'ctrl+l',
+  'Tab',
+  'Shift+Tab',
 ]
 
 edit_keys = [
