@@ -54,8 +54,6 @@ loop do
 
         (rand * 2).to_i.times{
             press("#{edit_switch.sample}")
-            sleep(0.2)
-            press("ctrl+minus")
             sleep(rand * 0.25 + 0.30)
         }
 
