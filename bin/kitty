@@ -1,7 +1,6 @@
 #!/bin/bash
 
-set -x
 exec /bin/kitty \
-    --single-instance \
+    --config ~/.config/kitty/kitty.conf \
     --config ~/.config/kitty/$(background).conf \
-    --config ~/.config/kitty/kitty.conf
+    "${@}"
