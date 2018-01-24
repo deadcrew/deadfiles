@@ -1,0 +1,13 @@
+#!/usr/bin/expect -f
+
+set prompt "#"
+set address [lindex $argv 0]
+
+spawn sudo systemctl start bluetooth.service
+spawn sudo bluetoothctl
+send "power on\r"
+expect -re "Changing power on succeeded"
+send "connect $address\r"
+expect -re "Connection "
+send "quit\r"
+expect eof
