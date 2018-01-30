@@ -1,0 +1,13 @@
+#!/bin/bash
+
+files=()
+for file in "${@}"; do
+    lines=$(wc -l < "$file")
+    if [[ "$lines" -lt 300 ]]; then
+        continue
+    fi
+
+    files+=("$file")
+done
+
+vim "${files[@]}"
