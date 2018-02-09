@@ -2,8 +2,9 @@
 arg_local=false
 arg_aur=false
 arg_version=false
+arg_description=false
 
-while getopts "alvh" arg; do
+while getopts "alvhd" arg; do
     case $arg in
         a)
             arg_aur=true
@@ -14,10 +15,15 @@ while getopts "alvh" arg; do
         v)
             arg_version=true
             ;;
+
+        d)
+            arg_description=true
+            ;;
         h)
             echo "-a -- only aur packages"
             echo "-l -- only local packages"
             echo "-v -- show versions"
+            echo "-d -- show package description"
             exit 1
             ;;
     esac
@@ -56,6 +62,10 @@ done
     pacman -Q $1 | awk '{print $2}'
 }
 
+:get-package-description() {
+    pacman -Qi $1 | grep -Po 'Description\s+:\s+\K.*'
+}
+
 packages=$(:get-all-packages)
 if $arg_aur || $arg_local; then
     info=$(:sync-info-packages ${packages[@]})
@@ -75,6 +85,9 @@ for package in "${packages[@]}"; do
     echo -n "$package"
     if $arg_version; then
         echo -n " "$(:get-package-version $package)
+    fi
+    if $arg_description; then
+        echo -n " "$(:get-package-description $package)
     fi
     echo
 done

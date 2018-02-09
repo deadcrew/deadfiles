@@ -3,7 +3,7 @@
 files=()
 for file in "${@}"; do
     lines=$(wc -l < "$file")
-    if [[ "$lines" -lt 300 ]]; then
+    if [[ "$lines" -lt 200 ]]; then
         continue
     fi
 
