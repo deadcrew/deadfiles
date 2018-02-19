@@ -1,0 +1,10 @@
+#!/bin/bash
+
+finish=$(date +'%s' -d "${*}")
+now=$(date +'%s')
+
+diff=$((finish-now))
+
+sleep $diff
+
+i3-nagbar -m "Timer for ${*} is done." -t warning
