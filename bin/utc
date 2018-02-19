@@ -7,7 +7,7 @@
 ###     utc +10 seconds tomorrow — quotes are not required
 
 format="%FT%TZ"
-tz=$(date +%Z)
+tz=$(date +%z)
 timestamp=$(date +$format -d "${*:-now}")
 
-date -u +$format -d "$timestamp $tz" 
+date -u +$format -d "$timestamp $tz"
