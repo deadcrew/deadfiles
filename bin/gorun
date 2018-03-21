@@ -1,0 +1,19 @@
+#!/bin/bash
+###
+### gorun compiles (if modified) and runs project
+###
+### gorun [<directory>]
+###
+
+set -euo pipefail
+
+if [[ "${1:-}" ]]; then
+    if [[ -d "$1" ]]; then
+        cd "$1"
+        shift
+    fi
+fi
+
+name=$(basename "$(pwd)")
+GOBIN=$(pwd) go install
+exec "$(pwd)/$name" "${@}"
