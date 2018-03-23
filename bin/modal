@@ -5,6 +5,19 @@ if printf '%s\n' "$@" | grep -xE -- '-e'; then
     mode=""
 fi
 
+matching="fuzzy"
+args=()
+while [[ "${1:-}" ]]; do
+    if [[ "$1" == "-matching" ]]; then
+        matching="${2:-}"
+        shift 2
+        continue
+    fi
+
+    args+=("$1")
+    shift
+done
+
 exec rofi \
     -font "Monaco 12" \
     -bw 1 \
@@ -18,5 +31,5 @@ exec rofi \
     -i \
     -p "" \
     "$mode" \
-    -matching fuzzy \
-    "$@"
+    -matching $matching \
+    "${args[@]}"
