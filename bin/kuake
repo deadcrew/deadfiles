@@ -136,7 +136,9 @@ CODE
     if $_terminal; then
         :spawn-terminal $_classname "$_exec" $window_geometry
 
-        local window_id=$(:window-find-sync $_classname)
+        while [[ ! "$window_id" ]]; do
+            local window_id=$(:window-find $_classname)
+        done
     else
         local window_id=$(:window-get-active)
         :window-set-classname $_classname
@@ -203,22 +205,33 @@ CODE
     local window_width="$5"
     local window_height="$6"
 
-    if ! tmux has-session -t $name; then
-        tmux new-session -d -s $name
+    # prevents blinking at startup
+    # font size (8x12) is hardcoded, no way to know font width without complex
+    # python code
+    window_x=$((window_x - 1))
+    window_y=$((window_y - 1))
+    window_width=$((window_width / 8))
+    window_height=$((window_height / 12 + 1))
+
+    local geometry="${window_width}x${window_height}+${window_x}+${window_y}"
+
+    if ! :tmux has-session -t $name; then
+        :tmux new-session -d -s $name
     fi
 
-
-    # TODO: need to add initial_window_position_x flags, requires patch in
-    # kitty
-
-    i3-msg -q "exec kitty \
-        --name $name --title $name \
-        -o='initial_window_width ${window_width}' \
-        -o='initial_window_height ${window_height}' \
-        tmux attach-session -t $name"
+    i3-msg -q "exec urxvt -geometry $geometry -name $name -title $name -e \
+        tmux ${TMUX_SOCKET:+-L $TMUX_SOCKET} attach-session -t $name"
 
     if [[ "$command" ]]; then
-        tmux send -t "$name" "$command"$'\n'
+        :tmux send -t "$name" "$command"$'\n'
+    fi
+}
+
+:tmux() {
+    if [[ "$TMUX_SOCKET" ]]; then
+        tmux -L $TMUX_SOCKET "${@}"
+    else
+        tmux "${@}"
     fi
 }
 
@@ -242,12 +255,6 @@ CODE
     local window_name="$1"
 
     xdotool search --classname "$window_name" | head -n1
-}
-
-:window-find-sync() {
-    local window_name="$1"
-
-    xdotool search --sync --classname "$window_name" | head -n1
 }
 
 :window-toggle() {
