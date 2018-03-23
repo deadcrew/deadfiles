@@ -15,9 +15,14 @@ DATASET_SIZE=128
         :mount-dataset
     fi
 
-    /bin/upwork
-    sleep 2
-    /bin/upwork
+    while :; do
+        notify "upwork: starting process"
+        /bin/upwork
+        sleep 2
+        if xdotool search --name 'Time Tracker' >/dev/null; then
+            break
+        fi
+    done
 }
 
 :is-dataset-mounted() {
