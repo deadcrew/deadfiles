@@ -1,13 +1,14 @@
 #!/bin/bash
 
-files=()
-for file in "${@}"; do
-    lines=$(wc -l < "$file")
-    if [[ "$lines" -lt 200 ]]; then
-        continue
-    fi
+files=($(
+    for file in "${@}"; do
+        lines=$(wc -l < "$file")
+        if [[ "$lines" -lt 200 ]]; then
+            continue
+        fi
 
-    files+=("$file")
-done
+        echo "$file"
+    done | shuffle
+))
 
 vim "${files[@]}"
