@@ -1,0 +1,79 @@
+#!/bin/bash
+
+set -euo pipefail
+
+:main() {
+local target="$(readlink -f $1)"
+
+    local storage=$(:get-storage-path "$target")
+
+    if ! :storage-exists "$target"; then
+        :storage-create "$target"
+    fi
+
+    if ! findmnt "$target" &>/dev/null; then
+        :ramfs-create "$target"
+    fi
+
+    trap ':trap-exit' EXIT
+
+    :sync-once "$storage" "$target"
+
+    :sync-continious "$target" "$storage"
+}
+
+:trap-exit() {
+    echo "got exit signal, restoring fs"
+
+    :sync-once "$target" "$storage"
+    sudo umount "$target"
+    sudo rm -rf "$target"
+    sudo mv "$storage" "$target"
+}
+
+:sync-continious() {
+    local target="$1"
+    local storage="$2"
+    echo "continious sync $target/ -> $storage/"
+    (
+        cd "$target"
+        watcher \
+            -e 'modify,close_write' \
+            '.' -- \
+                sudo rsync -av "$target/" "$storage/"
+    )
+}
+
+:ramfs-create() {
+    local dir="$1"
+    mkdir -p "$dir"
+    sudo mount -t tmpfs -o size=512m tmpfs "$dir"
+}
+
+:sync-once() {
+    local src="$1"
+    local dst="$2"
+    :log "sync $src -> $dst"
+    mkdir -p "$dst"
+    sudo rsync -av "$src/" "$dst/"
+}
+
+:storage-create() {
+    local target="$1"
+    mv "$target" "$(:get-storage-path "$target")"
+}
+
+:get-storage-path() {
+    local target="$1"
+    echo "$(dirname "$target")/rams.storage.$(basename "$target")"
+}
+
+:storage-exists() {
+    test -d "$(:get-storage-path "$1")"
+}
+
+:log() {
+    echo "$*" >&2
+}
+
+:main "$@"
