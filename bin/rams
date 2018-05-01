@@ -3,7 +3,7 @@
 set -euo pipefail
 
 :main() {
-local target="$(readlink -f $1)"
+    local target="$(readlink -f $1)"
 
     local storage=$(:get-storage-path "$target")
 
@@ -15,18 +15,38 @@ local target="$(readlink -f $1)"
         :ramfs-create "$target"
     fi
 
+    local sync_pid
     trap ':trap-exit' EXIT
 
     :sync-once "$storage" "$target"
 
-    :sync-continious "$target" "$storage"
+    :sync-continious "$target" "$storage" &
+    sync_pid=$!
+    wait $sync_pid
+}
+
+:kill-tree() {
+    local pid="$1"
+    local pgid=$(ps -o pgid "$pid" | grep -o '[0-9]*')
+    kill -SIGTERM $pgid
 }
 
 :trap-exit() {
     echo "got exit signal, restoring fs"
 
+    echo "killing tree $sync_pid"
+    :kill-tree "$sync_pid"
+    echo "waiting tree $sync_pid"
+    if ! wait "$sync_pid"; then
+        :
+    fi
+
+    echo "sync once"
     :sync-once "$target" "$storage"
-    sudo umount "$target"
+    echo "umount"
+    until sudo umount "$target"; do
+        sleep 1
+    done
     sudo rm -rf "$target"
     sudo mv "$storage" "$target"
 }
@@ -35,13 +55,12 @@ local target="$(readlink -f $1)"
     local target="$1"
     local storage="$2"
     echo "continious sync $target/ -> $storage/"
-    (
-        cd "$target"
-        watcher \
-            -e 'modify,close_write' \
-            '.' -- \
-                sudo rsync -av "$target/" "$storage/"
-    )
+
+    cd "$target"
+    watcher \
+        -e 'modify,close_write' \
+        '.' -- \
+            sudo rsync -av "$target/" "$storage/"
 }
 
 :ramfs-create() {

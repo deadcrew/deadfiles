@@ -1,0 +1,5 @@
+#!/bin/bash
+
+output=$(xdotool getmouselocation --shell)
+echo "$output" > /tmp/mouse-position
+echo "$output"
