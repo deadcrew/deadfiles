@@ -1,0 +1,46 @@
+#!/bin/bash
+
+set -euo pipefail
+
+source $(dirname "$(readlink -f "$0")")/../lib/kubectl.bash
+source /usr/share/bash/opts/opts.bash
+
+import:use github.com/reconquest/coproc.bash
+
+:main() {
+    declare -a args
+    declare -A opts
+
+    opts:parse opts args \
+        -n: -- "${@}"
+
+    local context="${args[1]}"
+    local namespace="${opts[-n]}"
+    local match="${args[2]}"
+    local pods
+    pods=($(
+        :get-pods "$context" "$namespace" \
+            | awk '/'$match'/{ print $1 }'
+    ))
+
+    echo '$pods[@]: '"${pods[@]}"
+    local stdouts=()
+    for pod in "${pods[@]}"; do
+        echo '$pod: '"${pod}"
+        coproc_id=coproc_$(:sanitize "$pod")
+        coproc:run $coproc_id 'blah'
+        eval 'local coproc_id_path=$'$coproc_id
+        echo '$coproc_id_path: '"${coproc_id_path}"
+        stdouts+=($coproc_id_path/stdout.pipe)
+        break
+    done
+
+    echo '$stdouts[@]: '"${stdouts[@]}"
+
+}
+
+:sanitize() {
+    echo "${1//-/_}"
+}
+
+:main "${@}"
