@@ -6,12 +6,16 @@ suspend_notify_timeout=${SUSPEND_NOTIFY_TIMEOUT:-120}
     ps -C upwork -o s= | grep -qF T
 }
 
+:list-pids() {
+    ps -o pgid= $(pgrep -x upwork) | sort | uniq | paste -sd,
+}
+
 :main() {
     if :is-suspened; then
-        pkill -x -CONT upwork
+        pkill -CONT -g $(:list-pids)
         notify-send "upwork" "<b>UPWORK</b> RESUMED"
     else
-        pkill -x -STOP upwork
+        pkill -STOP -g $(:list-pids)
         notify-send "upwork" "<b>UPWORK</b> SUSPENDED"
 
         {
