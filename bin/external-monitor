@@ -12,25 +12,28 @@
             output="${line%% *}"
         else
             if $connected && [[ "$line" =~ ^[0-9]+x[0-9]+ ]]; then
-                read size _ <<< "$line"
+                read size rate _ <<< "$line"
 
-                printf "%s %s\n" "$size" "$output"
+                printf "%s %s %s\n" "$size" "$rate" "$output"
             fi
         fi
     done
 }
 
-udevadm settle --timeout=5
+#udevadm settle --timeout=1
 
-output=$(
+read mode _ output <<< $(
     xrandr \
         | :map-outputs \
+        | awk '$2 > 31' \
         | sort -nr \
-        | head -n1 \
-        | awk '{ print $2 }'
+        | head -n1
 )
 
-xrandr --output "$output" --preferred
+echo "OUTPUT=$output"
+echo "MODE=$mode"
+
+xrandr --output "$output" --mode "$mode"
 
 xrandr \
     | grep -vFw "$output" \
@@ -39,4 +42,4 @@ xrandr \
     | xargs -n1 -I{} xrandr --output {} --off
 
 i3-msg restart
-killall -HUP keynav
+killall keynav
