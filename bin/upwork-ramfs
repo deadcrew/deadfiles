@@ -4,6 +4,7 @@ set -euo pipefail
 
 DATASET_EXT=~/dataset/upwork-ext4
 DATASET_RAM=~/dataset/upwork-ramfs
+DATASET_TARGET=~/.Upwork
 DATASET_SIZE=128
 
 :main() {
@@ -26,7 +27,7 @@ DATASET_SIZE=128
 }
 
 :is-dataset-mounted() {
-    findmnt ~/.Upwork &>/dev/null
+    findmnt $DATASET_TARGET &>/dev/null
 }
 
 :is-dataset-exists() {
@@ -45,7 +46,7 @@ DATASET_SIZE=128
     :sudo mkfs.ext4 $DATASET_EXT
     :sudo mkdir $mount
     :sudo mount $DATASET_EXT $mount
-    :sudo cp -r ~/.Upwork/* $mount/
+    :sudo cp -r $DATASET_TARGET/* $mount/
     :sudo umount $mount
     :sudo rmdir $mount
 }
@@ -54,8 +55,8 @@ DATASET_SIZE=128
     :sudo mkdir -p $DATASET_RAM
     :sudo mount -t tmpfs -o size=$(($DATASET_SIZE+1))m tmpfs $DATASET_RAM
     :sudo cp $DATASET_EXT $DATASET_RAM
-    :sudo mount $DATASET_RAM/upwork-ext4 ~/.Upwork
-    :sudo chown -R $(id -un):$(id -un) ~/.Upwork
+    :sudo mount $DATASET_RAM/upwork-ext4 $DATASET_TARGET
+    :sudo chown -R $(id -un):$(id -un) $DATASET_TARGET
 }
 
 
