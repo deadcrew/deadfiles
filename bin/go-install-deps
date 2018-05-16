@@ -1,0 +1,7 @@
+#!/bin/bash
+
+cmd='go install {}'
+deps=$(go list -f '{{join .Deps "\n"}}' ./... \
+        | xargs go list \
+            -f '{{if not .Standard}}{{.ImportPath}}{{end}}')
+echo "$deps" | xargs -P 32 -n1 -I{} bash -c "echo $cmd; $cmd"
