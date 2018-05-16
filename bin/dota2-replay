@@ -1,0 +1,9 @@
+#!/bin/bash
+
+match_id=$1
+
+match=$(curl -s "https://api.stratz.com/api/v1/match?matchId=${match_id}")
+echo $match | jq .
+cluster=$(jq -r '.results[0].clusterId' <<< "$match")
+replaySalt=$(jq -r '.results[0].replaySalt' <<< "$match")
+wget http://replay$cluster.valve.net/570/${match_id}_$replaySalt.dem.bz2
