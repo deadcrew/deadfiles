@@ -16,10 +16,16 @@ DATASET_SIZE=128
         :mount-dataset
     fi
 
+    until ping -c1 8.8.8.8; do
+        notify "upwork: waiting for internet"
+        sleep 3
+    done
+
     while :; do
         notify "upwork: starting process"
         /bin/upwork &
         sleep 3
+        pkill cmon
         if xdotool search --name 'Time Tracker' >/dev/null; then
             break
         fi
