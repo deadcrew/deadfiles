@@ -1,0 +1,45 @@
+#!/bin/bash
+
+set -euo pipefail
+
+match="${1:-}"
+
+deploy=$(
+    cat .circleci/config.yml \
+        | bmo -b '/deploy:/' '/(deploy:|workflows:)/' -c "/${match}/"
+)
+if [[ ! "$deploy"  ]]; then
+    echo "ERROR: no such deploy section" >&2
+    exit 1
+fi
+
+count=$(grep -c "command:" <<< "$deploy")
+if [[ "$count" != "1" ]]; then
+    echo "$deploy" | sed 's/^/> /' >&2
+    echo "ERROR: found $count sections, expected to found only one" >&2
+    exit 1
+fi
+
+environment=$(echo "$deploy" \
+    | bmo -b '/environment:/' '/command:/' \
+    | grep -vP '^\s*(environment|command):' \
+    | sed 's/^\s*//'
+)
+
+deployment=$(cat deployment.yaml)
+while IFS='=' read -r name value; do
+    if [[ "$deployment" =~ "$name" ]]; then
+        environment="$(printf "%s\n%s: \"%q\"" "$environment" "$name" "$value")"
+    fi
+done <<< $(env)
+
+if [[ ! "$environment" =~ "VERSION:" ]]; then
+    VERSION=$(printf "%s.%s" \
+        $(git rev-list --count HEAD) $(git rev-parse --short HEAD))
+
+    environment="$(printf "%s\n%s: \"%q\"" "$environment" "VERSION" "$VERSION")"
+fi
+
+sed 's/^/> /' <<< "$environment" >&2
+
+gotpl deployment.yaml <<< "$environment"
