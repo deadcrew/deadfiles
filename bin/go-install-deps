@@ -1,5 +1,9 @@
 #!/bin/bash
 
+if [[ "$1" ]]; then
+    cd "$(dirname "$1")"
+fi
+
 cmd='go install {}'
 deps=$(go list -f '{{join .Deps "\n"}}' ./... \
         | xargs go list \

@@ -1,0 +1,11 @@
+#!/bin/bash
+
+set -x
+set -euo pipefail
+
+process_id=$(xdotool getactivewindow getwindowpid)
+cwd=$(readlink -f /proc/$process_id/cwd)
+
+cd "$cwd"
+
+exec "${@}"
