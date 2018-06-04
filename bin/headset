@@ -9,4 +9,5 @@ amixer -q -c PCH cset 'name=Headphone Mic Boost Volume' 1
 pactl set-source-port "$input" analog-input-headset-mic
 
 # max recording volume
-pactl set-source-volume "$input" 65536
+pactl set-source-volume "$input" ${VOLUME:-65536}
+notify-send " " "headset: volume ${VOLUME:-65536}"

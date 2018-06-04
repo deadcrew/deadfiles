@@ -25,7 +25,6 @@ DATASET_SIZE=128
         notify "upwork: starting process"
         /bin/upwork &
         sleep 3
-        pkill cmon
         if xdotool search --name 'Time Tracker' >/dev/null; then
             break
         fi
