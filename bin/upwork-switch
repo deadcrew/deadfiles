@@ -1,0 +1,61 @@
+#!/bin/bash
+
+:main() {
+    local initial_window=$(xdotool getactivewindow)
+    trap "xdotool windowfocus $initial_window" EXIT
+
+    :log ":: searching window"
+    local window=$(xdotool search --sync --name 'Time Tracker')
+
+    xdotool key --window "$window" ctrl+alt+bracketleft
+
+    :mousemove "$window" 1 1
+    :log ":: found window $window"
+    :tomenu "$window"
+    sleep 0.3
+
+    local contract="$(cat ~/.cache/upwork-contract 2>/dev/null)"
+
+    if [[ "$contract" == "primary" ]]; then
+        contract="secondary"
+    else
+        contract="primary"
+    fi
+
+    :log ":: switching to $contract contract"
+
+    if [[ "$contract" == "primary" ]]; then
+        :mousemove $window 40 130
+    else
+        :mousemove $window 40 200
+    fi
+
+    :click $window 1
+
+    echo "$contract" > ~/.cache/upwork-contract
+
+    sleep 1
+    xdotool key --window "$window" ctrl+alt+bracketright
+}
+
+:tomenu() {
+    local window=$1
+    :mousemove $window 40 30
+    :click $window 1
+}
+
+:click() {
+    local window=$1
+    xdotool click --window $window $2
+}
+:mousemove() {
+    local window=$1
+    shift
+    xdotool mousemove --sync --window $window "${@}"
+}
+
+:log() {
+    echo "$*" >&2
+}
+
+:main "${@}"
