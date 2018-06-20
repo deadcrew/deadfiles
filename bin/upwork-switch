@@ -1,5 +1,8 @@
 #!/bin/bash
 
+SHORTCUT_WORK_START=${SHORTCUT_WORK_START:-"ctrl+alt+bracketleft"}
+SHORTCUT_WORK_STOP=${SHORTCUT_WORK_STOP:-"ctrl+alt+bracketright"}
+
 set -euo pipefail
 
 :main() {
@@ -9,7 +12,7 @@ set -euo pipefail
     :log ":: searching window"
     local window=$(xdotool search --sync --name 'Time Tracker')
 
-    xdotool key --window "$window" ctrl+alt+bracketleft
+    xdotool key --window "$window" $SHORTCUT_WORK_STOP
     sleep 0.5
 
     :mousemove "$window" 1 1
@@ -38,7 +41,7 @@ set -euo pipefail
 
     echo "$contract" > ~/.cache/upwork-contract
 
-    xdotool key --window "$window" ctrl+alt+bracketright
+    xdotool key --window "$window" $SHORTCUT_WORK_START
 }
 
 :tomenu() {
