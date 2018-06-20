@@ -10,6 +10,7 @@ set -euo pipefail
     local window=$(xdotool search --sync --name 'Time Tracker')
 
     xdotool key --window "$window" ctrl+alt+bracketleft
+    sleep 0.5
 
     :mousemove "$window" 1 1
     :log ":: found window $window"
@@ -33,10 +34,10 @@ set -euo pipefail
     fi
 
     :click $window 1
+    sleep 1
 
     echo "$contract" > ~/.cache/upwork-contract
 
-    sleep 1
     xdotool key --window "$window" ctrl+alt+bracketright
 }
 
