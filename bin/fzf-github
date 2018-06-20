@@ -1,0 +1,42 @@
+#!/bin/bash
+
+set -euo pipefail
+
+:main() {
+    cd "${1:-.}"
+
+    local repo=$(git remote get-url origin | grep -Po '(:|/)\K.*/.*(?=.git)?')
+
+    local choose=""
+    choose=$(
+        {
+            :list-issues;
+            :list-prs;
+        } | fzf-tmux -d 10
+    )
+
+    if [[ "$choose" ]]; then
+        echo ":: $choose" >&2
+        local id=$(grep -Po '#\K\d+' <<< "$choose")
+        browser "https://github.com/$repo/issues/$id"
+    fi
+}
+
+:format() {
+    printf "%5s %-3s %s\n" "$1" "$2" "$3"
+}
+
+:list-issues() {
+    hub issue | while read id title; do
+        :format "issue" "$id" "$title"
+    done
+}
+
+:list-prs() {
+    hub issue | while read id title; do
+        :format "pr" "$id" "$title"
+    done
+
+}
+
+:main "${@}"
