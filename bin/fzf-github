@@ -5,7 +5,7 @@ set -euo pipefail
 :main() {
     cd "${1:-.}"
 
-    local repo=$(git remote get-url origin | grep -Po '(:|/)\K.*/.*(?=.git)?')
+    local repo=$(git remote get-url origin | grep -Po '(:|/)\K.*/.*(?=.git)?$')
 
     local choose=""
     choose=$(
