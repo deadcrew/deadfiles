@@ -33,7 +33,7 @@ set -euo pipefail
 }
 
 :list-prs() {
-    hub issue | while read id title; do
+    hub pr list | while read id title; do
         :format "pr" "$id" "$title"
     done
 
