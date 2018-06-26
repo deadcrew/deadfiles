@@ -1,0 +1,34 @@
+#!/bin/bash
+
+set -euo pipefail
+
+secrets_repository=${secrets_repository:-$HOME/.secrets/}
+
+if [[ ! -d "${secrets_repository}" ]]; then
+    notify-send "carcosa-qr" "$secrets_repository does not exist."
+    exit 1
+fi
+
+cd "${secrets_repository}"
+
+if ! carcosa -Fc; then
+    notify-send "carcosa-qr" "Master password key cache file is not found."
+    exit 1
+fi
+
+token=$(carcosa -Lc \
+    | sort \
+    | modal 2>/dev/null \
+    | perl -p -e 'chomp if eof'
+)
+
+if output=$(carcosa -Gc "$token" 2>&1); then
+    png=$(mktemp -p /var/run/user/$UID/ --suffix=.png)
+    trap "rm $png" EXIT
+    qrencode <<< "$output" -o "$png" -s 10
+    feh "$png"
+else
+    if [ "$output" ]; then
+        notify-send "$output"
+    fi
+fi
