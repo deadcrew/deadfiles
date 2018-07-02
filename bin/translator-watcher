@@ -1,0 +1,20 @@
+#!/bin/bash
+
+:clipboard() {
+    xclip -o primary 2>/dev/null
+}
+
+old_clipboard=$(:clipboard)
+
+while :; do
+    sleep 0.05
+    clipboard=$(:clipboard)
+    if [[ "$clipboard" == "$old_clipboard" ]]; then
+        continue
+    fi
+
+    old_clipboard="$clipboard"
+    if [[ "$(wc -w <<< "$clipboard")" == "1" ]]; then
+        translator "$clipboard"
+    fi
+done
