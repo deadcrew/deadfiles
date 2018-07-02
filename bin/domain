@@ -1,17 +1,30 @@
 #!/bin/bash
 
-for domain in $@;
-do
-	if host $domain | grep "NXDOMAIN" >&/dev/null; then
-        while [[ ! "$whois" ]]; do
-            whois=$(whois $domain 2>/dev/null)
-        done
-		if  grep <<< "$whois" -E "(No match for|NOT FOUND)" >&/dev/null; then
-			echo "$domain AVAILABLE";
-		else
-			echo "$domain taken";
-		fi
-	else
-		echo "$domain taken";
-	fi
-done
+domain="$1"
+if [[ ! "$domain" =~ \. ]]; then
+    zones=(
+        archi
+        org
+        io
+        net
+        com
+        me
+    )
+    for zone in ${zones[@]}; do
+        echo "$domain.$zone"
+    done | xargs -n1 -P16 domain
+    exit 0
+fi
+
+if host $domain | grep "NXDOMAIN" >&/dev/null; then
+    while [[ ! "$whois" ]]; do
+        whois=$(whois $domain 2>/dev/null)
+    done
+    if  grep <<< "$whois" -E "(No match for|NOT FOUND)" >&/dev/null; then
+        echo "$domain AVAILABLE";
+    else
+        echo "$domain taken";
+    fi
+else
+    echo "$domain taken";
+fi
