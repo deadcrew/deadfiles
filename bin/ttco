@@ -9,12 +9,12 @@ if [[ ! "$username" || ! "$password" ]]; then
     exit 1
 fi
 
-if [[ "$#" != 2 ]]; then
-    echo "$0 start|stop <task-id>"
+if [[ ! "$user_id" ]]; then
+    echo "user_id is empty" >&2
+    exit 1
 fi
 
-op=$1
-task_id=$2
+op="${1:-get}"
 
 :request() {
     curl -s -u "$username:$password" \
@@ -33,24 +33,42 @@ task_id=$2
     jq -r '.data.task'
 }
 
-if [[ "$op" == "stop" ]]; then
-    response="$(:request /api/v4/tasks/stop/$task_id)"
-fi
+:print-action-result() {
+    local response="$1"
 
-if [[ "$op" == "start" ]]; then
-    response="$(:request /api/v4/tasks/track/$task_id)"
-fi
+    status=$(:get-status <<< "$response")
+    message=$(:get-message <<< "$response")
+    if [[ "$status" != "200" ]]; then
+        echo "Bad response status: ${status}" >&2
+        echo "Message: $message" >&2
+        exit 1
+    fi
 
-status=$(:get-status <<< "$response")
-message=$(:get-message <<< "$response")
-if [[ "$status" != "200" ]]; then
-    echo "Bad response status: ${status}" >&2
-    echo "Message: $message" >&2
-    exit 1
-fi
+    echo "$status $message"
 
+    task=$(:get-task <<< "$response")
+    echo "$task"
+}
 
-echo "$status $message"
+:print-get-result() {
+    local response="$1"
 
-task=$(:get-task <<< "$response")
-echo "$task"
+    jq -r ".data | .[] | select(.user.id == $user_id) | .id" <<< "$response"
+}
+
+case "$op" in
+    start)
+        response="$(:request /api/v4/tasks/stop/$task_id)"
+        :print-action-result "$response"
+        ;;
+
+    stop)
+        response="$(:request /api/v4/tasks/track/$task_id)"
+        :print-action-result "$response"
+        ;;
+
+    get)
+        response=$(:request "/api/v2/tasks?filter=TRACKING")
+        :print-get-result "$response"
+        ;;
+esac
