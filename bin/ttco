@@ -58,12 +58,12 @@ op="${1:-get}"
 
 case "$op" in
     start)
-        response="$(:request /api/v4/tasks/stop/$task_id)"
+        response="$(:request /api/v4/tasks/stop/$2)"
         :print-action-result "$response"
         ;;
 
     stop)
-        response="$(:request /api/v4/tasks/track/$task_id)"
+        response="$(:request /api/v4/tasks/track/$2)"
         :print-action-result "$response"
         ;;
 
