@@ -58,7 +58,10 @@ op="${1:-get}"
 
 case "$op" in
     start)
-        response="$(:request /api/v4/tasks/stop/$2)"
+        date=$(date +'%Y-%m-%d+%H:%M:%S')
+        response="$(
+            :request "/api/v4/tasks/track/$2?date=$date"
+        )"
         :print-action-result "$response"
         ;;
 
