@@ -1,0 +1,56 @@
+#!/bin/bash
+
+set -euo pipefail
+
+source ~/.config/ttco.conf
+
+if [[ ! "$username" || ! "$password" ]]; then
+    echo "username/password is empty" >&2
+    exit 1
+fi
+
+if [[ "$#" != 2 ]]; then
+    echo "$0 start|stop <task-id>"
+fi
+
+op=$1
+task_id=$2
+
+:request() {
+    curl -s -u "$username:$password" \
+        "https://app.trackingtime.co${1}"
+}
+
+:get-status() {
+    jq -r '.response.status'
+}
+
+:get-message() {
+    jq -r '.response.message'
+}
+
+:get-task() {
+    jq -r '.data.task'
+}
+
+if [[ "$op" == "stop" ]]; then
+    response="$(:request /api/v4/tasks/stop/$task_id)"
+fi
+
+if [[ "$op" == "start" ]]; then
+    response="$(:request /api/v4/tasks/track/$task_id)"
+fi
+
+status=$(:get-status <<< "$response")
+message=$(:get-message <<< "$response")
+if [[ "$status" != "200" ]]; then
+    echo "Bad response status: ${status}" >&2
+    echo "Message: $message" >&2
+    exit 1
+fi
+
+
+echo "$status $message"
+
+task=$(:get-task <<< "$response")
+echo "$task"
