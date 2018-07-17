@@ -1,0 +1,5 @@
+#!/bin/bash
+
+exec ~/sources/github.com/mermaidjs/mermaid.cli/node_modules/.bin/mmdc \
+    -p ~/sources/github.com/mermaidjs/mermaid.cli/puppeteer-config.json \
+    -i /dev/stdin -o $1
