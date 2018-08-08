@@ -20,11 +20,10 @@
     done
 }
 
-#udevadm settle --timeout=1
-
 read mode _ output <<< $(
     xrandr \
         | :map-outputs \
+        | grep -vP '\d+x\d+i' \
         | awk '$2 > 31' \
         | sort -nr \
         | head -n1
@@ -33,13 +32,24 @@ read mode _ output <<< $(
 echo "OUTPUT=$output"
 echo "MODE=$mode"
 
-xrandr --output "$output" --mode "$mode"
+args=()
 
-xrandr \
+args+=(--output "$output" --mode "$mode")
+
+args+=($(xrandr \
     | grep -vFw "$output" \
     | grep -Fw "connected" \
     | awk '{ print $1 }' \
-    | xargs -n1 -I{} xrandr --output {} --off
+    | xargs -n1 -I{} echo --output {} --off
+))
+
+args+=($(xrandr \
+    | grep -Po '^[\w-]+(?= disconnected \d+x\d+\+\d+\+\d+)' \
+    | xargs -n1 -I{} echo --output {} --off
+))
+
+xrandr "${args[@]}"
 
 i3-msg restart
-killall keynav
+killall -q keynav
+killall -q dunst
