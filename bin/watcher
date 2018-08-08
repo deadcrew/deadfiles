@@ -67,7 +67,7 @@ set -euo pipefail
     local events="$1"
     local directory="$2"
 
-    inotifywait -r -m -e $events --format %w%f $directory
+    inotifywait -q -r -m -e $events --format %w%f $directory
 }
 
 :parse-opts() {
