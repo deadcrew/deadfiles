@@ -1,0 +1,12 @@
+#!/bin/bash
+
+window=$(xdotool search --class feh)
+
+if [[ "$window" ]]; then
+    xdotool key --window "$window" r
+    exit 0
+else
+    nohup feh "${1}" &>/dev/null &
+    disown
+    exit 0
+fi
