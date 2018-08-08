@@ -7,7 +7,7 @@ else
 fi
 
 file="$(readlink -f "$1")"
-output="${file%%.*}.png"
+output="${file%.*}.png"
 
 mermaid <$file $output "${@:2}"
 echo "> generated $output" >&2

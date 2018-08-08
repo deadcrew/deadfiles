@@ -2,4 +2,4 @@
 
 file=$1
 
-mermaid <$1 ${file%%.*}.png "${@:2}"
+mermaid <$1 ${file%.*}.png "${@:2}"
