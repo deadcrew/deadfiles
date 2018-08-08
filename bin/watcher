@@ -193,9 +193,8 @@ HELP
         ( :eval-command-on-file-name "$filename" "${command[@]}" ) &
         local child=$!
 
-        ( :watchdog $wait $child ) &
-
-        local watchdog=$!
+        coproc watchdog { :watchdog $wait $child ; }
+        local watchdog=$watchdog_PID
 
         {
             wait $child
