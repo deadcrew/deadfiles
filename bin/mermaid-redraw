@@ -1,0 +1,18 @@
+#!/bin/bash
+
+if which sxiv &>/dev/null; then
+    VIEWER=sxiv
+else
+    VIEWER=feh
+fi
+
+file="$(readlink -f "$1")"
+output="${file%%.*}.png"
+
+mermaid <$file $output "${@:2}"
+echo "> generated $output" >&2
+
+RELOADER=${VIEWER}-reload
+${RELOADER} $output
+
+exit 0

@@ -1,5 +1,5 @@
 #!/bin/bash
 
-file=$(basename $1)
+file=$1
 
 mermaid <$1 ${file%%.*}.png "${@:2}"
