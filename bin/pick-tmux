@@ -1,6 +1,6 @@
 #!/bin/bash
 
-if ! which pick; then
+if ! which pick &>/dev/null; then
     echo "program 'pick' is required" >&2
     exit 1
 fi
@@ -16,7 +16,7 @@ fi
 
 trap "rm $stdin $stdout" EXIT
 
-tmux split-window sh -ic "pick < $stdin > $stdout"
+tmux split-window -vb -l 10 sh -ic "pick < $stdin > $stdout"
 
 tasks=()
 cat < $stdout &
