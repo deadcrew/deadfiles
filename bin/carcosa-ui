@@ -2,11 +2,7 @@
 
 set -euo pipefail
 
-mode=password
-
-if [[ "${1:-}" == "login-password" ]]; then
-    mode=login-password
-fi
+mode="${1:-password}"
 
 secrets_repository=${secrets_repository:-$HOME/.secrets/}
 
@@ -52,6 +48,11 @@ fi
 if output=$(carcosa -Gc "$token" 2>&1); then
     password=$output
 
+    if [[ "$mode" == "clipboard" ]]; then
+        xclip -i -selection primary <<< "$password"
+        exit 0
+    fi
+
     screenkey_pid=$(pgrep -f screenkey || true)
 
     if [[ "$screenkey_pid" ]]; then
@@ -94,6 +95,6 @@ if output=$(carcosa -Gc "$token" 2>&1); then
     fi
 else
     if [ "$output" ]; then
-        notify-send "$output"
+        notify "$output"
     fi
 fi

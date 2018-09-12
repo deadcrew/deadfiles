@@ -1,0 +1,3 @@
+#!/bin/bash
+
+docker inspect $1 | jq -r '.[]| .NetworkSettings.Networks | to_entries | .[] | .value.IPAddress'
