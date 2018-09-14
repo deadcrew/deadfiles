@@ -1,0 +1,11 @@
+#!/bin/bash
+
+cookie=$(
+    curl http://192.168.8.1/html/index.html -L -v 2>&1 \
+        | grep -i 'set-cookie' \
+        | cut -f2- -d:
+)
+
+status=$(curl -s -HCookie:$cookie http://192.168.8.1/api/monitoring/status | xml2)
+
+echo $(grep -Po 'SignalIcon=\K.*' <<< $status) / $(grep -Po 'maxsignal=\K.*' <<< $status)
