@@ -16,7 +16,7 @@ fi
 
 trap "rm $stdin $stdout" EXIT
 
-tmux split-window -vb -l 10 sh -ic "pick < $stdin > $stdout"
+tmux split-window -vb -l 10 sh -ic "pick -S < $stdin > $stdout"
 
 tasks=()
 cat < $stdout &
