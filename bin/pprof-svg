@@ -1,0 +1,20 @@
+#!/bin/bash
+
+find ./ -name '*.pprof' | while read pprof; do
+    file=$(readlink -f "$pprof")
+    file_no_ext=${file%%.pprof}
+    dir=$(dirname "$file")
+    bin=$(basename "$dir")
+    bin_path=$dir/$bin
+    if [[ ! -f $bin_path ]]; then
+        echo "No bin: $bin_path" >&2
+        exit 1
+    fi
+
+    echo ":: Generating SVG of $pprof"
+
+    go tool pprof \
+        -output "${file_no_ext}.svg" \
+        "$bin_path" "$file" \
+        <<< "svg999" &>/dev/null
+done
