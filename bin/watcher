@@ -24,7 +24,7 @@ set -euo pipefail
     :export-environment "$filename"
 
     printf " > \e[1m%s\e[0m\n" "$command"
-    ( script --return -qc "$command" /dev/null ) \
+    ( bash -c "eval $command" 2>&1 </dev/null ) \
         | :indent
 }
 

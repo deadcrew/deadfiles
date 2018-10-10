@@ -3,23 +3,27 @@
 set -euo pipefail
 
 if [[ "$*" ]]; then
-    channel=$(mktemp -dt rebirth.XXXXXX)/pids
-    trap "rm -r $(dirname $channel)" EXIT ERR
-    mkfifo "$channel"
+    dir=$(mktemp -dt rebirth.XXXXXX)
+    trap "rm -r $dir" EXIT ERR
+
+    printf "%s\n" "$*" >$dir/cmd
 
     while :; do
         { coproc { "$@"; } >&3; } 3>&1
-        printf "%d\n" "$COPROC_PID" >$channel
+        printf "%d\n" "$COPROC_PID" >$dir/pid
         if ! wait $COPROC_PID; then
             :
         fi
+        echo "> reborn" >&2
     done
 else
-    channel=$(echo ${TMPDIR:-/tmp}/rebirth.*/pids)
-
-    if [[ ! -p "$channel" ]]; then
-        exit 1
-    fi
-
-    pkill -INT -P $(head -n1 "$channel") 2>&-
+    for dir in ${TMPDIR:-/tmp}/rebirth.*; do
+        cmd=$(cat $dir/cmd)
+        pid=$(cat $dir/pid)
+        if pkill -INT -P $pid; then
+            echo "killed {$pid} $cmd" >&2
+        else
+            echo "unable to kill {$pid} $cmd" >&2
+        fi
+    done
 fi

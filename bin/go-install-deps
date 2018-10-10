@@ -8,4 +8,4 @@ deps=$(go list -f '{{join .Deps "\n"}}{{"\n"}}{{join .TestImports "\n"}}' ./... 
         | xargs go list \
             -f '{{if not .Standard}}{{.ImportPath}}{{end}}')
 
-exec xargs <<< "$deps" -P 32 -n1 -I{} /bin/go install {}
+exec xargs <<< "$deps" -P 32 -n1 -I{} sh -c 'echo {} && /bin/go install {}'
