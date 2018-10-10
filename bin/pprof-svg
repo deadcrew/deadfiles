@@ -7,8 +7,12 @@ find ./ -name '*.pprof' | while read pprof; do
     bin=$(basename "$dir")
     bin_path=$dir/$bin
     if [[ ! -f $bin_path ]]; then
-        echo "No bin: $bin_path" >&2
-        exit 1
+        if [[ -f $bin_path.test ]]; then
+            bin_path=$bin_path.test
+        else
+            echo "No bin: $bin_path" >&2
+            exit 1
+        fi
     fi
 
     echo ":: Generating SVG of $pprof"
