@@ -2,8 +2,14 @@
 
 set -euo pipefail
 
+name=""
+if [[ "${1:-}" == "-n" ]]; then
+    shift
+    name="_${1}"
+fi
+
 if [[ "$*" ]]; then
-    dir=$(mktemp -dt rebirth.XXXXXX)
+    dir=$(mktemp -dt rebirth$name.XXXXXX)
     trap "rm -r $dir" EXIT ERR
 
     printf "%s\n" "$*" >$dir/cmd
@@ -17,7 +23,7 @@ if [[ "$*" ]]; then
         echo "> reborn" >&2
     done
 else
-    for dir in ${TMPDIR:-/tmp}/rebirth.*; do
+    for dir in ${TMPDIR:-/tmp}/rebirth$name.*; do
         cmd=$(cat $dir/cmd)
         pid=$(cat $dir/pid)
         if pkill -INT -P $pid; then
