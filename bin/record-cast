@@ -63,9 +63,9 @@ ffcast $select_arg % \
     -i %D+%c -codec:v libx264 -b:v 20000k \
     -vf crop="iw-mod(iw\\,2):ih-mod(ih\\,2)" -y "$video"
 
-sleep 1
+#sleep 1
 
-clear
+#clear
 
-video-to-gif "$video" "$name" && rm "$video"
+#video-to-gif "$video" "$name" && rm "$video"
 
