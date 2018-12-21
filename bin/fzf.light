@@ -1,1 +1,1 @@
-/bin/fzf --color=fg:248,bg:255,bg+:220,fg+:240,hl:196,hl+:196,info:2,spinner:1,prompt:16,pointer:230 "${@}"
+/bin/fzf --color=fg:248,bg:231,bg+:220,fg+:240,hl:196,hl+:196,info:2,spinner:1,prompt:16,pointer:230 "${@}"

@@ -1,0 +1,37 @@
+#!/bin/bash
+
+__watchit_0="$(basename $BASH_SOURCE)"
+:watchit_exec() {
+    if [[ $__watchit_0 == "watchit" ]]; then
+        "${@}"
+    else
+        eval "${@}"
+    fi
+}
+
+:watchit() {
+    local timeout=0.5
+    if [[ $1 =~ ^-?[.0-9]+$ ]]; then
+        timeout=$1
+        shift
+    fi
+
+    START=$(tput cup 0 0)
+    ED=$(tput ed)
+    EL=$(tput el)
+    printf '%s%s' "$START" "$ED"
+    while true
+    do
+        ROWS=$(tput lines)
+        COLS=$(tput cols)
+        :watchit_exec "${@}" | head -n $ROWS | while IFS= read LINE; do
+            printf '%-*.*s%s\n' $COLS $COLS "$LINE" "$EL"
+        done
+        printf '%s%s' "$ED" "$START"
+        sleep $timeout
+    done
+}
+
+if [[ $__watchit_0 == "watchit" ]]; then
+    :watchit "${@}"
+fi
