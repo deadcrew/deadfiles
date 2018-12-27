@@ -1,0 +1,17 @@
+#!/bin/bash
+
+set -euo pipefail
+
+index=1
+/bin/ls -1 "${@}" | while read file; do
+    new_file=$(sed -r 's/^[0-9]+\-//' <<< "$file")
+    new_file=$(printf '%02d-%s' $index "$new_file")
+
+    if [[ "$new_file" != "$file" ]]; then
+        echo ":: ${file} -> ${new_file}" >&2
+
+        mv "${file}" "${new_file}"
+    fi
+
+    index=$((index+1))
+done

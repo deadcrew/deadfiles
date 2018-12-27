@@ -3,11 +3,14 @@
 exec 2>/dev/null
 
 while :; do
-    xdotool search --sync --class --onlyvisible upwork | while read win_id; do
-        if xwininfo -id "$win_id" | grep -qF 'Width: 360'; then
-            xdotool windowclose "$win_id"
-        fi
-    done
+    win_id=$(xdotool search --sync --class --onlyvisible upwork)
+    if [[ ! "$win_id" ]]; then
+        sleep 10
+        continue
+    fi
 
-    sleep 1
+    if xwininfo -id "$win_id" | grep -qF 'Width: 360'; then
+        xdotool windowclose "$win_id"
+        sleep 60
+    fi
 done
