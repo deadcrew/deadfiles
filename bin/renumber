@@ -3,7 +3,7 @@
 set -euo pipefail
 
 index=1
-/bin/ls -1 "${@}" | while read file; do
+for file in "${@}"; do
     new_file=$(sed -r 's/^[0-9]+\-//' <<< "$file")
     new_file=$(printf '%02d-%s' $index "$new_file")
 
