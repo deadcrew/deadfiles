@@ -33,5 +33,6 @@ __watchit_0="$(basename $BASH_SOURCE)"
 }
 
 if [[ $__watchit_0 == "watchit" ]]; then
+    trap '{clear;}' 'EXIT'
     :watchit "${@}"
 fi
