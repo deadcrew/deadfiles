@@ -1,7 +1,5 @@
 #!/bin/bash
 
-[ -n "$_LOCK" ] || _LOCK=x exec flock -n $0 $0 "$@"
-
 set -euo pipefail
 
 :usage() {
