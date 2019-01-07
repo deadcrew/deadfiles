@@ -1,0 +1,7 @@
+#!/bin/bash
+
+xdotool search --class --onlyvisible firefox | while read win_id; do
+    if xwininfo -id "$win_id" | grep -qF 'Firefox - Sharing Indicator'; then
+        xdotool windowclose "$win_id"
+    fi
+done
