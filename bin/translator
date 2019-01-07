@@ -80,7 +80,7 @@ HISTORY=~/.engrus_history
     local result=$(modal-template <<< "$meanings" \
         --args "-lines $length" \
         --no-description \
-        --message "<span font=\"Verdana 8\">&#8226; $input &#8212; $transcription</span>")
+        --message "<span font=\"Iosevka 10\">$input &#8212; [$transcription]</span>")
 
     if [[ ! "$result" ]]; then
         return 1
