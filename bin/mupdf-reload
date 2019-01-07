@@ -1,0 +1,12 @@
+#!/bin/bash
+
+window=$(xdotool search --class mupdf)
+
+if [[ "$window" ]]; then
+    xdotool key --window "$window" r
+    exit 0
+else
+    nohup mupdf "${1}" &>/dev/null &
+    disown
+    exit 0
+fi
