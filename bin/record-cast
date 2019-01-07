@@ -10,6 +10,12 @@ if [[ "$1" == "-w" ]]; then
     fi
 fi
 
+if [[ "$1" == "-g" && "$2" ]]; then
+    shift
+    select_geometry="$1"
+    shift
+fi
+
 if [[ $# -lt 1 || "$1" == "-h" ]]; then
     echo usage: "$0 [-w [window_id]] <video.avi>"
     exit 1
@@ -36,6 +42,10 @@ if [[ "$select_window" ]]; then
     killall -q -CONT screenkey
 else
     select_arg="-s"
+fi
+
+if [[ "$select_geometry" ]]; then
+    select_arg="-g $select_geometry"
 fi
 
 video="$name".avi
