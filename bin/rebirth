@@ -15,10 +15,10 @@ if [[ "$*" ]]; then
     printf "%s\n" "$*" >$dir/cmd
 
     while :; do
-        { coproc { "$@"; } >&3; } 3>&1
+        { coproc { eval "$@"; } >&3; } 3>&1
         printf "%d\n" "$COPROC_PID" >$dir/pid
         if ! wait $COPROC_PID; then
-            :
+            sleep 1
         fi
         echo "> reborn" >&2
     done
