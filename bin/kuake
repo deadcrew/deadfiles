@@ -2,6 +2,8 @@
 
 set -euo pipefail
 
+TMUX_SOCKET=${TMUX_SOCKET:-}
+
 :usage() {
     cat <<CODE
 kuake
