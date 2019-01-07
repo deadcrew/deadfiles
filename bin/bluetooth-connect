@@ -5,8 +5,18 @@ set address [lindex $argv 0]
 
 spawn sudo systemctl start bluetooth.service
 spawn sudo bluetoothctl
-send "power on\r"
-expect -re "Changing power on succeeded"
+
+expect "Agent registered"
+send "show\n"
+expect {
+    "Powered: no" {
+        send "power on\r"
+        expect -re "Controller .* Powered: yes"
+    }
+
+    "Powered: yes"
+}
+
 send "connect $address\r"
 expect -re "Connection "
 send "quit\r"
