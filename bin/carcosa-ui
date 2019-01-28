@@ -2,6 +2,7 @@
 
 set -euo pipefail
 
+set -x
 mode="${1:-password}"
 
 secrets_repository=${secrets_repository:-$HOME/.secrets/}
