@@ -4,8 +4,19 @@ if [[ "$1" ]]; then
     cd "$(dirname "$1")"
 fi
 
+nproc=$(expr $(nproc) + 1)
+
 deps=$(go list -f '{{join .Deps "\n"}}{{"\n"}}{{join .TestImports "\n"}}' ./... \
-        | xargs go list \
+        | xargs -P$nproc go list \
             -f '{{if not .Standard}}{{.ImportPath}}{{end}}')
 
-exec xargs <<< "$deps" -P 32 -n1 -I{} sh -c 'echo {} && /bin/go install {}'
+total=$(wc -l <<< "$deps")
+i=0
+
+exec xargs <<< "$deps" -P$nproc -n1 -I{} \
+    sh -c 'echo {} && /bin/go install {}' \
+    | while read line; do
+        i=$((i+1))
+
+        echo "[$i/$total] $line"
+    done
