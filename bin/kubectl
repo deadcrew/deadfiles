@@ -52,7 +52,7 @@
             continue
         fi
 
-        if [[ "$arg" =~ @.* ]]; then
+        if [[ ! "$context" && "$arg" =~ ^@.* ]]; then
             context=$(
                 :kubectl config get-contexts --no-headers -o name \
                     | grep -F "${arg:1}"
