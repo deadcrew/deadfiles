@@ -1,0 +1,71 @@
+#!/bin/bash
+
+### kub-roll-recreate - recreates kubernetes pods if the parent has
+### updateStrategy OnDelete
+###
+### Usage:
+###     kub-roll-recreate <label>
+###     kub-roll-recreate -h | --help
+### Example:
+###     kub-roll-recreate app=mongodb
+
+set -euo pipefail
+
+timeout=60s
+
+:main() {
+    source /usr/share/bash/opts/opts.bash
+
+    declare -a args
+    declare -A opts
+
+    opts:parse opts args \
+        -h --help -l: -- "${@}"
+
+    if [[ "${opts[-h]:-}" || "${opts[--help]:-}" ]]; then
+        :help
+        exit 1
+    fi
+
+    local selector="${opts[-l]:-}"
+    if [[ ! "$selector" ]]; then
+        echo "Label selector -l is not specified" >&2
+        exit 1
+    fi
+
+    local params=${args[@]:1}
+
+    pods=($(:kubectl "${params[@]}" get pods -l "${selector}" --no-headers \
+        | tac \
+        | awk '{print $1}'
+    ))
+
+    echo ":: found ${#pods[@]} pods" >&2
+
+    if [[ "${#pods[@]}" == "0" ]]; then
+        exit 1
+    fi
+
+    echo ":: pods: ${pods[@]}" >&2
+    for pod in "${pods[@]}"; do
+        echo ":: deleting ${pod}" >&2
+        :kubectl "${params[@]}" delete pod "${pod}"
+        echo ":: waiting for ready condition ${pod}" >&2
+        :kubectl "${params[@]}" wait --for=condition=Ready pod/"${pod}" --timeout=${timeout}
+    done
+}
+
+:kubectl() {
+    echo "$ kubectl ${@}" >&2
+    kubectl "${@}"
+}
+
+:help() {
+    sed -rn 's/^### ?//;T;p' "$0"
+}
+
+:log() {
+    echo "$*" >&2
+}
+
+:main "$@"
