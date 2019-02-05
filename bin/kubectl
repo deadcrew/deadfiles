@@ -1,6 +1,5 @@
 #!/bin/zsh
 
-set -x
 :main() {
     local arg
     local context
