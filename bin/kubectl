@@ -80,19 +80,19 @@
         context=$(:kubectl config current-context)
 
         if [[ ! "$context" ]]; then
-            printf ":: no matching context found\n"
+            printf ":: no matching context found\n" >&2
             return 1
         fi
 
-        printf ":: @ %s\n" "$context"
+        printf ":: @ %s\n" "$context" >&2
     fi
 
     if [[ "$namespace" ]]; then
-        printf ":: + %s\n" "$namespace"
+        printf ":: + %s\n" "$namespace" >&2
     fi
 
     if [[ "$all_namespaces" ]]; then
-        printf ":: + all namespaces\n"
+        printf ":: + all namespaces\n" >&2
     fi
 
     set -- "${args[@]}"
@@ -121,7 +121,7 @@
             entities=(${(s/ /)entities})
 
             if [[ ! "$entities" ]]; then
-                printf ":: no matching entities found for '%s'\n" "$arg"
+                printf ":: no matching entities found for '%s'\n" "$arg" >&2
                 return 1
             else
                 for entity in "${entities[@]}"; do
