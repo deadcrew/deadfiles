@@ -47,7 +47,7 @@
         fi
 
         if [[ "$arg" =~ \\+.* ]]; then
-            if [[ "${arg:1}" == "!" ]]; then
+            if [[ "${arg:1}" == "+" ]]; then
                 all_namespaces=true
             else
                 arg_namespace="${arg:1}"
@@ -111,8 +111,10 @@
             entities=$(
                 :kubectl \
                     ${namespace:+--namespace=$namespace} \
+                    ${all_namespaces:+--all-namespaces} \
                     --context=$context get "$entity" --no-headers \
-                        | awk '$3 != "Terminating" { print $1 }' \
+                            -o custom-columns=name:.metadata.name,phase:.status.phase \
+                        | awk '$2 != "Terminating" { print $1 }' \
                         | cut -f2- -d/ \
                         | grep "^${${arg:1}#*/}" \
                         | paste -sd ' '
@@ -136,9 +138,9 @@
     done
 
     :kubectl --context=$context \
-        ${all_namespaces:+--all-namespaces} \
         ${namespace:+--namespace=$namespace} \
-        "${args[@]}"
+        "${args[@]}" \
+        ${all_namespaces:+--all-namespaces}
 }
 
 :kubectl() {
