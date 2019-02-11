@@ -108,7 +108,8 @@
                 entity=pod
             fi
 
-            entities=$(
+            matching="${${${arg:1}#*/}//\%}"
+            items=$(
                 :kubectl \
                     ${namespace:+--namespace=$namespace} \
                     ${all_namespaces:+--all-namespaces} \
@@ -116,22 +117,23 @@
                             -o custom-columns=name:.metadata.name,phase:.status.phase \
                         | awk '$2 != "Terminating" { print $1 }' \
                         | cut -f2- -d/ \
-                        | grep "^${${arg:1}#*/}" \
+                        | grep -P "$matching" \
                         | paste -sd ' '
             )
 
-            entities=(${(s/ /)entities})
+            items=(${(s/ /)items})
 
-            if [[ ! "$entities" ]]; then
-                printf ":: no matching entities found for '%s'\n" "$arg" >&2
+            if [[ ! "$items" ]]; then
+                printf ":: no matching items $entity found for '%s'\n" "$matching" >&2
                 return 1
             else
-                for entity in "${entities[@]}"; do
-                    printf ":: %% %s\n" "${entity}"
+                for item in "${items[@]}"; do
+                    printf ":: %% %s\n" "${item}"
                 done
             fi
 
-            args+=($entities)
+            args+=("$entity")
+            args+=($items)
         else
             args+=("$arg")
         fi
@@ -144,6 +146,10 @@
 }
 
 :kubectl() {
+    if ${kubectl_debug:-false}; then
+        echo ":: /usr/bin/kubectl ${@}" >&2
+    fi
+
     /usr/bin/kubectl "$@"
 }
 
