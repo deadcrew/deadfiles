@@ -132,7 +132,10 @@
                 done
             fi
 
-            args+=("$entity")
+            if [[ "$entity" != "pod" ]]; then
+                args+=("$entity")
+            fi
+
             args+=($items)
         else
             args+=("$arg")
