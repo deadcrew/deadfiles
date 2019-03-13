@@ -1,0 +1,9 @@
+#!/bin/bash
+
+contents=$(cat "${1}")
+list=$(grep -Po '#[a-f0-9]{6}' "${1}" | sort | uniq)
+while read hex; do
+    contents=$(sed -r "s/${hex}/$(hexcolor "$hex")/g" <<< "$contents")
+done <<< "$list"
+
+echo "$contents"
