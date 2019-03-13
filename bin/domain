@@ -4,8 +4,9 @@ domain="$1"
 if [[ ! "$domain" =~ \. ]]; then
     zones=(
         archi
-        org
+        dev
         io
+        org
         net
         com
         me

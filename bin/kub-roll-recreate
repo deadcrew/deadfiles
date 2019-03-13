@@ -56,8 +56,8 @@ timeout=60s
 }
 
 :kubectl() {
-    echo "$ kubectl ${@}" >&2
-    kubectl "${@}"
+    echo "$ tubectl ${@}" >&2
+    tubectl "${@}"
 }
 
 :help() {
