@@ -1,5 +1,7 @@
 #!/bin/bash
 
+[ -n "$_LOCK" ] || _LOCK=x exec flock -n $0 $0 "$@"
+
 set -euo pipefail
 
 TMUX_SOCKET=${TMUX_SOCKET:-}
@@ -26,6 +28,7 @@ Options:
     --opacity     Set kuake opacity, default: 1.
     --class       Specify kuake window class name, default: kuake.
     --exec        Exec command in spawned kuake terminal.
+    --direct      Execute command directly without tmux.
     -h --help     Show this screen.
 CODE
 }
@@ -40,6 +43,7 @@ CODE
     local _opacity=1
     local _classname=kuake
     local _exec=
+    local _direct=false
 
     while [[ $# -ne 0 ]]; do
         case "$1" in
@@ -100,6 +104,10 @@ CODE
                 shift
                 ;;
 
+            --direct)
+                _direct=true
+                ;;
+
             -h | --help)
                 :usage
                 exit 0
@@ -134,7 +142,7 @@ CODE
     fi
 
     if $_terminal; then
-        :spawn-terminal $_classname "$_exec" $window_geometry
+        :spawn-terminal $_classname "$_exec" "$_direct" $window_geometry
 
         while [[ ! "$window_id" ]]; do
             local window_id=$(:window-find $_classname)
@@ -200,10 +208,11 @@ CODE
 :spawn-terminal() {
     local name="$1"
     local command=$2
-    local window_x="$3"
-    local window_y="$4"
-    local window_width="$5"
-    local window_height="$6"
+    local direct=$3
+    local window_x="$4"
+    local window_y="$5"
+    local window_width="$6"
+    local window_height="$7"
 
     # prevents blinking at startup
     # font size (8x12) is hardcoded, no way to know font width without complex
@@ -219,11 +228,16 @@ CODE
         :tmux new-session -d -s $name
     fi
 
-    i3-msg -q "exec urxvt -geometry $geometry -name $name -title $name -e \
-        tmux ${TMUX_SOCKET:+-L $TMUX_SOCKET} attach-session -t $name"
+    if "$direct"; then
+        i3-msg -q "exec urxvt -geometry $geometry -name $name -title $name -e \
+            $command"
+    else
+        i3-msg -q "exec urxvt -geometry $geometry -name $name -title $name -e \
+            tmux ${TMUX_SOCKET:+-L $TMUX_SOCKET} attach-session -t $name"
 
-    if [[ "$command" ]]; then
-        :tmux send -t "$name" "$command"$'\n'
+        if [[ "$command" ]]; then
+            :tmux send -t "$name" "$command"$'\n'
+        fi
     fi
 }
 
@@ -281,17 +295,13 @@ CODE
 }
 
 :is-another-screen() {
-    local window_x="$1"
-    local window_y="$2"
-    local window_width="$3"
-    local window_height="$4"
-    local window_screen="$5"
+    local window_geometry="$*"
 
     local cache_path="/tmp/kuake.$window_id"
-    local cache_screen=$(cat $cache_path 2>/dev/null)
+    local cache=$(cat $cache_path 2>/dev/null)
 
-    if [[ "$cache_screen" != "$window_screen" ]]; then
-        echo -n "$window_screen" > "$cache_path"
+    if [[ "$cache" != "$window_geometry" ]]; then
+        echo -n "$window_geometry" > "$cache_path"
         return 0
     fi
 
