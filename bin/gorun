@@ -7,6 +7,7 @@
 
 set -euo pipefail
 
+oldpwd="$(pwd)"
 if [[ "${1:-}" ]]; then
     if [[ -d "$1" ]]; then
         cd "$1"
@@ -16,4 +17,8 @@ fi
 
 name=$(basename "$(pwd)")
 GOBIN=$(pwd) go install
-exec "$(pwd)/$name" "${@}"
+bin=$(readlink -f "$(pwd)/$name")
+
+cd "$oldpwd"
+
+exec "$bin" "${@}"
