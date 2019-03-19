@@ -1,0 +1,31 @@
+#!/bin/bash
+
+set -euo pipefail
+
+colorscheme=0
+
+:color() {
+    local query="$(md5sum <<< $1 | awk '{print $1}')"
+    local color="${2:-0}"
+    local scheme="${3:-0}"
+
+    # based upon http://jimlund.org/blog/pics/colortest_iTerm.png
+    local lookback=$(( ($color * 2) % (6 * 6) ))
+    local seed=$(( 0x${query:1:2} + $scheme ))
+    local base=$(( 16 + ($seed % (230 - 16)) ))
+    local block=$(( ($base - 16) / 6 ))
+    local index=$(( ($base - 16) % 6 ))
+    local next=$((
+        (($block >= $lookback)
+            ? ($block - $lookback)
+            : (6 * 6 - $lookback + $block)
+        ) * 6 + 16 + $index + 2
+    ))
+
+    printf "%s" "$next"
+}
+
+bg=$(:color "$*" 0 $colorscheme)
+fg=$(:color "$*" 1 $colorscheme)
+
+echo -e "\e[48;5;${fg};1m\e[38;5;${bg};1m${@}\e[0m"
