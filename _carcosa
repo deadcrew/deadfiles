@@ -1,7 +1,7 @@
 #compdef carcosa
 
 function _carcosa() {
-    local dirs=(carcosa -Lc)
+    local dirs=($(carcosa -Lc))
 
     _values "carcosa items" $dirs
 }
