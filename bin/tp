@@ -15,9 +15,15 @@
 }
 
 :main() {
+    vertical=""
+    if [[ "${1:-}" == "-v" ]]; then
+        vertical="-h"
+        shift
+    fi
+
     cmd=("${@}")
     stdin=$(:fifo)
-    tmux split-window $SHELL -ic "${cmd[*]} < $stdin"
+    tmux split-window ${vertical} $SHELL -ic "${cmd[*]} < $stdin"
     tee "$stdin"
 }
 
