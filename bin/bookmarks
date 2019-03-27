@@ -1,0 +1,29 @@
+#!/bin/bash
+
+set -euo pipefail
+
+:modal() {
+    modal-template --args "-lines 5" --no-description
+}
+
+:json() {
+    yq '[.[] | {title: .title, item: .url}]'
+}
+
+:main() {
+    local db_file=$HOME/.config/bookmarks/db.yaml
+
+    if [[ ! -f $db_file ]]; then
+        echo "db file does not exist:"
+        echo "  $db_file"
+        exit 1
+    fi
+
+    url=$(:json < "$db_file" | :modal)
+
+    if [[ "$url" ]]; then
+        browser "$url"
+    fi
+}
+
+:main "${@}"
