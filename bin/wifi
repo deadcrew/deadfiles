@@ -1,0 +1,51 @@
+#!/bin/bash
+
+set -euo pipefail
+
+wlan_interface=$(ip l | grep -m1 --color=never -Po '^\d+: \Kw[^:]+')
+
+wpa_cli() {
+    command sudo wpa_cli -i "$interface" "$@"
+}
+
+awk() {
+    command awk -F'\t' "$@"
+}
+
+network=${1:-}
+interface=${2:-$wlan_interface}
+
+list=$(wpa_cli list_networks | tail -n+2)
+
+if [[ "$network" ]]; then
+    if ! net=$(
+        awk '{ print $1, $2 }' <<< "$list" \
+            | grep -iP "^\\d+ .*$network"
+    ); then
+        echo "No network found"
+        echo "Available networks are:"
+        awk '{ print "* ", $2 }' <<< "$list"
+        exit 1
+    fi
+
+    id=$(awk '{print $1}' <<< "$net")
+    name=$(awk '{print $2}' <<< "$net")
+
+    echo -n "Selecting network ... $name"
+
+    wpa_cli select_network "$id"
+else
+    echo -n "Selecting available network... "
+    wpa_cli reconfigure
+fi
+
+echo -n "Waiting for address..."
+until inet_output=$(ip addr show dev $interface | grep -o 'inet .*'); do
+    echo -n .
+    sleep 0.5
+done
+
+echo " OK"
+echo "Network: $inet_output"
+echo -n "SSID: "
+iw dev | grep -Po --color=never 'ssid \K.*'
