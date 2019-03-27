@@ -17,7 +17,7 @@ interface=${2:-$wlan_interface}
 
 list=$(wpa_cli list_networks | tail -n+2)
 
-if [[ "$network" ]]; then
+if [[ "$network" && "$network" != "!" ]]; then
     if ! net=$(
         awk '{ print $1, $2 }' <<< "$list" \
             | grep -iP "^\\d+ .*$network"
@@ -35,14 +35,19 @@ if [[ "$network" ]]; then
 
     wpa_cli select_network "$id"
 else
-    echo -n "Selecting available network... "
-    wpa_cli reconfigure
+    if [[ "$network" == "!" ]]; then
+        echo -n "Selecting available network... "
+        wpa_cli reconfigure
+    else
+        wpa_cli status | grep '^ssid=' | cut -d= -f2-
+        exit
+    fi
 fi
 
 echo -n "Waiting for address..."
 until inet_output=$(ip addr show dev $interface | grep -o 'inet .*'); do
     echo -n .
-    sleep 0.5
+    sleep 0.05
 done
 
 echo " OK"
