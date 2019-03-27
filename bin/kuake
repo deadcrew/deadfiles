@@ -1,7 +1,5 @@
 #!/bin/bash
 
-[ -n "$_LOCK" ] || _LOCK=x exec flock -n $0 $0 "$@"
-
 set -euo pipefail
 
 TMUX_SOCKET=${TMUX_SOCKET:-}
@@ -164,6 +162,12 @@ CODE
     local vertical=$3
     local horizontal=$4
 
+    local tag="$width.$height.$vertical.$horizontal"
+    if [[ -f /var/run/user/$UID/kuake.geometry.$tag ]]; then
+        cat /var/run/user/$UID/kuake.geometry.$tag
+        return
+    fi
+
     read \
         screen_number \
         screen_x screen_y \
@@ -202,7 +206,9 @@ CODE
             ;;
     esac
 
-    echo $window_x $window_y $window_width $window_height $screen_number
+    result="$window_x $window_y $window_width $window_height $screen_number"
+    echo "$result" > /var/run/user/$UID/kuake.geometry.$tag
+    echo "$result"
 }
 
 :spawn-terminal() {
@@ -309,20 +315,7 @@ CODE
 }
 
 :xscreeninfo() {
-    python2 <<PYTHON
-import gtk.gdk
-
-screen   = gtk.gdk.screen_get_default()
-monitors = int(screen.get_n_monitors())
-display  = gtk.gdk.display_get_default()
-pointer  = display.get_pointer()
-
-cursor_monitor = screen.get_monitor_at_point(pointer[1], pointer[2])
-geometry = screen.get_monitor_geometry(cursor_monitor)
-print "%d %d %d %d %d" % (
-    cursor_monitor, geometry.x, geometry.y, geometry.width, geometry.height
-)
-PYTHON
+    xscreeninfo
 }
 
 :main "${@}"
