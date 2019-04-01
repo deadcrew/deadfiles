@@ -5,16 +5,18 @@ set -euo pipefail
 set -x
 mode="${1:-password}"
 
-secrets_repository=${secrets_repository:-$HOME/.secrets/}
+REPO=${REPO:-$HOME/.secrets}
 
-if [[ ! -d "${secrets_repository}" ]]; then
-    notify-send "carcosa-ui" "$secrets_repository does not exist."
+if [[ ! -d "${REPO}" ]]; then
+    notify-send "carcosa-ui" "$REPO does not exist."
     exit 1
 fi
 
-cd "${secrets_repository}"
+:carcosa() {
+    carcosa -p ${REPO} "${@}"
+}
 
-if ! carcosa -Fc; then
+if ! :carcosa -Fc; then
     notify-send "carcosa-ui" "Master password key cache file is not found."
     exit 1
 fi
@@ -34,19 +36,19 @@ fi
 
 active_window_id=$(xdotool getwindowfocus)
 
-token=$(carcosa -Lc \
+token=$(:carcosa -Lc \
     | sort \
     | modal 2>/dev/null \
     | perl -p -e 'chomp if eof'
 )
 
 if [[ ! "$token" ]]; then
-    token=$(carcosa -Lc \
+    token=$(:carcosa -Lc \
         | sort \
         | head -n1)
 fi
 
-if output=$(carcosa -Gc "$token" 2>&1); then
+if output=$(:carcosa -Gc "$token"); then
     password=$output
 
     if [[ "$mode" == "clipboard" ]]; then
