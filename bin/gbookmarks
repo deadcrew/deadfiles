@@ -1,0 +1,12 @@
+#!/bin/bash
+
+set -euo pipefail
+
+name="gbookmarks"
+
+dir="$(dirname "$(readlink -f "$0")")"/../go/src/$name
+if [[ ! -f $dir/$name ]]; then
+    (cd $dir && go build)
+fi
+
+$dir/$name "${@}"

@@ -6,10 +6,6 @@ set -euo pipefail
     modal-template --args "-lines 5" --no-description
 }
 
-:json() {
-    yq '[.[] | {title: .title, item: .url}]'
-}
-
 :main() {
     local db_file=$HOME/.config/bookmarks/db.yaml
 
@@ -19,7 +15,7 @@ set -euo pipefail
         exit 1
     fi
 
-    url=$(:json < "$db_file" | :modal)
+    url=$(gbookmarks "$db_file" | :modal)
 
     if [[ "$url" ]]; then
         browser "$url"
