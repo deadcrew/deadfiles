@@ -11,7 +11,7 @@ attempts=0
 
     exitcode=$?
 
-    if grep "a bug in the X server" "$stderr"; then
+    if grep -P "a bug in the X server|X_GetWindowAttributes" "$stderr"; then
         attempts=$((attempts+1))
         if [[ "$attempts" -gt 5 ]]; then
             cat "$stdout"
