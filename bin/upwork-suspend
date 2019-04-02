@@ -12,12 +12,16 @@ suspend_notify_timeout=${SUSPEND_NOTIFY_TIMEOUT:-120}
 
 :main() {
     if :is-suspened; then
-        pkill -CONT -g $(:list-pids)
+        for i in {1..3}; do
+            notify-replace "upwork" "" "<b>UPWORK</b> CONTINUED $(printf '▶%.0s' $(seq 1 $i))"
+            sleep 0.3
+        done
         notify-replace "upwork" "" ""
+        pkill -CONT -g $(:list-pids)
     else
         upwork-kill-notification
         pkill -STOP -g $(:list-pids)
-        notify-replace "upwork" "" "<b>UPWORK</b> SUSPENDED"
+        notify-replace "upwork" "" "<b>UPWORK</b> SUSPENDED ■"
 
         {
             counter=0
