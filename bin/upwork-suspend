@@ -13,22 +13,23 @@ suspend_notify_timeout=${SUSPEND_NOTIFY_TIMEOUT:-120}
 :main() {
     if :is-suspened; then
         pkill -CONT -g $(:list-pids)
-        notify-send "upwork" "<b>UPWORK</b> RESUMED"
+        notify-replace "upwork" "" ""
     else
+        upwork-kill-notification
         pkill -STOP -g $(:list-pids)
-        notify-send "upwork" "<b>UPWORK</b> SUSPENDED"
+        notify-replace "upwork" "" "<b>UPWORK</b> SUSPENDED"
 
         {
             counter=0
             while sleep 1; do
                 if :is-suspened; then
-                    counter=$((counter + 1))
+                    if (( counter > 0 && counter % suspend_notify_timeout == 0 )); then
+                        elapsed=$(TZ=UTC0 printf '%(%M:%S)T\n' "$counter")
 
-                    if [[ "$counter" -gt ${suspend_notify_timeout} ]]; then
-                        counter=0
-
-                        notify-send "upwork" "<b>UPWORK</b> STILL SUSPENDED"
+                        notify-replace "upwork" "" "<b>UPWORK</b> STILL SUSPENDED ($elapsed)"
                     fi
+
+                    counter=$((counter + 1))
                 else
                     break
                 fi
