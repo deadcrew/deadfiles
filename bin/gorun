@@ -15,8 +15,13 @@ if [[ "${1:-}" ]]; then
     fi
 fi
 
+mod=""
+if [[ "${GO111MODULE:-}" == "on" ]]; then
+    mod="-mod vendor"
+fi
+
 name=$(basename "$(pwd)")
-GOBIN=$(pwd) go install
+GOBIN=$(pwd) go install $mod
 bin=$(readlink -f "$(pwd)/$name")
 
 cd "$oldpwd"
