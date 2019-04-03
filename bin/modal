@@ -19,7 +19,6 @@ while [[ "${1:-}" ]]; do
 done
 
 exec rofi \
-    -font "Monaco 12" \
     -bw 1 \
     -padding 1 \
     -line-margin 1 \
@@ -28,6 +27,7 @@ exec rofi \
     -hide-scrollbar \
     -color-enabled \
     -separator-style none \
+    -async-pre-read 0 \
     -i \
     -p "" \
     "$mode" \

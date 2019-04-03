@@ -5,8 +5,10 @@ source /usr/share/bash/opts/opts.bash
 declare -a args
 declare -A opts
 
+PATH=/usr/bin/vendor_perl/:$PATH
+
 opts:parse opts args \
-    --message: --no-description -h --help --args: -- "${@}"
+    --message: --no-description -h --help --template: -- "${@}"
 
 if [[ "${opts[--help]}" ]]; then
     cat <<HELP
@@ -19,44 +21,60 @@ HELP
     exit 1
 fi
 
-template='
-    <span font_weight="bold">
-        \(.title)
-    </span>
-    <br>
-        &#8250; \(.item)
-'
+template=${opts[--template]:-}
 
-rows=2
-
-if [[ ! "${opts[--no-description]}" ]]; then
-    rows=3
-
-    template+='
-        <br>
-        <span color="#bbb">
-            &#160;&#160;
-            <span font="Tahoma 8">
-                \(.description)
-            </span>
+if [[ ! "${template:-}" ]]; then
+    template='
+        <span font_weight="bold">
+            \(.title | @html)
         </span>
+        <br>
+            &#8250; \(.item | @html)
     '
+
+    if [[ ! "${opts[--no-description]}" ]]; then
+        template+='
+            <br>
+            <span color="#bbb">
+                &#160;&#160;
+                <span font="Tahoma 8">
+                    \(.description)
+                </span>
+            </span>
+        '
+    fi
 fi
+
+rows=$(($(grep -cF '<br>' <<< "$template") + 1))
 
 template+='<end>'
 
 template=$(
-    tr -d '\n' <<< "${args[1]:-$template}" \
+    tr -d '\n' <<< "$template" \
         | sed -r 's/\s+(<)|(>)\s+/\1\2/g' \
         | sed 's/"/\\"/g'
 )
 
-shift
+modal_args=(
+    -markup-rows
+    -eh "$rows"
+    -sep '\0'
+)
+
+if [[ "${opts[--message]:-}" ]]; then
+    modal_args+=(-mesg "${opts[--message]:-}")
+fi
+
+modal_args+=("${@}")
 
 jq -r '.[] | "'"$template"'"' \
     | tr -d '\n' \
     | sed -u 's/<end>/\x0/g' \
     | sed -u 's/<br>/\n/g' \
-    | modal -markup-rows -eh "$rows" -sep '\0' -mesg "${opts[--message]:-}" ${opts[--args]:-} "${@}" \
-    | sed -n '2p' \
-    | cut -f2- -d' '
+    | modal "${modal_args[@]}" \
+    | { if (( rows > 1 )); then sed -n '2p'; else cat; fi } \
+    | cut -f2- -d' ' \
+    | sed -r \
+        -e 's/<[^>]+?>//g' \
+        -e 's/&amp;/\&/g' \
+        -e 's/&#x20;/ /g'
