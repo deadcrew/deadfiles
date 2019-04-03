@@ -1,25 +1,85 @@
 #!/bin/bash
 
+### carcosa-ui: interactive picker for carcosa.
+###
+### Usage:
+###     carcosa-ui [--mode=] [--prefix=] [<repo>[:<name>]]...
+###     carcosa-ui --help
+###
+### Options:
+###     --help
+###     --mode=<mode>     Mode to work in:
+###                        * password - paste password;
+###                        * login-password - paste login and password;
+###     --prefix=<prefix> Filter out only tokens that starts with given prefix.
+
 set -euo pipefail
 
-set -x
-mode="${1:-password}"
+source /usr/share/bash/opts/opts.bash
 
-REPO=${REPO:-$HOME/.secrets}
+:main() {
+    declare -a args
+    declare -A opts
 
-if [[ ! -d "${REPO}" ]]; then
-    notify-send "carcosa-ui" "$REPO does not exist."
-    exit 1
-fi
+    opts:parse opts args \
+        --help --mode: --prefix: -- "${@}"
 
-:carcosa() {
-    carcosa -p ${REPO} "${@}"
+    if [[ "${opts[--help]:-}" ]]; then
+        :help
+        exit 1
+    fi
+
+    local mode="${opts[--mode]:-password}"
+
+    declare -A repos=()
+
+    :repos repos "${args[@]:1}"
+
+    local tokens=$()
+
+    local template
+    if (( "${#repos[@]}" > 1 )); then
+        template='<b>\(.name)</b>&#x20;\(.token)'
+    else
+        template='\(.name)'
+    fi
+
+    local prefix="${opts[--prefix]:-}"
+
+    local token=$(
+        :list repos "${opts[--prefix]:-}" \
+            | sort \
+            | :json \
+            | modal-template --template "$template" \
+            | perl -p -e 'chomp if eof'
+    )
+
+    if [[ ! "$token" ]]; then
+        return 1
+    fi
+
+    IFS=' ' read -r repo token <<< "$token"
+
+    if [[ ! "${repos[$repo]:-}" ]]; then
+        return 2
+    fi
+
+    if [[ "$prefix" ]]; then
+        token=$prefix$token
+    fi
+
+    :use "$mode" "$token" "${repos[$repo]}"
 }
 
-if ! :carcosa -Fc; then
-    notify-send "carcosa-ui" "Master password key cache file is not found."
-    exit 1
-fi
+:json() {
+    while IFS=' ' read -r name token; do
+        jo name=$name token=$token
+    done | jo -a
+}
+
+:help() {
+    sed -rn 's/^### ?//;T;p' "$0"
+}
 
 :type() {
     cat <<< "$1" \
@@ -34,70 +94,107 @@ fi
         key --clearmodifiers "$1"
 }
 
-active_window_id=$(xdotool getwindowfocus)
+:list() {
+    local -n _repos=$1
+    local prefix=$2
 
-token=$(:carcosa -Lc \
-    | sort \
-    | modal 2>/dev/null \
-    | perl -p -e 'chomp if eof'
-)
+    local path
+    local name
+    for repo in "${!_repos[@]}"; do
+        name=$repo
+        path=${repos[$name]}
 
-if [[ ! "$token" ]]; then
-    token=$(:carcosa -Lc \
-        | sort \
-        | head -n1)
-fi
+        if ! carcosa -Fc -p "$path"; then
+            notify-send "carcosa-ui" "no master password cache for $path"
+            exit 1
+        fi
 
-if output=$(:carcosa -Gc "$token"); then
-    password=$output
-
-    if [[ "$mode" == "clipboard" ]]; then
-        xclip -i -selection primary <<< "$password"
-        exit 0
-    fi
-
-    screenkey_pid=$(pgrep -f screenkey || true)
-
-    if [[ "$screenkey_pid" ]]; then
-        screenkey_cmdline=$(cat /proc/$screenkey_pid/cmdline | tr '\0' '\n')
-        pkill -f screenkey
-
-        while pgrep -f screenkey > /dev/null; do
-            sleep 0.1
-        done
-    fi
-
-    xdotool \
-        windowfocus --sync "$active_window_id"
-
-    enter=true
-    if [[ "$mode" == "login-password" ]]; then
-        login=${token##*/}
-
-        if [[ "$login" != "$token" ]]; then
-            if [[ ${login:0:1} == "!" ]]; then
-                login=${login:1}
-                enter=false
+        carcosa -Lc -p "$path" | \
+            if [[ "${prefix:-}" ]]; then
+                grep -oP "^$prefix\K.*";
+            else
+                cat
+            fi | \
+            if (( "${#_repos[@]}" > 1 )); then
+                sed -re "s/^/$name /"
+            else
+                cat
             fi
+    done
+}
 
-            if [[ "$login" ]]; then
-                :type "$login"
-                :type:key "Tab"
+:repos() {
+    local -n result=$1 ; shift
+
+    local name
+    local path
+
+    for repo in "${@}"; do
+        IFS=: read -r path name <<< "$repo"
+
+        if [[ ! "${name}" ]]; then
+            name=$(basename "$path")
+        fi
+
+        if [[ "${path:0:1}" == "~" ]]; then
+            path="$HOME${path:1}"
+        fi
+
+        if [[ ! -d "${path}" ]]; then
+            notify-send "carcosa-ui" "$path does not exist."
+            exit 1
+        fi
+
+        result[$name]=$path
+    done
+}
+
+:use() {
+    set -x
+    local mode=$1
+    local token=$2
+    local path=$3
+
+    local active_window_id=$(xdotool getwindowfocus)
+
+    if local output=$(carcosa -Gc "$token" -p "$path"); then
+        local password=$output
+
+        if [[ "$mode" == "clipboard" ]]; then
+            xclip -i -selection primary <<< "$password"
+            return
+        fi
+
+        xdotool \
+            windowfocus --sync "$active_window_id"
+
+        local enter=true
+        if [[ "$mode" == "login-password" ]]; then
+            local login=${token##*/}
+
+            if [[ "$login" != "$token" ]]; then
+                if [[ ${login:0:1} == "!" ]]; then
+                    login=${login:1}
+                    enter=false
+                fi
+
+                if [[ "$login" ]]; then
+                    :type "$login"
+                    :type:key "Tab"
+                fi
             fi
         fi
-    fi
 
-    :type "$password"
+        :type "$password"
 
-    if $enter; then
-        :type:key "Return"
+        if $enter; then
+            :type:key "Return"
+        fi
+    else
+        if [ "$output" ]; then
+            notify "$output"
+        fi
     fi
+}
 
-    if [[ "$screenkey_pid" ]]; then
-        exec xargs -d'\n' sh -c 'exec "$0" "${@}"'<<< "$screenkey_cmdline"
-    fi
-else
-    if [ "$output" ]; then
-        notify "$output"
-    fi
-fi
+:main "${@:-~/.secrets}"
