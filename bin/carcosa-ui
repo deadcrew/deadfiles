@@ -58,10 +58,14 @@ source /usr/share/bash/opts/opts.bash
         return 1
     fi
 
-    IFS=' ' read -r repo token <<< "$token"
+    if (( "${#repos[@]}" > 1 )); then
+        IFS=' ' read -r repo token <<< "$token"
 
-    if [[ ! "${repos[$repo]:-}" ]]; then
-        return 2
+        if [[ ! "${repos[$repo]:-}" ]]; then
+            return 2
+        fi
+    else
+        for repo in ${!repos[@]}; do :; done
     fi
 
     if [[ "$prefix" ]]; then
@@ -150,7 +154,6 @@ source /usr/share/bash/opts/opts.bash
 }
 
 :use() {
-    set -x
     local mode=$1
     local token=$2
     local path=$3
