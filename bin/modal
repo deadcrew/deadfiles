@@ -27,7 +27,6 @@ exec rofi \
     -hide-scrollbar \
     -color-enabled \
     -separator-style none \
-    -async-pre-read 0 \
     -i \
     -p "" \
     "$mode" \

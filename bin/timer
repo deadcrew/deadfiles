@@ -1,10 +1,32 @@
 #!/bin/bash
 
-finish=$(date +'%s' -d "${*}")
+set -euo pipefail
+
+set -x
+duration="${1:-}"
+if [[ ! "$duration" ]]; then
+    duration=$(modal -lines 0 -mesg "Duration (10 sec, 30 minutes)")
+else
+    shift
+fi
+
+message="${@:-}"
+if [[ ! "$message" ]]; then
+    if ! message=$(modal -lines 0 -mesg "Message (will be printed on timer)");
+    then
+        :
+    fi
+    if [[ ! "$message" ]]; then
+        message="Timer: $duration"
+    fi
+fi
+
+finish=$(date +'%s' -d "${duration}")
 now=$(date +'%s')
 
 diff=$((finish-now))
 
+notify-desktop "" "New timer: ${duration}"
 sleep $diff
 
-i3-nagbar -m "Timer for ${*} is done." -t warning
+i3-nagbar -m "${message}" -t warning

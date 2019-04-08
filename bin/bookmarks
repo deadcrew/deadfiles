@@ -7,18 +7,37 @@ set -euo pipefail
 }
 
 :main() {
-    local db_file=$HOME/.config/bookmarks/db.yaml
+    local mode="${1:-}"
 
+    local db_file=${DB:-$HOME/.config/bookmarks/db.yaml}
     if [[ ! -f $db_file ]]; then
         echo "db file does not exist:"
         echo "  $db_file"
         exit 1
     fi
 
-    url=$(gbookmarks "$db_file" | :modal)
+    if [[ ! "$mode" ]]; then
+        url=$(gbookmarks "$db_file" | :modal)
 
-    if [[ "$url" ]]; then
-        browser "$url"
+        if [[ "$url" ]]; then
+            browser "$url"
+        fi
+
+        exit 0
+    fi
+
+    if [[ "$mode" == "add" ]]; then
+        url="$(xclip -o)"
+        title="$(modal -lines 0 -mesg "URL: ${url}")"
+
+        if gbookmarks "$db_file" "$url" "$title"; then
+            notify-desktop "" "♥ Bookmark saved"
+        else
+            notify-desktop "" "Unable to save bookmark"
+            exit 1
+        fi
+
+        exit 0
     fi
 }
 
