@@ -5,7 +5,7 @@ if printf '%s\n' "$@" | grep -xE -- '-e'; then
     mode=""
 fi
 
-matching="fuzzy"
+matching="normal"
 args=()
 while [[ "${1:-}" ]]; do
     if [[ "$1" == "-matching" ]]; then
