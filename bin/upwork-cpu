@@ -10,7 +10,6 @@ QUOTA="${QUOTA:-10}"
     sudo systemd-run \
         --pty \
         --setenv=DISPLAY=${DISPLAY} \
-        --property=CPUQuota=${QUOTA}% \
         --slice=upwork-limited \
             sudo -u ${USER} nice -n 19 /usr/bin/upwork
 }
@@ -18,10 +17,13 @@ QUOTA="${QUOTA:-10}"
 notify-send "UPWORK" "<b>UPWORK</b> STARTING"
 
 # start daemon
+
 :upwork &
 
-# daemon need some time to start
-sleep 5
+xdotool search --name "Time Tracker" --sync
+sleep 3
+
+sudo systemctl set-property --runtime upwork-limited.slice "CPUQuota=${QUOTE}%"
 
 # show gui
-:upwork
+#:upwork
