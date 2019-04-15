@@ -27,6 +27,7 @@ now=$(date +'%s')
 diff=$((finish-now))
 
 notify-desktop "" "New timer: ${duration}"
+
 sleep $diff
 
 i3-nagbar -m "${message}" -t warning
