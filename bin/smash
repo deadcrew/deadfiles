@@ -1,5 +1,6 @@
 #!/bin/zsh
 
+set -x
 source ~/.smashrc &>/dev/null
 
 :get_option() {
