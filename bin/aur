@@ -1,0 +1,41 @@
+#!/bin/bash
+
+package="${1}"
+
+:ssh() {
+    ssh aur.reconquest.io "${@}"
+}
+
+echo ":: removing package from the queue: ${package}"
+:ssh aurora -R "${package}"
+
+echo ":: adding package to the queue: ${package}"
+:ssh aurora -A "${package}"
+
+echo ":: quering package ${package}"
+while :; do
+    line=$(:ssh aurora -Q | grep -P "^${package} ")
+
+    status=$(awk '{print $2}' <<< "$line")
+    echo "status: ${status}"
+
+    if [[ "$status" == "unknown" ]]; then
+        continue
+    fi
+
+    break
+done
+
+while :; do
+    echo ":: retrieving container id of ${package}"
+    id=$(:ssh docker ps | grep "${package}" | awk '{print $1}')
+    if [[ ! "$id" ]]; then
+        continue
+    fi
+
+    break
+done
+
+:ssh docker logs -f "${id}"
+
+sudo pacman -Sy "aurora/${package}"
