@@ -17,7 +17,15 @@ USAGE
 
 :main() {
     local window_id=$(xdotool getactivewindow)
+    if [[ ! "$window_id" ]]; then
+        exit 0
+    fi
+
     local window_pid=$(xdotool getactivewindow getwindowpid)
+    if [[ ! "$window_pid" ]]; then
+        exit 0
+    fi
+
     local window_child=$(pgrep -n -P "$window_pid")
     local tmux_pid=$(tmux-get-active | awk '{print $2}')
 
@@ -26,8 +34,8 @@ USAGE
         return
     fi
 
-    local process=$(pgrep -P "$tmux_pid" -n)
-    kill -9 "$process"
+    pids=$(ps -s "$tmux_pid" -o pid= | tac)
+    kill -9 $pids
 }
 
 :log() {
