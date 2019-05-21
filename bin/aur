@@ -7,14 +7,14 @@ package="${1}"
 }
 
 echo ":: removing package from the queue: ${package}"
-:ssh aurora -R "${package}"
+:ssh aurorad -R "${package}"
 
 echo ":: adding package to the queue: ${package}"
-:ssh aurora -A "${package}"
+:ssh aurorad -A "${package}"
 
 echo ":: quering package ${package}"
 while :; do
-    line=$(:ssh aurora -Q | grep -P "^${package} ")
+    line=$(:ssh aurorad -Q | grep -P "^${package} ")
 
     status=$(awk '{print $2}' <<< "$line")
     echo "status: ${status}"
