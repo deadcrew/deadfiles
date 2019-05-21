@@ -16,6 +16,12 @@ if [[ "$1" == "-g" && "$2" ]]; then
     shift
 fi
 
+audio=""
+if [[ "$1" == "-a" ]]; then
+    shift
+    audio="-f pulse -ac 2 -i default"
+fi
+
 if [[ $# -lt 1 || "$1" == "-h" ]]; then
     echo usage: "$0 [-w [window_id]] <video.avi>"
     exit 1
@@ -68,10 +74,11 @@ if [[ "$window_id" ]]; then
     } &
 fi
 
+set -x
 ffcast $select_arg % \
-    ffmpeg -f x11grab -framerate 25 -video_size %s \
+    ffmpeg $audio -f x11grab -framerate 25 -video_size %s \
     -i %D+%c -codec:v libx264 -b:v 20000k \
-    -vf crop="iw-mod(iw\\,2):ih-mod(ih\\,2)" -y "$video"
+    -vf crop="iw-mod(iw\\,2):ih-mod(ih\\,2)" -y -c:a copy "$video"
 
 #sleep 1
 
