@@ -1,0 +1,52 @@
+#!/bin/bash
+
+set -euo pipefail
+
+wlan_interface=$(ip l | grep -m1 --color=never -Po '^\d+: \Kw[^:]+')
+
+echo "Starting wifi scan"
+until sudo wpa_cli scan | grep -q OK; do
+    sleep 0.1
+done
+
+echo "Wifi scan started"
+
+sleep 3
+
+networks=$(sudo wpa_cli scan_results | tail -n+3)
+if [[ ! "$networks" ]]; then
+    echo "No networks found"
+    exit 1
+fi
+
+network=$(fzf <<< "$networks")
+if [[ ! "$network" ]]; then
+    exit 1
+fi
+
+network=$(awk -F'\t' '{print $5}' <<< "$network")
+
+echo "SSID: ${network}"
+
+if ! grep -q "ssid=\"$network\"" \
+    /etc/wpa_supplicant/wpa_supplicant-$wlan_interface.conf; then
+    echo -n "Password: "
+    read password
+
+    config="
+    network={
+            ssid=\"${network}\"
+            psk=\"${password}\"
+    }
+    "
+
+    echo "$config" | sudo tee -a \
+        /etc/wpa_supplicant/wpa_supplicant-${wlan_interface}.conf
+
+    echo "Wifi network added to config, re-configuring wpa_supplicant"
+else
+    echo "Network already found in config, connecting"
+fi
+
+wifi !
+wifi "$network"
