@@ -8,9 +8,6 @@ wpa_cli() {
     command sudo wpa_cli -i "$interface" "$@"
 }
 
-awk() {
-    command awk -F'\t' "$@"
-}
 
 network=${1:-}
 interface=${2:-$wlan_interface}
@@ -19,19 +16,25 @@ list=$(wpa_cli list_networks | tail -n+2)
 
 if [[ "$network" && "$network" != "!" ]]; then
     if ! net=$(
-        awk '{ print $1, $2 }' <<< "$list" \
+        awk -F '\t' '{ print $1, $2 }' <<< "$list" \
             | grep -iP "^\\d+ .*$network"
     ); then
         echo "No network found"
         echo "Available networks are:"
-        awk '{ print "* ", $2 }' <<< "$list"
+        awk -F '\t' '{ print "* ", $2 }' <<< "$list"
         exit 1
     fi
 
     id=$(awk '{print $1}' <<< "$net")
     name=$(awk '{print $2}' <<< "$net")
 
-    echo -n "Selecting network ... $name"
+    if [[ ! "$name" ]]; then
+        echo "No network found"
+        echo "Available networks are:"
+        awk -F '\T' '{ print "* ", $2 }' <<< "$list"
+        exit 2
+    fi
+    echo -n "Selecting network ... $name "
 
     wpa_cli select_network "$id"
 else
@@ -41,6 +44,15 @@ else
     else
         wpa_cli status | grep '^ssid=' | cut -d= -f2-
         exit
+    fi
+fi
+
+if ! sudo systemctl status dhcp &>/dev/null; then
+    exitcode=$?
+    if [[ "$exitcode" == "3" ]]; then
+        sudo systemctl stop dhcp
+        sleep 0.1
+        sudo systemctl start dhcp
     fi
 fi
 
