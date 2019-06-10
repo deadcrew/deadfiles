@@ -8,12 +8,6 @@ fi
 matching="normal"
 args=()
 while [[ "${1:-}" ]]; do
-    if [[ "$1" == "-matching" ]]; then
-        matching="${2:-}"
-        shift 2
-        continue
-    fi
-
     args+=("$1")
     shift
 done
@@ -30,5 +24,4 @@ exec rofi \
     -i \
     -p "" \
     "$mode" \
-    -matching $matching \
     "${args[@]}"
