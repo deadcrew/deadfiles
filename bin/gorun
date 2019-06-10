@@ -21,9 +21,8 @@ if [[ "${GO111MODULE:-}" == "on" ]]; then
 fi
 
 name=$(basename "$(pwd)")
-GOBIN=$(pwd) go install $mod
-bin=$(readlink -f "$(pwd)/$name")
+go install -gcflags "-trimpath $GOPATH" -asmflags "-trimpath $GOPATH" $mod
 
 cd "$oldpwd"
 
-exec "$bin" "${@}"
+exec "$GOPATH/bin/$name" "${@}"
