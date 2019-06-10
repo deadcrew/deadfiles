@@ -65,7 +65,7 @@ if [[ "${opts[--message]:-}" ]]; then
     modal_args+=(-mesg "${opts[--message]:-}")
 fi
 
-modal_args+=("${@}")
+modal_args+=("${args[@]:1}")
 
 jq -r '.[] | "'"$template"'"' \
     | tr -d '\n' \
