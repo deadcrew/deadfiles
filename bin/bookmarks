@@ -3,7 +3,7 @@
 set -euo pipefail
 
 :modal() {
-    modal-template --args "-lines 5" --no-description
+    modal-template --no-description -- -lines 5
 }
 
 :main() {
@@ -28,7 +28,10 @@ set -euo pipefail
 
     if [[ "$mode" == "add" ]]; then
         url="$(xclip -o)"
-        title="$(modal -lines 0 -mesg "URL: ${url}")"
+        title="$(
+            modal -lines 0 \
+                -mesg "URL: $(sed -re 's/&/\&amp;/g' <<< "$url")"
+        )"
 
         if gbookmarks "$db_file" "$url" "$title"; then
             notify-desktop "" "♥ Bookmark saved"
