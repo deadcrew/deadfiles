@@ -9,20 +9,22 @@ if [[ ! -d "${secrets_repository}" ]]; then
     exit 1
 fi
 
-cd "${secrets_repository}"
+:carcosa() {
+    carcosa -p "$secrets_repository" "$@"
+}
 
-if ! carcosa -Fc; then
+if ! :carcosa -Fc; then
     notify-send "carcosa-qr" "Master password key cache file is not found."
     exit 1
 fi
 
-token=$(carcosa -Lc \
+token=$(:carcosa -Lc \
     | sort \
     | modal 2>/dev/null \
     | perl -p -e 'chomp if eof'
 )
 
-if output=$(carcosa -Gc "$token" 2>&1); then
+if output=$(:carcosa -Gc "$token" 2>&1); then
     png=$(mktemp -p /var/run/user/$UID/ --suffix=.png)
     trap "rm $png" EXIT
     qrencode <<< "$output" -o "$png" -s 10
