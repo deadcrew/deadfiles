@@ -22,8 +22,15 @@ if [[ "$1" == "-a" ]]; then
     audio="-f pulse -ac 2 -i default"
 fi
 
+press=false
+if [[ "$1" == "-p" ]]; then
+    shift
+    press=true
+fi
+
+
 if [[ $# -lt 1 || "$1" == "-h" ]]; then
-    echo usage: "$0 [-w [window_id]] <video.avi>"
+    echo usage: "$0 [-w [window_id]] [-p] <video.avi>"
     exit 1
 fi
 
@@ -34,18 +41,20 @@ if [[ "$select_window" ]]; then
         window_id=$(xwininfo | awk '/Window id/{print $4}')
     fi
     select_arg="-#$window_id"
-    echo "Press ScrollLock to start recording."
-    killall -q -STOP screenkey
+    if $press; then
+        echo "Press ScrollLock to start recording."
+        killall -q -STOP screenkey
 
-    xdotool windowfocus $window_id
+        xdotool windowfocus $window_id
 
-    xev -id "$window_id" | while read line; do
-        if grep "keycode 78" <<< "$line"; then
-            break
-        fi
-    done
+        xev -id "$window_id" | while read line; do
+            if grep "keycode 78" <<< "$line"; then
+                break
+            fi
+        done
 
-    killall -q -CONT screenkey
+        killall -q -CONT screenkey
+    fi
 else
     select_arg="-s"
 fi
@@ -56,7 +65,7 @@ fi
 
 video="$name".avi
 
-if [[ "$window_id" ]]; then
+if [[ "$window_id" ]] && $press; then
     {
         echo "Press ScrollLock to stop recording."
         killall -q -STOP screenkey
@@ -74,15 +83,13 @@ if [[ "$window_id" ]]; then
     } &
 fi
 
-set -x
 ffcast $select_arg % \
     ffmpeg $audio -f x11grab -framerate 25 -video_size %s \
     -i %D+%c -codec:v libx264 -b:v 20000k \
     -vf crop="iw-mod(iw\\,2):ih-mod(ih\\,2)" -y -c:a copy "$video"
 
-#sleep 1
+sleep 1
 
 #clear
 
-#video-to-gif "$video" "$name" && rm "$video"
-
+video-to-gif "$video" "$name.gif" && rm "$video"
