@@ -19,7 +19,7 @@ while :; do
     status=$(awk '{print $2}' <<< "$line")
     echo "status: ${status}"
 
-    if [[ "$status" == "unknown" ]]; then
+    if [[ "$status" == "unknown" || "$status" == "queued" ]]; then
         continue
     fi
 

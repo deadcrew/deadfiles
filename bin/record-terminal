@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -x
+
 export TMUX=
 
 terminal_name=RECORD_TERMINAL
@@ -9,13 +11,27 @@ if [ "$1" = "-x" ]; then
     screenkey=true
 fi
 
-if [ "${@}" ]; then
-    initial_command="-e ${@}"
-else
-    initial_command="-e tmux new -s record-terminal"
+name=""
+if [[ "$1" == "-n" ]]; then
+    shift
+    name="$1"
+    shift
 fi
 
-tmux kill-session -t record-terminal
+session="record-terminal"
+if [[ "$1" == "-s" ]]; then
+    shift
+    session="$1"
+    shift
+fi
+
+if [[ "${#@}" -ne 0 ]]; then
+    initial_command="-e ${@}"
+else
+    initial_command="-e tmux new -s $session"
+fi
+
+#tmux kill-session -t $session &>/dev/null
 
 urxvt -name $terminal_name $initial_command &
 
@@ -23,7 +39,7 @@ urxvt_pid=$!
 
 attempts=10
 while ! urxvt_window_id=$(xdotool search --classname $terminal_name 2>/dev/null); do
-    tmux set-window-option -t record-terminal set-titles-string $terminal_name
+    tmux set-window-option -t $session set-titles-string $terminal_name
 
     attempts=$(($attempts-1))
 
@@ -72,6 +88,10 @@ fi
 xdotool windowfocus $current_window_id
 
 output_video=$(mktemp --suffix .avi)
+if [[ "$name" ]]; then
+    output_video="$name"
+fi
+
 urxvt -e record-cast -w $urxvt_window_id $output_video &
 record_cast_pid=$!
 
@@ -80,6 +100,6 @@ wait $urxvt_pid
 pkill -f screenkey
 pkill -f ffmpeg
 
-tmux kill-session -t record-terminal
+tmux kill-session -t $session
 
 wait $record_cast_pid

@@ -1,0 +1,3 @@
+#!/bin/bash
+
+exec xdotool search --class --onlyvisible --sync "Firefox" key --clearmodifiers F5
