@@ -1,0 +1,8 @@
+#!/bin/bash
+
+[ -n "$_LOCK" ] || _LOCK=x exec flock -n $0 $0 "$@"
+
+vol=$(($(baton vol | grep -Po '[0-9]+') + ${1}))
+
+baton vol "${vol}"
+notify "<b>SPOTIFY</b> ${vol}%"
