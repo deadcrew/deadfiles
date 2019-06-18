@@ -1,0 +1,19 @@
+#!/bin/bash
+
+:get_default_name() {
+    grep '* index' -A1 | grep -Po '<\K[^>]+'
+}
+
+default_sink=$(pacmd list-sinks | :get_default_name)
+default_source=$(pacmd list-sources | :get_default_name)
+file_name=call.$(date +%FT%T).wav
+
+pactl >&- load-module module-null-sink sink_name=call
+pactl >&- load-module module-loopback sink=call latency_msec=50 source=$default_sink.monitor
+pactl >&- load-module module-loopback sink=call latency_msec=50 source=$default_source
+
+echo "recording -> $file_name"
+parec --rate=24000 --file-format=wav --latency-msec=50 -d call.monitor -r $file_name
+
+pactl unload-module module-loopback
+pactl unload-module module-null-sink
