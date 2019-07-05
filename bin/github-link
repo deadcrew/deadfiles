@@ -18,11 +18,11 @@ set -euo pipefail
     local repo
     repo=$(grep -Po '[:/]\K[^/]+/[^/]+$' <<< "$origin")
 
-    local branch
-    branch=$(git -C $root rev-parse --abbrev-ref HEAD)
+    local commit
+    commit=$(git -C $root rev-parse HEAD)
 
     local link
-    link="https://github.com/$repo/blob/$branch/$filename"
+    link="https://github.com/$repo/blob/$commit/$filename"
 
     if [[ "$line" ]]; then
         link="$link#L$line"
