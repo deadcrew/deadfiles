@@ -2,7 +2,7 @@
 
 set -euo pipefail
 
-secrets_repository=${secrets_repository:-$HOME/.secrets/}
+secrets_repository=${secrets_repository:-$HOME/.secrets}
 
 if [[ ! -d "${secrets_repository}" ]]; then
     notify-send "carcosa-qr" "$secrets_repository does not exist."

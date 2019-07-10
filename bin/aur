@@ -10,7 +10,7 @@ echo ":: removing package from the queue: ${package}"
 :ssh aurorad -R "${package}"
 
 echo ":: adding package to the queue: ${package}"
-:ssh aurorad -A "${package}"
+:ssh aurorad -A "${package}" -p 1
 
 echo ":: quering package ${package}"
 while :; do
