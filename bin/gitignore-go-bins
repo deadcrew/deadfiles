@@ -1,0 +1,15 @@
+#!/bin/bash
+
+git ls-files --full-name \
+    | grep -vP "^vendor/" \
+    | grep -vP "\.sh$" \
+    | while read line
+    do
+        if [[ ! -x "$line" ]]; then
+            continue
+        fi
+        line="/$line"
+        if ! grep -qFx "${line}" .gitignore; then
+            echo "$line" | tee -a .gitignore
+        fi
+    done
