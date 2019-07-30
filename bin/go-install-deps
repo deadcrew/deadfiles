@@ -1,7 +1,8 @@
 #!/bin/bash
 
-if [[ "$1" ]]; then
+if [[ "$1" && "$1" != "-v" ]]; then
     cd "$(dirname "$1")"
+    shift
 fi
 
 nproc=$(expr $(nproc) + 1)
@@ -9,6 +10,10 @@ nproc=$(expr $(nproc) + 1)
 deps=$(go list -f '{{join .Deps "\n"}}{{"\n"}}{{join .TestImports "\n"}}' ./... \
         | xargs -P$nproc go list \
             -f '{{if not .Standard}}{{.ImportPath}}{{end}}')
+
+if [[ "${1:-}" == "-v" ]]; then
+    deps=$(grep -v "/vendor/" <<< "$deps")
+fi
 
 total=$(wc -l <<< "$deps")
 i=0
