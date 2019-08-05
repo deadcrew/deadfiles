@@ -6,6 +6,8 @@ if [ -n "$MODAL_PATH" ]; then
     stest -lfx $MODAL_PATH
 fi
 
+PATH=$(printf "%s\n" $PATH | grep -vF $GOPATH | paste -sd:)
+
 {
     stest -lfx $PATH
     stest -lhx $PATH
