@@ -1,0 +1,35 @@
+#!/bin/bash
+
+pattern_line='<version>([^<]+)</version>'
+version_line=$(cat pom.xml | grep -P "$pattern_line" | head -n1)
+
+pattern_version='([0-9\.]+)'
+version=$(grep -Po "$pattern_version" <<< "$version_line")
+
+echo "$version"
+
+major="$(cut -d. -f1 <<< "$version")"
+minor="$(cut -d. -f2 <<< "$version")"
+patch="$(cut -d. -f3 <<< "$version")"
+
+echo '$major: '"${major}"
+echo '$minor: '"${minor}"
+echo '$patch: '"${patch}"
+
+case "${1:-patch}" in
+    major)
+        major=$((major+1))
+        ;;
+    minor)
+        minor=$((minor+1))
+        ;;
+    patch)
+        patch=$((patch+1))
+        ;;
+esac
+
+version_new="$major.$minor.$patch"
+
+echo "${version} -> ${version_new}"
+
+sed -ri "s|${version_line}|    <version>${version_new}</version>|" pom.xml
