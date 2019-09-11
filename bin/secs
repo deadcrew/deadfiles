@@ -1,0 +1,4 @@
+#!/bin/bash
+
+carcosa -p ~/.secrets -Sc 2>&1 | spin -s ' Syncing personal secrets'
+carcosa -p ~/reconquest/secrets -Sc 2>&1 | spin -s ' Syncing reconquest secrets'
