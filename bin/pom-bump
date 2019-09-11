@@ -18,13 +18,13 @@ echo '$patch: '"${patch}"
 
 case "${1:-patch}" in
     major)
-        major=$((major+1))
+        major=$(($major+1))
         ;;
     minor)
-        minor=$((minor+1))
+        minor=$(($minor+1))
         ;;
     patch)
-        patch=$((patch+1))
+        patch=$(($patch+1))
         ;;
 esac
 
