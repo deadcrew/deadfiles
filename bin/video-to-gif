@@ -8,7 +8,7 @@ fi
 
 temp_dir=$(mktemp -d)
 
-ffmpeg -i $1 -r 12.5 $temp_dir/out%06d.png
+ffmpeg -i "$1" -r 12.5 $temp_dir/out%06d.png
 
 ls -1 $temp_dir/out*.png | xargs -P${3:-2} -II -n1 convert -alpha remove -background black -verbose I I.gif
 
