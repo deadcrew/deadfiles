@@ -8,6 +8,13 @@ if [[ "${1:-}" == "-n" ]]; then
     name="_${1}"
 fi
 
+:coproc() {
+    local dir=$1 ; shift
+
+    { coproc { eval "$@" || (( $? != 130 )) && sleep inf; } >&3; } 3>&1
+    printf "%d\n" "$COPROC_PID" >$dir/pid
+}
+
 if [[ "$*" ]]; then
     dir=$(mktemp -dt rebirth$name.XXXXXX)
     trap "rm -r $dir" EXIT ERR
@@ -15,8 +22,7 @@ if [[ "$*" ]]; then
     printf "%s\n" "$*" >$dir/cmd
 
     while :; do
-        { coproc { eval "$@"; } >&3; } 3>&1
-        printf "%d\n" "$COPROC_PID" >$dir/pid
+        :coproc $dir "$@"
         if ! wait $COPROC_PID; then
             sleep 1
         fi
