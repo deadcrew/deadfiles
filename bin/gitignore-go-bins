@@ -1,6 +1,6 @@
 #!/bin/bash
 
-git ls-files --full-name \
+git ls-files --full-name -o \
     | grep -vP "^vendor/" \
     | grep -vP "\.sh$" \
     | while read line

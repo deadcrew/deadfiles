@@ -4,7 +4,7 @@ pattern_line='<version>([^<]+)</version>'
 version_line=$(cat pom.xml | grep -P "$pattern_line" | head -n1)
 
 pattern_version='([0-9\.]+)'
-version=$(grep -Po "$pattern_version" <<< "$version_line")
+version=$(grep -Po "$pattern_version" <<< "$version_line" | head -n1)
 
 echo "$version"
 
@@ -18,13 +18,13 @@ echo '$patch: '"${patch}"
 
 case "${1:-patch}" in
     major)
-        major=$(($major+1))
+        major=$(echo $(calc "$major+1"))
         ;;
     minor)
-        minor=$(($minor+1))
+        minor=$(echo $(calc "$minor+1"))
         ;;
     patch)
-        patch=$(($patch+1))
+        patch=$(echo $(calc "$patch+1"))
         ;;
 esac
 

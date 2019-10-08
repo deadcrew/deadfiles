@@ -18,10 +18,13 @@ fi
 total=$(wc -l <<< "$deps")
 i=0
 
-exec xargs <<< "$deps" -P$nproc -n1 -I{} \
+xargs <<< "$deps" -P$nproc -n1 -I{} \
     sh -c 'echo {} && /bin/go install {}' \
     | while read line; do
         i=$((i+1))
 
         echo "[$i/$total] $line"
     done
+
+pkill gopls
+echo "😗 gopls killed"
