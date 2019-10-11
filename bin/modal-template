@@ -8,7 +8,7 @@ declare -A opts
 PATH=/usr/bin/vendor_perl/:$PATH
 
 opts:parse opts args \
-    --message: --no-description -h --help --template: -- "${@}"
+    --args: --message: --no-description -h --help --template: -- "${@}"
 
 if [[ "${opts[--help]}" ]]; then
     cat <<HELP
@@ -63,6 +63,10 @@ modal_args=(
 
 if [[ "${opts[--message]:-}" ]]; then
     modal_args+=(-mesg "${opts[--message]:-}")
+fi
+
+if [[ "${opts[--args]:-}" ]]; then
+    modal_args+=(${opts[--args]:-})
 fi
 
 modal_args+=("${args[@]:1}")
