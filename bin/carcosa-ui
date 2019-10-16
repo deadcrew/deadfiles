@@ -113,6 +113,8 @@ source /usr/share/bash/opts/opts.bash
             exit 1
         fi
 
+        :sync "${path}"
+
         carcosa -Lc -p "$path" | \
             if [[ "${prefix:-}" ]]; then
                 grep -oP "^$prefix\K.*";
@@ -125,6 +127,10 @@ source /usr/share/bash/opts/opts.bash
                 cat
             fi
     done
+}
+
+:sync() {
+    carcosa -Sc -p "${path}" >/dev/null 2>&1 <&- &
 }
 
 :repos() {
