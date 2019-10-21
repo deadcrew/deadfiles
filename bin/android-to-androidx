@@ -5,7 +5,7 @@ if [[ ! "$1" ]]; then
     exit 2
 fi
 
-file="$1"
+files=("$@")
 
 contents=$(
     curl -s https://developer.android.com/topic/libraries/support-library/downloads/androidx-class-mapping.csv \
@@ -17,5 +17,5 @@ i=0
 tr , ' ' <<< "$contents" | while read from to; do
     i=$((i+1))
     echo "[${i}/$total] $from -> $to" >&2
-    sed -ri "s/$from/$to/g" "$file"
+    sed -ri "s/$from/$to/g" "${files[@]}"
 done
