@@ -1,0 +1,21 @@
+#!/bin/bash
+
+if [[ ! "$1" ]]; then
+    echo "file not specified" >&2
+    exit 2
+fi
+
+file="$1"
+
+contents=$(
+    curl -s https://developer.android.com/topic/libraries/support-library/downloads/androidx-class-mapping.csv \
+    | tail -n+2
+)
+
+total=$(wc -l <<< "$contents")
+i=0
+tr , ' ' <<< "$contents" | while read from to; do
+    i=$((i+1))
+    echo "[${i}/$total] $from -> $to" >&2
+    sed -ri "s/$from/$to/g" "$file"
+done
