@@ -12,16 +12,15 @@ major="$(cut -d. -f1 <<< "$version")"
 minor="$(cut -d. -f2 <<< "$version")"
 patch="$(cut -d. -f3 <<< "$version")"
 
-echo '$major: '"${major}"
-echo '$minor: '"${minor}"
-echo '$patch: '"${patch}"
-
 case "${1:-patch}" in
     major)
         major=$(echo $(calc "$major+1"))
+        minor=0
+        patch=0
         ;;
     minor)
         minor=$(echo $(calc "$minor+1"))
+        patch=0
         ;;
     patch)
         patch=$(echo $(calc "$patch+1"))
@@ -30,6 +29,6 @@ esac
 
 version_new="$major.$minor.$patch"
 
-echo "${version} -> ${version_new}"
+echo "${version} -> ${version_new}" >&2
 
 sed -ri "s|${version_line}|    <version>${version_new}</version>|" pom.xml
