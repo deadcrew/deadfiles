@@ -19,31 +19,6 @@ git-commit() {
 
         local pwd=$(pwd)
 
-        if [[ $(pwd) =~ $HOME/dotfiles || $(pwd) =~ $HOME/deadfiles ]]; then
-            subject=$(
-                echo "$modified" \
-                | sed-replace '.*/' \
-                | sed-replace '^\.' \
-                | sed-replace 'rc$' \
-                | sed-replace 'config$' \
-                | sed-replace '.conf$'
-            )
-
-            if [ ! "$subject" ]; then
-                subject=$(
-                    echo "$added" \
-                    | sed-replace '/.*'
-                )
-            fi
-
-            if [ ! "$subject" ]; then
-                subject=$(
-                    echo "$deleted" \
-                    | sed-replace '/.*'
-                )
-            fi
-        fi
-
         if [ "$subject" ]; then
             subject="${subject//$'\n'/, }"
             message="$subject: $message"
