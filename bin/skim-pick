@@ -1,6 +1,10 @@
 #!/bin/bash
 
-args=(--no-sort --tiebreak=index,begin,score)
+args=(
+    --no-sort
+    --tiebreak=index,begin,score
+    --bind=ctrl-o:beginning-of-line,ctrl-k:toggle-sort
+)
 if [[ "$BACKGROUND" == "light" ]]; then
     args+=(--color=light)
 fi
