@@ -1,6 +1,15 @@
 #!/bin/bash
 
 domain="$1"
+if [[ "$2" == "all" ]]; then
+    curl -s 'https://www.iana.org/domains/root/db' \
+        | grep -Po '<a href="/domains/root/db/[a-z]+.html">\.\K[a-z]+' \
+        | while read zone; do
+        echo "$domain.$zone"
+    done | xargs -n1 -P200 domain
+    exit
+fi
+
 if [[ ! "$domain" =~ \. ]]; then
     zones=(
         archi
