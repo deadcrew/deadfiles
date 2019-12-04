@@ -1,0 +1,6 @@
+#!/bin/bash
+
+filename="${1}"
+shift
+
+tail -f "${filename}" | tee /dev/stderr | grep -q "${@}"
