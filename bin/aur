@@ -3,7 +3,7 @@
 package="${1}"
 
 :ssh() {
-    ssh aur.reconquest.io "${@}"
+    ssh aur.reconquest.io -p222 "${@}"
 }
 
 echo ":: removing package from the queue: ${package}"
