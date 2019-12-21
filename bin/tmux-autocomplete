@@ -1,0 +1,12 @@
+#!/bin/bash
+
+cmd=("--theme" "$(background)" "--debug" "/tmp/log")
+if [[ -f $GOPATH/bin/tmux-autocomplete ]]; then
+    exec $GOPATH/bin/tmux-autocomplete "${cmd[@]}" "${@}"
+fi
+
+if [[ -f /usr/bin/tmux-autocomplete ]]; then
+    exec /usr/bin/tmux-autocomplete "${cmd[@]}" "${@}"
+fi
+
+echo "no program available" >&2

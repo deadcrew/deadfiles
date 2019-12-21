@@ -33,12 +33,17 @@ if ! grep -q "ssid=\"$network\"" \
     echo -n "Password: "
     read password
 
+    second_line='key_mgmt=NONE'
+    if [[ "$password" ]]; then
+        second_line="psk=\"$password\""
+    fi
+
     config="
-    network={
-            ssid=\"${network}\"
-            psk=\"${password}\"
-    }
-    "
+network={
+        ssid=\"${network}\"
+        $second_line
+}
+"
 
     echo "$config" | sudo tee -a \
         /etc/wpa_supplicant/wpa_supplicant-${wlan_interface}.conf
