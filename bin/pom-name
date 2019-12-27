@@ -1,0 +1,7 @@
+#!/bin/bash
+
+version=$(cat pom.xml | grep -Po '<version>\K([^<]+)' | head -n1)
+artifact=$(cat pom.xml | grep -Po '<artifactId>\K([^<]+)' | head -n1)
+
+
+echo "$artifact-$version"
