@@ -1,0 +1,12 @@
+#!/bin/bash
+
+pane=$(tmux display-message -p "#D")
+dir=/tmp/tmux-filter-pane/$(sed -re 's/%//' <<< $pane)
+
+mkdir -p $dir
+mkfifo $dir/tail
+
+tmux capture-pane -pJS- -t $pane > $dir/head
+tmux new-window "trap 'rm -rf $dir ; tmux pipe-pane -t $pane' EXIT && \
+    { { head -n-1 $dir/head ; cat $dir/tail & } | fzf --no-sort --tac --no-clear } "
+tmux pipe-pane -t $pane "cat > $dir/tail"
