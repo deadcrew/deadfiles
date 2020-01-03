@@ -1,3 +1,3 @@
 #!/bin/sh
 
-exec fzf.$(background 2>/dev/null|| echo dark) --algo=v2 --exact --no-sort --inline-info "${@}"
+exec shortcut fzf.$(background 2>/dev/null|| echo dark) --algo=v2 --exact --no-sort --inline-info "${@}"
