@@ -13,6 +13,8 @@
 ###                        * login-password - paste login and password;
 ###     --prefix=<prefix> Filter out only tokens that starts with given prefix.
 
+[ -n "$_LOCK" ] || _LOCK=x exec flock -n $0 $0 "$@"
+
 set -euo pipefail
 
 source /usr/share/bash/opts/opts.bash

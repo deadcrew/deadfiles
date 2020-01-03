@@ -1,0 +1,17 @@
+#!/bin/bash
+
+if [[ ! -f .shortcuts ]]; then
+    exec "${@}"
+    exit
+fi
+
+exprs_to=()
+exprs_from=()
+while read line; do
+    chunks=(${line//:/ })
+    exprs_to+=("-e" "s|^${chunks[1]}|${chunks[0]}|")
+    exprs_from+=("-e" "s|^${chunks[0]}|${chunks[1]}|")
+done < .shortcuts
+
+
+sed "${exprs_to[@]}" | ${@} | sed "${exprs_from[@]}"
