@@ -1,41 +1,20 @@
 #!/bin/bash
 
+set -euo pipefail
+
 package="${1}"
 
-:ssh() {
-    ssh aur.reconquest.io -p222 "${@}"
-}
-
-echo ":: removing package from the queue: ${package}"
-:ssh aurorad -R "${package}"
-
-echo ":: adding package to the queue: ${package}"
-:ssh aurorad -A "${package}" -p 1
-
-echo ":: quering package ${package}"
-while :; do
-    line=$(:ssh aurorad -Q | grep -P "^${package} ")
-
-    status=$(awk '{print $2}' <<< "$line")
-    echo "status: ${status}"
-
-    if [[ "$status" == "unknown" || "$status" == "queued" ]]; then
-        continue
-    fi
-
-    break
-done
-
-while :; do
-    echo ":: retrieving container id of ${package}"
-    id=$(:ssh docker ps | grep "${package}" | awk '{print $1}')
-    if [[ ! "$id" ]]; then
-        continue
-    fi
-
-    break
-done
-
-:ssh docker logs -f "${id}"
+if ! which aurora &>/dev/null; then
+    echo "No aurora program found"
+    echo
+    echo "Install it:"
+    echo "go get -v -u github.com/kovetskiy/aurora/cmd/aurora"
+    echo
+    echo "Also read: https://github.com/kovetskiy/aurora#generate-key"
+    exit 1
+fi
+aurora rm "$package"
+aurora add "$package"
+aurora watch -w "$package"
 
 sudo pacman -Sy "aurora/${package}"
