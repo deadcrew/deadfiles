@@ -1,6 +1,6 @@
 #!/bin/bash
 
-cmd=("--theme" "$(background)")
+cmd=("--theme" "$(background)" --debug "/tmp/tmux-autocomplete.log")
 if [[ -f $GOPATH/bin/tmux-autocomplete ]]; then
     exec $GOPATH/bin/tmux-autocomplete "${cmd[@]}" "${@}"
 fi
