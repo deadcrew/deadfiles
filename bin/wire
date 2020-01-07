@@ -1,0 +1,36 @@
+#!/bin/bash
+
+iface="$1"
+if [[ ! "$iface" ]]; then
+    echo "Specify interface:"
+    find /sys/class/net ! -type d | xargs --max-args=1 realpath  | awk -F\/ '/pci/{print $NF}'
+    exit 1
+fi
+
+wire_dir=/var/run/user/$UID/wire
+mkdir -p $wire_dir
+
+cat > $wire_dir/config <<CONF
+authoritative;
+option domain-name-servers 8.8.8.8, 8.8.4.4;
+option subnet-mask 255.255.255.0;
+option routers 10.11.12.13;
+subnet 10.11.12.0 netmask 255.255.255.0 {
+    range 10.11.12.14 10.11.12.254;
+}
+CONF
+
+touch $wire_dir/leases &>/dev/null
+
+:cleanup() {
+    sudo ip link set down dev $iface
+    sudo ip addr flush dev $iface
+}
+
+trap :cleanup EXIT
+
+:cleanup
+sudo ip link set up dev $iface
+sudo ip addr add 10.11.12.13/24 dev $iface
+
+sudo dhcpd -4 -d -lf $wire_dir/leases -pf $wire_dir/dhcpd4.pid -cf $wire_dir/config -f $iface
