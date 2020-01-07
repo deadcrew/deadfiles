@@ -13,7 +13,8 @@ if ! which aurora &>/dev/null; then
     echo "Also read: https://github.com/kovetskiy/aurora#generate-key"
     exit 1
 fi
-aurora rm "$package"
+
+aurora rm "$package" || echo "Package was not in queue"
 aurora add "$package"
 aurora watch -w "$package"
 
