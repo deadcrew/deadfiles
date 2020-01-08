@@ -1,0 +1,11 @@
+#!/bin/bash
+
+# TODO(seletskiy): add opts.bash with option to specify lock file path
+
+if [[ "$1" =~ ^(\./|\.\.|/) ]]; then
+    lock=$(readlink -f "$1")
+else
+    lock=$(which "$1")
+fi
+
+flock "$lock" "$@"
