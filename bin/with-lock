@@ -8,4 +8,4 @@ else
     lock=$(which "$1")
 fi
 
-flock "$lock" "$@"
+exec flock "$lock" "$@"
