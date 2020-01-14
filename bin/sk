@@ -1,0 +1,3 @@
+#!/bin/bash
+
+exec shortcut sk.$(background 2>/dev/null || echo dark) --tiebreak=index "${@}"
