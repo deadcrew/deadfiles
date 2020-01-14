@@ -1,0 +1,4 @@
+#!/bin/bash
+
+exec /bin/sk --color=dark,matched:220,bg:234,fg:240,current_match:196,current_bg:234,current:220,query:247 \
+     "${@}"
