@@ -33,14 +33,24 @@ set -euo pipefail
                 -mesg "URL: $(sed -re 's/&/\&amp;/g' <<< "$url")"
         )"
 
-        if gbookmarks "$db_file" "$url" "$title"; then
-            notify-desktop "" "♥ Bookmark saved"
-        else
-            notify-desktop "" "Unable to save bookmark"
-            exit 1
-        fi
+        :add "$db_file" "$url" "$title"
 
         exit 0
+    fi
+
+    if [[ "$mode" == "auto" ]]; then
+        title=$(xdotool getactivewindow getwindowname)
+
+        :add "$db_file" "$(xclip -o)" "{auto} $title"
+    fi
+}
+
+:add() {
+    if gbookmarks "$1" "$2" "$3"; then
+        notify-desktop "" "♥ Bookmark saved"
+    else
+        notify-desktop "" "Unable to save bookmark"
+        exit 1
     fi
 }
 
