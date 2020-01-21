@@ -132,7 +132,7 @@ source /usr/share/bash/opts/opts.bash
 }
 
 :sync() {
-    carcosa -Sc -p "${path}" >/dev/null 2>&1 <&- &
+    carcosa -S -p "${path}" >/dev/null 2>&1 <&- &
 }
 
 :repos() {
