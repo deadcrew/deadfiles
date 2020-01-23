@@ -1,0 +1,10 @@
+#!/bin/bash
+
+while :; do
+    now=$(zsh -i -c "${@}")
+    if [[ "$prev" != "$now" ]]; then
+        echo "$now"
+    fi
+
+    prev="$now"
+done
