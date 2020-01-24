@@ -1,8 +1,0 @@
-`!p try:
-    once
-except:
-    once = True
-    import px.langs.go.packages
-`package ${1:`!p snip.rv=px.langs.go.packages.guess_package_name_from_file_name()`}
-
-$0
