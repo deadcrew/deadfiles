@@ -1,0 +1,8 @@
+#!/bin/bash
+
+codes='import socket; s=socket.socket(); s.bind(("", 0)); print(s.getsockname()[1]); s.close()'
+if [[ "${1}" ]]; then
+    exec ssh "${@}" python <<< "$codes"
+fi
+
+exec python <<< "$codes"
