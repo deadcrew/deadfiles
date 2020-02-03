@@ -1,0 +1,18 @@
+#!/bin/bash
+
+set -euo pipefail
+
+playbook="${1}"
+
+host=$(yq -r '.[] | .hosts' < "$playbook")
+
+lines=$(bmo -b "/^\[/" "//" \
+    -v 'name' 'match($0, /^[^\[]*/, result); return result[0]' \
+    -c "/\[$host\]/" \
+    -f 'name' \
+    < "hosts")
+
+while read line; do
+    line=$(sed -r "s/ansible_port=/-p/" <<< "$line")
+    freeport ${line}
+done <<< "$lines"
