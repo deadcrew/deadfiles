@@ -1,0 +1,3 @@
+#!/bin/bash
+
+ps axfu | numfmt --header --from-unit=1024 --to=iec --field 5-6
