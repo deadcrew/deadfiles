@@ -139,6 +139,8 @@ CODE
         return
     fi
 
+    rm -rf "$(:get-cache-dir)"
+
     if $_terminal; then
         :spawn-terminal $_classname "$_exec" "$_direct" $window_geometry
 
@@ -162,9 +164,8 @@ CODE
     local vertical=$3
     local horizontal=$4
 
-    local tag="$width.$height.$vertical.$horizontal"
-    if [[ -f /var/run/user/$UID/kuake.geometry.$tag ]]; then
-        cat /var/run/user/$UID/kuake.geometry.$tag
+    if [[ -f $(:get-cache-dir)/geometry ]]; then
+        cat $(:get-cache-dir)/geometry
         return
     fi
 
@@ -207,7 +208,7 @@ CODE
     esac
 
     result="$window_x $window_y $window_width $window_height $screen_number"
-    echo "$result" > /var/run/user/$UID/kuake.geometry.$tag
+    echo "$result" > $(:get-cache-dir)/geometry
     echo "$result"
 }
 
@@ -292,8 +293,8 @@ CODE
     local window_height="$6"
     local window_screen="$7"
 
-    xdotool windowmove --sync $window_id $window_x $window_y
-    xdotool windowsize --sync $window_id $window_width $window_height
+    xdotool windowmove $window_id $window_x $window_y
+    xdotool windowsize $window_id $window_width $window_height
 
     if [[ "$opacity" != "1" ]]; then
         transset-df -i "$window_id" "$opacity"
@@ -303,7 +304,7 @@ CODE
 :is-another-screen() {
     local window_geometry="$*"
 
-    local cache_path="/tmp/kuake.$window_id"
+    local cache_path="$(:get-cache-dir)/window.$window_id"
     local cache=$(cat $cache_path 2>/dev/null)
 
     if [[ "$cache" != "$window_geometry" ]]; then
@@ -312,6 +313,13 @@ CODE
     fi
 
     return 1
+}
+
+:get-cache-dir() {
+    local tag="$_width.$_height.$_vertical.$_horizontal"
+    local dir="/var/run/user/$UID/kuake/$tag/"
+    mkdir -p "$dir"
+    echo "$dir"
 }
 
 :xscreeninfo() {
