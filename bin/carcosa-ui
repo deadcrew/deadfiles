@@ -13,7 +13,39 @@
 ###                        * login-password - paste login and password;
 ###     --prefix=<prefix> Filter out only tokens that starts with given prefix.
 
-[ -n "$_LOCK" ] || _LOCK=x exec flock -n $0 $0 "$@"
+
+:wait() {
+    spinner=("/" "—" "\\" "|")
+    i=0
+    while :; do
+        _LOCK=wx flock -E 137 -n $0 $0 "$@";
+        if [[ "$?" != "137" ]]; then
+            exit
+        fi
+
+        i=$((i+1))
+        sleep 0.1
+        notify-replace "carcosa-ui" "" \
+            "carcosa: syncing ${spinner[$((i % ${#spinner[@]}))]}"
+    done
+}
+
+if [[ ! "${_LOCK:-}" ]]; then
+    _LOCK=x flock -E 137 -n $0 $0 "$@"
+    if [[ "$?" == "137" ]]; then
+        _LOCK=w exec flock -n /var/run/user/$UID/carcosa-ui.wait.lock $0 "$@"
+    fi
+
+    exit
+fi
+
+if [[ "${_LOCK:-}" == "w" ]]; then
+    :wait
+fi
+
+if [[ "${_LOCK:-}" == "wx" ]]; then
+    notify-replace "carcosa-ui" "" "carcosa: synced"
+fi
 
 set -euo pipefail
 
@@ -115,7 +147,9 @@ source /usr/share/bash/opts/opts.bash
             exit 1
         fi
 
-        :sync "${path}"
+        if [[ "$_LOCK" == "x" ]]; then
+            :sync "${path}"
+        fi
 
         carcosa -Lc -p "$path" | \
             if [[ "${prefix:-}" ]]; then
