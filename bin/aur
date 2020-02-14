@@ -18,4 +18,6 @@ aurora rm "$package" || echo "Package was not in queue"
 aurora add "$package"
 aurora watch -w "$package"
 
+aurora get "$package" | tee /dev/stderr | grep -q success
+
 sudo pacman -Sy "aurora/${package}"
