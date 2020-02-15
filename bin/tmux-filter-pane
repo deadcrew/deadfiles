@@ -6,7 +6,11 @@ dir=$(mktemp -d)
 mkdir -p $dir
 mkfifo $dir/tail
 
+fzf=fzf
+if which fzf.tmux-filter-pane &>/dev/null; then
+    fzf=fzf.tmux-filter-pane
+fi
 tmux capture-pane -pJS- -t $pane > $dir/head
 tmux split-window -v "trap 'rm -rf $dir ; tmux pipe-pane -t $pane' EXIT && \
-    { { head -n-1 $dir/head ; cat $dir/tail & } | stdbuf -i0 -e0 -o0 fzf --no-sort --tac --no-clear }"
+    { { head -n-1 $dir/head ; cat $dir/tail & } | stdbuf -i0 -e0 -o0 $fzf --no-sort --tac --no-clear }"
 tmux pipe-pane -t $pane "cat > $dir/tail"
