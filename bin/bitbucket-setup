@@ -1,0 +1,78 @@
+#!/bin/bash
+
+URI="${URI:-https://bitbucket.local}"
+
+cookies="-b /tmp/bitbucket-setup.cookies -c /tmp/bitbucket-setup.cookies"
+
+echo ":: reading license from stdin" >&2
+license=$(cat)
+
+:set-atl-token() {
+    atl_token=$(curl $cookies -v -s "$URI/setup" \
+        | pup 'input[name="atl_token"] attr{value}')
+}
+
+:set-atl-token
+
+curl "$URI/setup" \
+    $cookies \
+    -H 'Connection: keep-alive' \
+    -H 'Cache-Control: max-age=0' \
+    -H "Origin: $URI" \
+    -H 'Upgrade-Insecure-Requests: 1' \
+    -H 'Content-Type: application/x-www-form-urlencoded' \
+    -H 'User-Agent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.79 Safari/537.36' \
+    -H 'Sec-Fetch-User: ?1' \
+    -H 'Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9' \
+    -H 'Sec-Fetch-Site: same-origin' \
+    -H 'Sec-Fetch-Mode: navigate' \
+    -H "Referer: $URI/setup" \
+    -H 'Accept-Language: en-US,en;q=0.9,ru;q=0.8' \
+    -d 'step=settings' \
+    -d 'applicationTitle=Bitbucket' \
+    --data-urlencode "baseUrl=$URI" \
+    -d 'license-type=false' \
+    --data-urlencode "license=$license" \
+    --data-urlencode "licenseDisplay=$license" \
+    -d 'submit=Next' \
+    -d "atl_token=${atl_token}"
+
+:set-atl-token
+
+curl -L "$URI/setup" \
+    $cookies \
+    -H 'Connection: keep-alive' \
+    -H 'Cache-Control: max-age=0' \
+    -H "Origin: $URI" \
+    -H 'Upgrade-Insecure-Requests: 1' \
+    -H 'Content-Type: application/x-www-form-urlencoded' \
+    -H 'User-Agent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.79 Safari/537.36' \
+    -H 'Sec-Fetch-User: ?1' \
+    -H 'Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9' \
+    -H 'Sec-Fetch-Site: same-origin' \
+    -H 'Sec-Fetch-Mode: navigate' \
+    -H "Referer: $URI/setup" \
+    -H 'Accept-Language: en-US,en;q=0.9,ru;q=0.8' \
+    --data-urlencode 'step=user' \
+    --data-urlencode 'username=admin' \
+    --data-urlencode 'fullname=admin' \
+    --data-urlencode 'email=admin@admin.admin' \
+    --data-urlencode 'password=admin' \
+    --data-urlencode 'confirmPassword=admin' \
+    --data-urlencode 'skipJira=Go to Bitbucket' \
+    --data-urlencode "atl_token=$atl_token" \
+
+
+if [[ "$1" == "-a" ]]; then
+    browser "data:text/html;base64,$(base64 -w0 <<HEAD
+    <form id="x" method="POST" action="$URI/j_atl_security_check">
+        <input type="text" name="j_username" value="admin" />
+        <input type="text" name="j_password" value="admin" />
+        <input type="text" name="_atl_remember_me" value="on" />
+        <input type="text" name="queryString" value="nextUrl=%2Fdashboard" />
+    </form>
+
+    <script>setTimeout(function(){document.getElementById("x").submit()}, 100)</script>
+HEAD
+    )"
+fi

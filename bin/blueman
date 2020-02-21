@@ -1,5 +1,6 @@
 #!/bin/bash
 
 sudo systemctl start bluetooth
+bluetoothctl <<< "power on"
 systemctl --user start blueman-applet
 blueman-manager
