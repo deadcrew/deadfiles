@@ -1,0 +1,56 @@
+#!/bin/bash
+
+_user="admin"
+_pass="admin"
+_host="bitbucket.local"
+_context=""
+
+:curl() {
+    local url="$1"
+    shift
+
+    local auth="${_user:+-u $_user:$_pass}"
+    curl -s $auth "http://${_host}${_context}$url" "${@}"
+}
+
+_prev_message=""
+:message() {
+    message="$*"
+    if [[ "$message" == "$_prev_message" ]]; then
+        return
+    fi
+
+    now=$(date +%s.%N)
+    duration=$(printf '%.2f' $(calc "$now-$start"))
+    _prev_message="$message"
+    printf "%-6s %s\n" "${duration}s" "$message"
+}
+
+:wait-bitbucket-startup() {
+    local response=""
+    start=$(date +%s.%N)
+    while true; do
+        if ! response=$(:curl  "/system/startup" -H "Accept: application/json" -L --fail); then
+            code=$?
+            if [[ "$code" == "22" ]]; then
+                break
+            fi
+
+            :message "WAITING: Bitbucket HTTP service is not responding yet"
+        else
+            message=$(jq -r '.progress.message' <<< "$response")
+            percentage=$(jq -r '.progress.percentage' <<< "$response")
+            state=$(jq -r '.state' <<< "$response")
+
+            :message "$(printf '%33s: %s' "$(colorhash $percentage%)" "${message}")"
+
+            if [[ "$state" == "STARTED" ]]; then
+                break
+            fi
+        fi
+
+        sleep 0.05
+    done
+}
+
+:wait-bitbucket-startup
