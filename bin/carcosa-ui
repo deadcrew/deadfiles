@@ -120,10 +120,9 @@ source /usr/share/bash/opts/opts.bash
 }
 
 :type() {
-    cat <<< "$1" \
-        | perl -p -e 'chomp if eof' \
+    perl -p -e 'chomp if eof' \
+        | tr '\n' ' ' \
         | xdotool type --clearmodifiers --delay 1 --file -
-
 }
 
 :type:key() {
@@ -224,15 +223,17 @@ source /usr/share/bash/opts/opts.bash
                 fi
 
                 if [[ "$login" ]]; then
-                    :type "$login"
+                    :type <<< "$login"
                     :type:key "Tab"
                 fi
             fi
         fi
 
-        :type "$password"
+
+        :type <<< "$password"
 
         if $enter; then
+            sleep 0.1
             :type:key "Return"
         fi
     else
