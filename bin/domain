@@ -30,7 +30,7 @@ if host $domain | grep "NXDOMAIN" >&/dev/null; then
     while [[ ! "$whois" ]]; do
         whois=$(whois $domain 2>/dev/null)
     done
-    if  grep <<< "$whois" -E "(No match for|NOT FOUND)" >&/dev/null; then
+    if  grep <<< "$whois" -E "(No match for|NOT FOUND|No Data Found)" >&/dev/null; then
         echo "$domain AVAILABLE";
     else
         echo "$domain taken";
