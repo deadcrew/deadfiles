@@ -13,5 +13,8 @@ while read line; do
     exprs_from+=("-e" "s|^${chunks[0]}:|${chunks[1]}|")
 done < .shortcuts
 
-
-sed "${exprs_to[@]}" | ${@} | sed "${exprs_from[@]}"
+if [ -t 0 ]; then
+    exec "${@}"
+else
+    sed "${exprs_to[@]}" | ${@} | sed "${exprs_from[@]}"
+fi
