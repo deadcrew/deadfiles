@@ -40,7 +40,7 @@ if [[ ! "${_LOCK:-}" ]]; then
 fi
 
 if [[ "${_LOCK:-}" == "w" ]]; then
-    :wait
+    :wait "$@"
 fi
 
 if [[ "${_LOCK:-}" == "wx" ]]; then
