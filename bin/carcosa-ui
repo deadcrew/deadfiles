@@ -14,11 +14,19 @@
 ###     --prefix=<prefix> Filter out only tokens that starts with given prefix.
 
 
+if systemctl is-active eyebrod >/dev/null; then
+    data=$(curl -s 'http://127.0.0.1:3451/rpc?command=get_hostname')
+    xsel -i -b <<< "$data"
+fi
+
+_lock_wait=/var/run/user/$UID/carcosa-ui.wait.lock
+_lock_run=/var/run/user/$UID/carcosa-ui.run.lock
+
 :wait() {
     spinner=("/" "—" "\\" "|")
     i=0
     while :; do
-        _LOCK=wx flock -E 137 -n $0 $0 "$@";
+        _LOCK=wx flock --verbose -E 137 -n $_lock_run $0 "$@";
         if [[ "$?" != "137" ]]; then
             exit
         fi
@@ -31,9 +39,9 @@
 }
 
 if [[ ! "${_LOCK:-}" ]]; then
-    _LOCK=x flock -E 137 -n $0 $0 "$@"
+    _LOCK=x flock -E 137 -n $_lock_run $0 "$@"
     if [[ "$?" == "137" ]]; then
-        _LOCK=w exec flock -n /var/run/user/$UID/carcosa-ui.wait.lock $0 "$@"
+        _LOCK=w exec flock -n $_lock_wait $0 "$@"
     fi
 
     exit

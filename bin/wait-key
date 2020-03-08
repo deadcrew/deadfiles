@@ -1,0 +1,18 @@
+#!/bin/bash
+
+key="${1}"
+
+if [[ ! -e /tmp/waitkey ]]; then
+    mkfifo /tmp/waitkey
+fi
+
+keypresses >/tmp/waitkey &
+pid=$!
+
+while read -a chunks; do
+    if [[ "${chunks[0]}" == "KeyRelease" && "${chunks[2]}" == "[$key]" ]]; then
+        break
+    fi
+done </tmp/waitkey
+
+kill $(ps -o pid= --ppid $pid)
