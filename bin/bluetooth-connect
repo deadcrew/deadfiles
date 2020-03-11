@@ -18,6 +18,24 @@ expect {
 }
 
 send "connect $address\r"
+expect {
+    "Failed to connect" {
+        send "remove $address\r"
+        exp_continue
+    }
+
+    -re "Device $address not available|Device has been removed" {
+        send "scan on\r"
+        expect "Discovery started"
+        expect -re "\[NEW\] Device $address"
+        send "pair $address\r"
+        expect "Pairing successful"
+        expect -re "\[CHG\] $address Connected: no"
+        send "scan off\r"
+        send "connect $address\r"
+    }
+}
+
 expect -re "Connection "
 send "quit\r"
 expect eof
