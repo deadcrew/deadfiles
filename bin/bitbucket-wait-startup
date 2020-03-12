@@ -2,7 +2,7 @@
 
 _user="admin"
 _pass="admin"
-_host="bitbucket.local"
+_host="${_host:-bitbucket.local}"
 _context=""
 
 :curl() {
@@ -42,7 +42,7 @@ _prev_message=""
             percentage=$(jq -r '.progress.percentage' <<< "$response")
             state=$(jq -r '.state' <<< "$response")
 
-            :message "$(printf '%33s: %s' "$(colorhash $percentage%)" "${message}")"
+            :message "$(printf '%8s: %s' "$percentage%" "${message}")"
 
             if [[ "$state" == "STARTED" ]]; then
                 break
