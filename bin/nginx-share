@@ -23,5 +23,6 @@ http {
 }
 FILE
 
+sudo killall -9 nginx
 sudo systemctl restart nginx
 sudo systemctl status nginx
