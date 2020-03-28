@@ -1,0 +1,4 @@
+#!/bin/bash
+
+number=$1
+exec mpv --title="camera:[$number]" -v --no-resume-playback "https://sochi.camera:8081/cam_$number/tracks-v1/index.m3u8?token=bisv_dgZK"
