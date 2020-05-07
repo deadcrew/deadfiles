@@ -17,7 +17,10 @@
 
 source '/usr/share/bash/opts/opts.bash'
 
-:help() { sed -rn 's/^### ?//;T;p' "$0"; exit $1; }
+:help() {
+    sed -rn 's/^### ?//;T;p' "$0"
+    exit $1
+}
 
 declare -A opts
 declare -a args
@@ -62,7 +65,7 @@ if [[ "$select_window" ]]; then
         xdotool windowfocus $window_id
 
         xev -id "$window_id" | while read line; do
-            if grep "keycode 78" <<< "$line"; then
+            if grep "keycode 78" <<<"$line"; then
                 break
             fi
         done
@@ -85,7 +88,7 @@ if [[ "$window_id" ]] && $press; then
         xdotool windowfocus $window_id
 
         xev -id "$window_id" | while read line; do
-            if grep "keycode 78" <<< "$line"; then
+            if grep "keycode 78" <<<"$line"; then
                 break
             fi
         done
@@ -97,5 +100,5 @@ fi
 
 ffcast $select_arg % \
     ffmpeg $audio -f x11grab -framerate 25 -video_size %s \
-    -i %D+%c -codec:v libx264 -b:v 20000k \
+    -i %D+%c -codec:v h264_nvenc -preset losslesshp \
     -vf crop="iw-mod(iw\\,2):ih-mod(ih\\,2)" -y -c:a copy "$video"
