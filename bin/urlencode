@@ -1,0 +1,20 @@
+#!/bin/bash
+
+# urlencode <string>
+old_lc_collate=$LC_COLLATE
+LC_COLLATE=C
+
+data="${1:-}"
+if [[ ! "$data" ]]; then
+    data=$(cat)
+fi
+length="${#data}"
+for ((i = 0; i < length; i++)); do
+    c="${data:i:1}"
+    case $c in
+    [a-zA-Z0-9.~_-]) printf "$c" ;;
+    *) printf '%%%02X' "'$c" ;;
+    esac
+done
+
+LC_COLLATE=$old_lc_collate
