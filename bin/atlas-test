@@ -1,0 +1,3 @@
+#!/bin/bash
+
+atlas-mvn test -B -q | atlas-filter-tests

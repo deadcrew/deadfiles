@@ -1,0 +1,23 @@
+#!/bin/bash
+
+lines=()
+found="0"
+while read line; do
+    if [[ "$found" == "0" ]]; then
+        if [[ "$line" =~ "T E S T S" ]]; then
+            found="1"
+            continue
+        fi
+
+        lines+=("$line")
+        continue
+    fi
+
+    if [[ "$found" == "1" ]]; then
+        echo "${line#"[INFO]"}"
+    fi
+done
+
+if [[ "$found" == "0" ]]; then
+    printf '%s\n' "${lines[@]}"
+fi

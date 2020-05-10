@@ -1,0 +1,4 @@
+#!/bin/bash
+
+xdotool search --onlyvisible "as_toolbar" windowunmap
+xdotool search --onlyvisible "zoom_linux_float_video_window" windowunmap
