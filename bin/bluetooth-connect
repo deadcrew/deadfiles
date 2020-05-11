@@ -1,5 +1,6 @@
 #!/usr/bin/expect -f
 
+set timeout -1
 set prompt "#"
 set address [lindex $argv 0]
 
@@ -17,9 +18,11 @@ expect {
     "Powered: yes"
 }
 
+system notify-replace bluetooth-connect '' "'<b>BT</b> » dev $address'"
+
 send "connect $address\r"
 expect {
-    "Failed to connect" {
+    -re "Failed to connect|Device $address not available" {
         send "remove $address\r"
         exp_continue
     }
@@ -27,15 +30,26 @@ expect {
     -re "Device $address not available|Device has been removed" {
         send "scan on\r"
         expect "Discovery started"
-        expect -re "\[NEW\] Device $address"
+        system notify-replace bluetooth-connect '' "'<b>BT</b> » dev $address<br>     not found: pair now!'"
+        expect -re ".*NEW.* Device $address"
         send "pair $address\r"
         expect "Pairing successful"
-        expect -re "\[CHG\] $address Connected: no"
+        system notify-replace bluetooth-connect '' "'<b>BT</b> » dev $address<br>     paired, connecting…'"
+        expect -re ".*CHG.* $address Connected: no"
         send "scan off\r"
         send "connect $address\r"
+        exp_continue
+    }
+
+
+    "Connection successful" {
+        system notify-replace bluetooth-connect '' "'<b>BT</b> » dev $address<br>     connected'"
+        send "quit\r"
+    }
+
+    "\\\[agent\\\] Authorize service .*" {
+        send "yes\r"
     }
 }
 
-expect -re "Connection "
-send "quit\r"
 expect eof
