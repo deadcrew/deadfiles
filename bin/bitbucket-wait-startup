@@ -3,7 +3,7 @@
 _user="admin"
 _pass="admin"
 _host="${_host:-bitbucket.local}"
-_context=""
+_context=${_context:-}
 
 :curl() {
     local url="$1"
