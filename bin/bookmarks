@@ -30,7 +30,7 @@ set -euo pipefail
         url="$(xclip -o)"
         title="$(
             modal -lines 0 \
-                -mesg "URL: $(sed -re 's/&/\&amp;/g' <<< "$url")"
+                -mesg "URL: $(sed -re 's/&/\&amp;/g' <<<"$url")"
         )"
 
         :add "$db_file" "$url" "$title"

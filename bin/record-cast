@@ -99,6 +99,6 @@ if [[ "$window_id" ]] && $press; then
 fi
 
 ffcast $select_arg % \
-    ffmpeg $audio -f x11grab -framerate 25 -video_size %s \
+    ffmpeg $audio -f x11grab -framerate 30 -video_size %s \
     -i %D+%c -codec:v h264_nvenc -preset losslesshp \
     -vf crop="iw-mod(iw\\,2):ih-mod(ih\\,2)" -y -c:a copy "$video"

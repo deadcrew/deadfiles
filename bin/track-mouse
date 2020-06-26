@@ -1,0 +1,15 @@
+#!/bin/bash
+
+if [[ "$1" == "-t" ]]; then
+    compton --config /dev/null -f &
+    trap "kill $!" ERR EXIT INT QUIT
+fi
+
+inputs=$(xinput list \
+    | grep -P 'slave\s+pointer' \
+    | grep -Po 'id=\K\S+')
+
+printf "%s\n" "$inputs" \
+    | xargs -n1 -P${#inputs} xinput test \
+    | stdbuf -i0 -o0 grep -P 'button\s+press\s+[123]' \
+    | xargs -n1 -I{} find-cursor --size 50 --distance 1 --line-width 1 --wait 20 --color '#dae63e' -g
