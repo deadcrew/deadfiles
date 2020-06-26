@@ -22,7 +22,7 @@ system notify-replace bluetooth-connect '' "'<b>BT</b> » dev $address'"
 
 send "connect $address\r"
 expect {
-    -re "Failed to connect|Device $address not available" {
+    -re "Failed to connect|Failed to pair" {
         send "remove $address\r"
         exp_continue
     }
@@ -41,14 +41,15 @@ expect {
         exp_continue
     }
 
+    -re "\\\[agent\\\] Authorize service .*" {
+        send "yes\r"
+        exp_continue
+    }
+
 
     "Connection successful" {
         system notify-replace bluetooth-connect '' "'<b>BT</b> » dev $address<br>     connected'"
         send "quit\r"
-    }
-
-    "\\\[agent\\\] Authorize service .*" {
-        send "yes\r"
     }
 }
 

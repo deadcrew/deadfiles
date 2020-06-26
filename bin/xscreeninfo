@@ -1,14 +1,25 @@
-#!/bin/python2
+#!/bin/bash
 
-import gtk.gdk
+read mouse_x mouse_y <<<$(
+    xdotool getmouselocation |
+        cut -f-2 -d' ' |
+        tr -d 'xy:'
+)
 
-screen   = gtk.gdk.screen_get_default()
-monitors = int(screen.get_n_monitors())
-display  = gtk.gdk.display_get_default()
-pointer  = display.get_pointer()
+while read width height x y; do
+    if ((mouse_x < x || mouse_y < y)); then
+        continue
+    fi
 
-cursor_monitor = screen.get_monitor_at_point(pointer[1], pointer[2])
-geometry = screen.get_monitor_geometry(cursor_monitor)
-print "%d %d %d %d %d" % (
-    cursor_monitor, geometry.x, geometry.y, geometry.width, geometry.height
+    if ((mouse_x > x + width || mouse_y > y + height)); then
+        continue
+    fi
+
+    echo _ $x $y $width $height
+done <<<$(
+    xrandr --listactivemonitors |
+        grep -P '^ \d' |
+        cut -f4 -d' ' |
+        sed -r 's#/[0-9]+##g' |
+        tr 'x+' ' '
 )
