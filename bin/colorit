@@ -1,0 +1,7 @@
+#!/bin/bash
+
+fg=$1
+bg=$2
+shift 2
+
+echo -e "\e[48;5;${fg};1m\e[38;5;${bg};1m${@}\e[0m"
