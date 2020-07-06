@@ -8,6 +8,9 @@ wpa_cli() {
     command sudo wpa_cli -i "$interface" "$@"
 }
 
+wpa_cli_status() {
+    wpa_cli status | grep '^ssid=' | cut -d= -f2-
+}
 
 network=${1:-}
 interface=${2:-$wlan_interface}
@@ -36,6 +39,10 @@ if [[ "$network" && "$network" != "!" ]]; then
     fi
     echo -n "Selecting network ... $name "
 
+    if [[ "$(wpa_cli_status)"  == "$id" ]]; then
+        wpa_cli reconfigure
+    fi
+
     wpa_cli select_network "$id"
 else
     if [[ "$network" == "!" ]]; then
@@ -44,15 +51,6 @@ else
     else
         wpa_cli status | grep '^ssid=' | cut -d= -f2-
         exit
-    fi
-fi
-
-if ! sudo systemctl status dhcp &>/dev/null; then
-    exitcode=$?
-    if [[ "$exitcode" == "3" ]]; then
-        sudo systemctl stop dhcp
-        sleep 0.1
-        sudo systemctl start dhcp
     fi
 fi
 
