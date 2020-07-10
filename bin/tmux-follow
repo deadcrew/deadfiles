@@ -5,18 +5,17 @@ set -euo pipefail
 pane="${1:-}"
 if [[ ! "$pane" ]]; then
     pane=$(
-        tmux list-clients -F '#{session_name}' \
-            | xargs -P5 '-I{}' -n1 \
-                sh -c 'line=$(tmux capture-pane -pJ -t {} | grep -m1 .); echo "{} $line"' \
-            | fzf --preview='tmux.preview {}' --preview-window up:80:noborder
+        tmux list-windows -a -F '#{session_name}:#{window_index}' |
+            xargs -P5 '-I{}' -n1 \
+                sh -c 'line=$(tmux capture-pane -pJ -t {} | grep -m1 .); echo "{} $line"' |
+            fzf --preview='tmux.preview {}' --preview-window up:60
     )
     if [[ ! "$pane" ]]; then
         exit
     fi
 
-    pane=$(awk '{print $1}' <<< "$pane")
+    pane=$(awk '{print $1}' <<<"$pane")
 fi
-
 
 dir=$(mktemp -d)
 mkdir -p $dir
@@ -24,10 +23,11 @@ mkfifo $dir/tail
 
 trap "rm -rf $dir" EXIT
 
-tmux capture-pane -pJS- -t $pane > $dir/head
+tmux capture-pane -pJS- -t $pane >$dir/head
 tmux pipe-pane -t $pane "cat > $dir/tail" &
 pid=$!
 
 trap "kill $pid 2>/dev/null; rm -rf $dir;" EXIT
 
-head -n-1 $dir/head ; cat $dir/tail
+head -n-1 $dir/head
+cat $dir/tail
