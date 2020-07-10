@@ -1,0 +1,16 @@
+#!/bin/bash
+
+set -euo pipefail
+mkdir -p ~/.cache/batrak/
+proc=$(($(nproc)*2))
+batrak "${@}" \
+    | gargs -p $proc  '[[ -f ~/.cache/batrak/{0} ]] || batrak -L {0} > ~/.cache/batrak/{0}'
+
+issue=$(batrak "${@}" \
+    | fzf --tac --no-sort --preview "tmux.fzf-batrak-preview {}" --preview-window 'down:40%')
+
+issue=$(awk '{print $1}' <<< "$issue")
+
+jira=$(grep -Po 'jira_api_url.*://\K[^/]+' ~/.batrakrc)
+
+browser "https://$jira/browse/$issue"

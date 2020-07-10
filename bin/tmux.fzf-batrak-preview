@@ -1,0 +1,9 @@
+#!/bin/bash
+
+read issue _ <<< $1
+
+if [[ -f ~/.cache/batrak/$issue ]]; then
+     exec cat ~/.cache/batrak/$issue
+fi
+
+batrak -L $issue | tee ~/.cache/batrak/$issue
