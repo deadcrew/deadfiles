@@ -1,6 +1,7 @@
 #!/bin/bash
 
 URI="${URI:-https://bitbucket.local}"
+PASSWORD="${PASSWORD:-admin}"
 
 cookies="-b /tmp/bitbucket-setup.cookies -c /tmp/bitbucket-setup.cookies"
 
@@ -57,7 +58,7 @@ curl -L "$URI/setup" \
     --data-urlencode 'username=admin' \
     --data-urlencode 'fullname=admin' \
     --data-urlencode 'email=admin@admin.admin' \
-    --data-urlencode 'password=admin' \
+    --data-urlencode "password=$PASSWORd" \
     --data-urlencode 'confirmPassword=admin' \
     --data-urlencode 'skipJira=Go to Bitbucket' \
     --data-urlencode "atl_token=$atl_token" \
