@@ -2,19 +2,33 @@
 
 set -euo pipefail
 
+
+:list-panes() {
+    tmux list-windows -a -F '#{session_name}:#{window_index}' \
+        | xargs -P5 '-I{}' -n1 \
+            sh -c 'line=$(tmux capture-pane -pJ -t {} | grep -m1 .); echo "{} $line"'
+}
+
 pane="${1:-}"
 if [[ ! "$pane" ]]; then
     pane=$(
-        tmux list-windows -a -F '#{session_name}:#{window_index}' |
-            xargs -P5 '-I{}' -n1 \
-                sh -c 'line=$(tmux capture-pane -pJ -t {} | grep -m1 .); echo "{} $line"' |
-            fzf --preview='tmux.preview {}' --preview-window up:60
+        :list-panes | fzf --preview 'tmux.preview {}' --preview-window up:60
     )
     if [[ ! "$pane" ]]; then
         exit
     fi
 
     pane=$(awk '{print $1}' <<<"$pane")
+else
+    if [[ "$pane" == "-g" ]]; then
+        panes=$(:list-panes | grep -P "$2" | sed -r '/^$/d')
+        if [[ "$(wc -l <<< "$panes")" != 1 ]]; then
+            echo "$panes" >&2
+            exit 1
+        else
+            pane=$(awk '{print $1}' <<< "$panes")
+        fi
+    fi
 fi
 
 dir=$(mktemp -d)

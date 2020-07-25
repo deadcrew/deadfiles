@@ -16,5 +16,5 @@ done < .shortcuts
 if [ -t 0 ]; then
     exec "${@}"
 else
-    sed "${exprs_to[@]}" | ${@} | sed "${exprs_from[@]}"
+    sed "${exprs_to[@]}" | "${@}" | sed "${exprs_from[@]}"
 fi
