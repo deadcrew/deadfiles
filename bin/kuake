@@ -23,6 +23,7 @@ Options:
     --middle      Show kuake at center (horizontal) of screen;
     --height      Set kuake height as procent of screne height, default: 35.
     --width       Set kuake height as procent of screne height, default: 50.
+    --padding     Set kuake padding.
     --opacity     Set kuake opacity, default: 1.
     --class       Specify kuake window class name, default: kuake.
     --exec        Exec command in spawned kuake terminal.
@@ -42,6 +43,7 @@ CODE
     local _classname=kuake
     local _exec=
     local _direct=false
+    local _padding=0
 
     while [[ $# -ne 0 ]]; do
         case "$1" in
@@ -79,6 +81,11 @@ CODE
 
         --height)
             _height="$2"
+            shift
+            ;;
+
+        --padding)
+            _padding="$2"
             shift
             ;;
 
@@ -128,7 +135,7 @@ CODE
 
     local window_id=$(:window-find $_classname)
     local window_geometry=$(
-        :get-kuake-geometry $_width $_height $_vertical $_horizontal
+        :get-kuake-geometry $_width $_height $_vertical $_horizontal $_padding
     )
 
     if [[ "$window_id" ]]; then
@@ -165,6 +172,7 @@ CODE
     local height="$2"
     local vertical=$3
     local horizontal=$4
+    local padding=$5
 
     if [[ -f $__cache_dir/geometry ]]; then
         cat $__cache_dir/geometry
@@ -191,13 +199,13 @@ CODE
         ;;
 
     bottom)
-        window_y=$(($screen_y + $screen_height - $window_height))
+        window_y=$(($screen_y + $screen_height - $window_height - $padding))
         ;;
     esac
 
     case "$horizontal" in
     left)
-        window_x=$screen_x
+        window_x=$(($screen_x+$padding))
         ;;
 
     middle)
@@ -205,7 +213,7 @@ CODE
         ;;
 
     right)
-        window_x=$(($screen_x + $screen_width - $window_width))
+        window_x=$(($screen_x + $screen_width - $window_width - $padding))
         ;;
     esac
 
