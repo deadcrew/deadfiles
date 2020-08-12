@@ -9,9 +9,10 @@ if [[ "${1:-}" == "-n" ]]; then
 fi
 
 :coproc() {
-    local dir=$1 ; shift
+    local dir=$1
+    shift
 
-    { coproc { eval "$@" || (( $? != 130 )) && sleep inf; } >&3; } 3>&1
+    { coproc { eval "$@" || (($? != 130)) && sleep inf; } >&3; } 3>&1
     printf "%d\n" "$COPROC_PID" >$dir/pid
 }
 
@@ -23,8 +24,8 @@ if [[ "$*" ]]; then
 
     while :; do
         :coproc $dir "$@"
-        if ! wait $COPROC_PID; then
-            sleep 1
+        if wait $COPROC_PID; then
+            :
         fi
         echo "> reborn" >&2
     done
