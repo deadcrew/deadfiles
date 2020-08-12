@@ -24,7 +24,7 @@ set -euo pipefail
     :export-environment "$filename"
 
     printf " > \e[1m%s\e[0m\n" "$command"
-    ( bash -c "eval $command" 2>&1 </dev/null ) \
+    (bash -c "eval $command" 2>&1 </dev/null) \
         | :indent
 }
 
@@ -38,7 +38,7 @@ set -euo pipefail
 :get-file-extension() {
     local filename="$1"
 
-    sed 's/.*\.//g' <<< "$filename"
+    sed 's/.*\.//g' <<<"$filename"
 }
 
 :indent() {
@@ -60,7 +60,7 @@ set -euo pipefail
 :is-run-step() {
     local run_number="$1"
     local run_step="$2"
-    test $(( $run_number % $run_step )) -eq 0
+    test $(($run_number % $run_step)) -eq 0
 }
 
 :wait-changed-files() {
@@ -76,34 +76,39 @@ set -euo pipefail
 
     shift 2
 
-    eval set -- "$(getopt -o w:he:d:t: -- "${@}")"
+    eval set -- "$(getopt -o w:he:d:t:x: -- "${@}")"
     while [ $# -gt 0 ]; do
         case $1 in
-            -w)
-                shift
-                eval $_opts\[wait\]=$1
-                ;;
-            -e)
-                shift
-                eval $_opts\[events\]=$1
-                ;;
-            -d)
-                shift
-                eval $_opts\[dir\]=$1
-                ;;
-            -t)
-                shift
-                eval $_opts\[delay\]=$1
-                ;;
-            --)
-                shift
-                break
-                ;;
-            *)
-                ;&
-            -h)
-                :usage
-                exit 1
+        -w)
+            shift
+            eval $_opts\[wait\]=$1
+            ;;
+        -e)
+            shift
+            eval $_opts\[events\]=$1
+            ;;
+        -d)
+            shift
+            eval $_opts\[dir\]=$1
+            ;;
+        -t)
+            shift
+            eval $_opts\[delay\]=$1
+            ;;
+        -x)
+            shift
+            eval $_opts\[exclude\]=$1
+            ;;
+        --)
+            shift
+            break
+            ;;
+        *) ;&
+
+        -h)
+            :usage
+            exit 1
+            ;;
         esac
 
         shift
@@ -113,7 +118,7 @@ set -euo pipefail
 }
 
 :usage() {
-        cat <<HELP
+    cat <<HELP
 Usage:
     watcher [-we] <pattern> [<run_step>] <command>...
 
@@ -154,6 +159,7 @@ Options:
     -t <timeout>  Wait for <timeout> before running command, effectively
                    discarding all file change bursts that occur in short
                    period of time.
+    -x <exclude>  Exclude pattern.
 HELP
 
 }
@@ -161,11 +167,10 @@ HELP
 :watchdog() {
     sleep $1
     kill 2>/dev/null -TERM $(
-    pstree -p $2 \
-        | grep -o '([0-9]\+)' \
-        | grep -o '[0-9]\+'
+        pstree -p $2 \
+            | grep -o '([0-9]\+)' \
+            | grep -o '[0-9]\+'
     )
-
 
     :red "$2 killed after ${1}sec timeout"
 }
@@ -190,10 +195,10 @@ HELP
     local exitcode="0"
 
     if [ "$wait" -gt 0 ]; then
-        ( :eval-command-on-file-name "$filename" "${command[@]}" ) &
+        (:eval-command-on-file-name "$filename" "${command[@]}") &
         local child=$!
 
-        coproc watchdog { :watchdog $wait $child ; }
+        coproc watchdog { :watchdog $wait $child; }
         local watchdog=$watchdog_PID
 
         {
@@ -229,13 +234,15 @@ HELP
         exit 1
     fi
 
-    local lockfile=/tmp/watcher.$(md5sum <<< "$(pwd): $@" | awk '{print $1}')
+    local lockfile=/tmp/watcher.$(md5sum <<<"$(pwd): $@" | awk '{print $1}')
     trap ":unlock $lockfile" EXIT
 
     if [ "$1" ]; then
         local pattern=${1:-.}
         shift
     fi
+
+    local exclude_pattern="${opts[exclude]:-}"
 
     local run_step=1
     if [[ $1 =~ ^-?[0-9]+$ ]]; then
@@ -262,12 +269,17 @@ HELP
 
     { :wait-changed-files "${opts[events]}" "${opts[dir]}" \
         | while read filename; do
-            if ! grep -q${grep_pattern_type} "$pattern" <<< "$filename"
-            then
+            if ! grep -q${grep_pattern_type} "$pattern" <<<"$filename"; then
                 continue
             fi
 
-            current_step=$(( $current_step + 1 ))
+            if [[ "${exclude_pattern:-}" ]]; then
+                if grep -q${grep_pattern_type} "$exclude_pattern" <<<"$filename"; then
+                    continue
+                fi
+            fi
+
+            current_step=$(($current_step + 1))
 
             if ! :is-run-step $current_step $run_step; then
                 continue
