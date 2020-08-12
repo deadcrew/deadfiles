@@ -64,7 +64,7 @@ if [[ "$select_window" ]]; then
 
         xdotool windowfocus $window_id
 
-        xev -id "$window_id" | while read line; do
+        xev -event keyboard -id "$window_id" | while read line; do
             if grep "keycode 78" <<<"$line"; then
                 break
             fi
