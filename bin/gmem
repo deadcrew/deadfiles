@@ -1,0 +1,3 @@
+#!/bin/bash
+
+gorun "$(dirname "$(readlink -f "$0")")"/../go/src/gmem/ "${@}"

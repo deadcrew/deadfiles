@@ -1,34 +1,37 @@
 #!/bin/bash
 
-pattern_line='<version>([^<]+)</version>'
-version_line=$(cat pom.xml | grep -P "$pattern_line" | head -n1)
+file=pom.xml
+major=$(pom -p version.major < $file)
+minor=$(pom -p version.minor < $file)
+patch=$(pom -p version.patch < $file)
 
-pattern_version='([0-9\.]+)'
-version=$(grep -Po "$pattern_version" <<< "$version_line" | head -n1)
+from_major=$major
+from_minor=$minor
+from_patch=$patch
 
-echo "$version"
-
-major="$(cut -d. -f1 <<< "$version")"
-minor="$(cut -d. -f2 <<< "$version")"
-patch="$(cut -d. -f3 <<< "$version")"
-
-case "${1:-patch}" in
+case "$1" in
     major)
-        major=$(echo $(calc "$major+1"))
+        major=$(($major+1))
         minor=0
         patch=0
         ;;
+
     minor)
-        minor=$(echo $(calc "$minor+1"))
+        minor=$(($minor+1))
         patch=0
         ;;
+
     patch)
-        patch=$(echo $(calc "$patch+1"))
+        patch=$(($patch+1))
+        ;;
+
+    *)
+        echo "Unknown mode" >&2
         ;;
 esac
 
-version_new="$major.$minor.$patch"
+sed -ri "s|<version.major>.*</version.major>|<version.major>$major</version.major>|" pom.xml
+sed -ri "s|<version.minor>.*</version.minor>|<version.minor>$minor</version.minor>|" pom.xml
+sed -ri "s|<version.patch>.*</version.patch>|<version.patch>$patch</version.patch>|" pom.xml
 
-echo "${version} -> ${version_new}" >&2
-
-sed -ri "s|${version_line}|    <version>${version_new}</version>|" pom.xml
+echo "$major.$minor.$patch"

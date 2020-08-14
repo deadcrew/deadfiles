@@ -1,0 +1,35 @@
+#!/bin/bash
+
+set -euo pipefail
+
+level="$1"
+title="$2"
+
+:repeat() {
+    for i in $(seq $2); do echo -n $1; done
+}
+
+version=$(pom-bump "$level")
+
+major=$(cut -d. -f1 <<< "$version")
+minor=$(cut -d. -f2 <<< "$version")
+patch=$(cut -d. -f3 <<< "$version")
+
+build_number="${minor}0000${patch}"
+
+hashtag="$major$minor$patch"
+
+releases=$(cat RELEASES)
+cat > RELEASES <<EOF
+$title
+$(:repeat = "${#title}")
+
+ver: $version
+bb5: ${build_number}50 ${build_number}51
+bb6: ${build_number}60 ${build_number}61
+
+Release notes are available here:
+https://snake-ci.com/docs/changelog/addon/#$hashtag
+
+$releases
+EOF
