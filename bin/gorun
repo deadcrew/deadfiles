@@ -20,13 +20,8 @@ if [[ "$cwd" =~ "/go/src/" ]]; then
     export GOPATH="${cwd//\/go\/src*/\/go\/}"
 fi
 
-mod=""
-if [[ "${GO111MODULE:-}" == "on" ]]; then
-    mod="-mod vendor"
-fi
-
 name=$(basename "$cwd")
-go install -gcflags "-trimpath $GOPATH" -asmflags "-trimpath $GOPATH" $mod
+go install -gcflags "-trimpath $GOPATH" -asmflags "-trimpath $GOPATH"
 
 cd "$oldpwd"
 
