@@ -1,0 +1,3 @@
+#!/bin/bash
+
+aur "$1" -c "https://github.com/kovetskiy/pkgbuilds" -s "$1" -p 1
