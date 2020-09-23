@@ -16,7 +16,7 @@ if ! which aurora &>/dev/null; then
 fi
 
 aurora rm "$package" || echo "Package was not in queue"
-aurora add "$package" "${@:-}"
+aurora add "$package" "${@}"
 aurora watch -w "$package"
 
 aurora get "$package" | tee /dev/stderr | grep -q success
