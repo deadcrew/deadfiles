@@ -37,6 +37,8 @@ expect {
         system notify-replace bluetooth-connect '' "'<b>BT</b> » dev $address<br>     paired, connecting…'"
         expect -re ".*CHG.* $address Connected: no"
         send "scan off\r"
+        send "trust $address\r"
+        expect -re "trust succeeded"
         send "connect $address\r"
         exp_continue
     }
