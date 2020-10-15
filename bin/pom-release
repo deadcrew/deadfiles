@@ -15,7 +15,7 @@ major=$(cut -d. -f1 <<< "$version")
 minor=$(cut -d. -f2 <<< "$version")
 patch=$(cut -d. -f3 <<< "$version")
 
-build_number="${minor}0000${patch}"
+build_number="${major}00${minor}00${patch}"
 
 hashtag="$major$minor$patch"
 
