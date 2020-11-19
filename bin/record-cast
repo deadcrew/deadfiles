@@ -58,7 +58,7 @@ if [[ "$select_window" ]]; then
         window_id=$(xwininfo | awk '/Window id/{print $4}')
     fi
     select_arg="-#$window_id"
-    if $press; then
+    if [[ "$press" ]]; then
         echo "Press ScrollLock to start recording."
         killall -q -STOP screenkey
 
