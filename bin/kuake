@@ -139,7 +139,19 @@ CODE
     )
 
     if [[ "$window_id" ]]; then
-        :window-toggle $_classname
+        # create a floating window
+        # move to scratchpad
+        # show scratcpad
+        # disable floating
+        # enable floating
+        # scratchpad will be empty
+        #
+        # -> scratchpad show will return 'ERROR: (null)', therefore we need to
+        # move the window to scratchpad if toggle has failed
+
+        if ! :window-toggle $_classname; then
+            :window-hide $_classname
+        fi
 
         if :is-another-screen $window_geometry; then
             :window-kuakize $window_id $_opacity $window_geometry
