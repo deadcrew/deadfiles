@@ -1,6 +1,8 @@
 #!/bin/bash
 
-/opt/android-sdk/emulator/emulator @$1 \
+avd=$1
+shift
+
+/opt/android-sdk/emulator/emulator @$avd \
     -netdelay none -no-boot-anim \
-    -gpu host \
-    -skin 1080x1920 
+    -skin 1080x2160 "${@}"

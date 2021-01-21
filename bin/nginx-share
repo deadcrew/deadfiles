@@ -15,6 +15,8 @@ events {
     worker_connections  1024;
 }
 http {
+    default_type  application/octet-stream;
+    include mime.types;
     server {
         listen 80;
         root "${dir}";
