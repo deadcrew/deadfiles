@@ -1,0 +1,8 @@
+#!/bin/bash
+
+set -euo pipefail
+
+pattern="$1"
+file="${2}"
+
+vim -esbnN -c "$pattern" "$file"
