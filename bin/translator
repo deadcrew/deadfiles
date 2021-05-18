@@ -31,7 +31,13 @@ HISTORY=~/.engrus_history
 
         :history:add "$input" "$result"
 
-        ankictl -A ${ANKI_DECK} <<< "${input}"$'\t'"${result}"
+        if [[ "$ANKI_DECK" ]]; then
+            if ! ankictl -A ${ANKI_DECK} <<< "${input}"$'\t'"${result}"; then
+                notify 'ankictl: unable to add a word'
+            else
+                notify 'ankictl: updated dictionary'
+            fi
+        fi
     done
 }
 
@@ -94,7 +100,6 @@ HISTORY=~/.engrus_history
     local result=$2
 
     printf '%s\t%s\n' "$input" "$result" >> $HISTORY
-
 }
 
 :main "$@"

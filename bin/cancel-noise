@@ -1,0 +1,74 @@
+#!/bin/bash
+
+## rewritten version of https://gist.githubusercontent.com/Brunfunstudios/d2b9c9d7c339bde8d6123b90a98aa3c2/raw/19387bbc015cb92cdb25b18451c9fda732b604fb/filter_voice.sh
+
+set -euo pipefail
+
+parent_path=~/.cache/rnnoise
+ladspa_file=$parent_path/bin/ladspa/librnnoise_ladspa.so
+
+:enable() {
+    local input_sink="$1"
+    pacmd load-module module-null-sink sink_name=mic_denoised_out
+    pacmd load-module module-ladspa-sink sink_name=mic_raw_in sink_master=mic_denoised_out label=noise_suppressor_mono plugin=$ladspa_file
+    pacmd load-module module-loopback latency_msec=1 source=$input_sink sink=mic_raw_in channels=1
+
+    pacmd set-default-source mic_denoised_out.monitor
+}
+
+:disable() {
+    :ignore pactl unload-module module-loopback
+    :ignore pactl unload-module module-null-sink
+    :ignore pactl unload-module module-ladspa-sink
+}
+
+:download-rnnoise() {
+    :log "Downloading the library for noise cancelling, will put it at $ladspa_file"
+    wget --quiet https://github.com/werman/noise-suppression-for-voice/releases/download/v0.2/linux_rnnoise_bin_x64.tar.gz -P $parent_path
+    :ignore tar xf $parent_path/linux_rnnoise_bin_x64.tar.gz -C $parent_path
+    rm $parent_path/linux_rnnoise_bin_x64.tar.gz
+}
+
+:ensure-rnnoise() {
+    if [[ ! -f $ladspa_file ]]; then
+        :download-rnnoise
+    fi
+}
+
+:is-enabled() {
+    pacmd list-modules | grep -q 'ladspa'
+}
+
+:log() {
+    echo ":: ${*}" >&2
+}
+
+:ignore() {
+    "${@}" || true
+}
+
+:main() {
+    mkdir -p $parent_path
+
+    local input_sink=$(pacmd stat |grep -o -P "(?<=Default source name: ).*")
+    local output_sink=$(pacmd stat |grep -o -P "(?<=Default sink name: ).*")
+
+    :log ""
+    :log "Input:" $input_sink
+    :log "Output:" $output_sink
+    :log "If those arent the sinks you want to use change the default input/output in pavucontroll or similiar and restart this script"
+    :log ""
+
+    if :is-enabled; then
+        :log "Noise cancelling is enabled, disabling it"
+        :disable
+        :log "Noise cancelling has been disabled"
+    else
+        :log "Enabling noise cancelling"
+        :ensure-rnnoise
+        :enable "$input_sink"
+        :log "Noise cancelling has been enabled"
+    fi
+}
+
+:main "${@}"

@@ -1,7 +1,7 @@
 #!/bin/bash
 
 mode="-dmenu"
-if printf '%s\n' "$@" | grep -xE -- '-e'; then
+if printf '%s\n' "$@" | grep -q -xE -- '-e'; then
     mode=""
 fi
 
