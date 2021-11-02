@@ -1,0 +1,25 @@
+#!/bin/bash
+
+read mouse_x mouse_y <<<$(
+    xdotool getmouselocation |
+        cut -f-2 -d' ' |
+        tr -d 'xy:'
+)
+
+while read width height x y; do
+    if ((mouse_x < x || mouse_y < y)); then
+        continue
+    fi
+
+    if ((mouse_x > x + width || mouse_y > y + height)); then
+        continue
+    fi
+
+    echo _ $x $y $width $height
+done <<<$(
+    cat /var/log/Xorg.0.log \
+        | grep 'Setting mode' \
+        | tail -n-1 \
+        | grep -Po '@\K\d+x\d+ \+\d+\+\d+' \
+        | sed -re 's/x/ /g' -e 's/ \+/ /g' -e 's/\+/ /g'
+)

@@ -12,6 +12,7 @@
 ###                        * password - paste password;
 ###                        * login-password - paste login and password;
 ###     --prefix=<prefix> Filter out only tokens that starts with given prefix.
+###     --no-sync         Disable background sync.
 
 
 if systemctl is-active eyebrod >/dev/null; then
@@ -64,7 +65,7 @@ source /usr/share/bash/opts/opts.bash
     declare -A opts
 
     opts:parse opts args \
-        --help --mode: --prefix: -- "${@}"
+        --help --mode: --prefix: --no-sync -- "${@}"
 
     if [[ "${opts[--help]:-}" ]]; then
         :help
@@ -88,8 +89,13 @@ source /usr/share/bash/opts/opts.bash
 
     local prefix="${opts[--prefix]:-}"
 
+    local active_window_id=$(xdotool getwindowfocus)
+    local mouse_location=$(
+        xdotool getmouselocation | cut -f-2 -d' ' | tr -d 'xy:'
+    )
+
     local token=$(
-        :list repos "${opts[--prefix]:-}" \
+        :list repos "${opts[--prefix]:-}" "${opts[--no-sync]:-false}" \
             | sort \
             | :json \
             | modal-template --template "$template" \
@@ -114,7 +120,15 @@ source /usr/share/bash/opts/opts.bash
         token=$prefix$token
     fi
 
-    :use "$mode" "$token" "${repos[$repo]}"
+    child_window_id=$(
+        xwininfo -id "$active_window_id" -tree \
+            | grep -P '\d+ children:' -A1 \
+            | tail -n1 \
+            | awk '{ print $1 }' || true
+    )
+
+    :use "$mode" "$token" "${repos[$repo]}" \
+        "${child_window_id:-$active_window_id}"
 }
 
 :json() {
@@ -142,6 +156,7 @@ source /usr/share/bash/opts/opts.bash
 :list() {
     local -n _repos=$1
     local prefix=$2
+    local nosync=$3
 
     local path
     local name
@@ -154,8 +169,10 @@ source /usr/share/bash/opts/opts.bash
             exit 1
         fi
 
-        if [[ "$_LOCK" == "x" ]]; then
-            :sync "${path}"
+        if [[ ! $nosync ]]; then
+            if [[ "$_LOCK" == "x" ]]; then
+                :sync "${path}"
+            fi
         fi
 
         carcosa -Lc -p "$path" | \
@@ -206,8 +223,7 @@ source /usr/share/bash/opts/opts.bash
     local mode=$1
     local token=$2
     local path=$3
-
-    local active_window_id=$(xdotool getwindowfocus)
+    local active_window_id=$4
 
     if local output=$(carcosa -Gc "$token" -p "$path"); then
         local password=$output

@@ -28,8 +28,8 @@ if [[ "$network" && "$network" != "!" ]]; then
         exit 1
     fi
 
-    id=$(awk '{print $1}' <<< "$net")
-    name=$(awk '{print $2}' <<< "$net")
+    id=$(cut -f1 -d' ' <<< "$net")
+    name=$(cut -f2- -d' ' <<< "$net")
 
     if [[ ! "$name" ]]; then
         echo "No network found"

@@ -20,14 +20,22 @@ expect {
 
 system notify-replace bluetooth-connect '' "'<b>BT</b> » dev $address'"
 
+set retries 5
+
 send "connect $address\r"
 expect {
-    -re "Failed to connect|Failed to pair" {
-        send "remove $address\r"
+    -re "Failed to connect" {
+        set retries "[expr $retries - 1]"
+        if { $retries <= 0 } {
+            send "remove $address\r"
+        } else {
+            send "connect $address\r"
+        }
+
         exp_continue
     }
 
-    -re "Device $address not available|Device has been removed" {
+    -re "Device $address not available|Device has been removed|Failed to pair: .*" {
         send "scan on\r"
         expect "Discovery started"
         system notify-replace bluetooth-connect '' "'<b>BT</b> » dev $address<br>     not found: pair now!'"
