@@ -21,7 +21,7 @@ if [[ "$cwd" =~ "/go/src/" ]]; then
 fi
 
 name=$(basename "$cwd")
-go install -gcflags "-trimpath $GOPATH" -asmflags "-trimpath $GOPATH"
+GOFLAGS=-buildvcs=false go install -gcflags "-trimpath $GOPATH" -asmflags "-trimpath $GOPATH"
 
 cd "$oldpwd"
 

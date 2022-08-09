@@ -28,9 +28,9 @@ git-commit() {
     fi
 
 
-    local flags=""
+    local flags="--signoff"
     if $amend; then
-        flags="--amend"
+        flags="$flags --amend"
     fi
 
     if [ "$(git diff --cached)" = "" ]; then

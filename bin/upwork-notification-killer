@@ -5,17 +5,21 @@ exec 2>/dev/null
 interval=2
 
 while :; do
-    win_id=$(xdotool search --class --onlyvisible upwork)
-    if [[ ! "$win_id" ]]; then
+    windows=($(xdotool search --class --onlyvisible upwork))
+    if [[ ! "$windows" ]]; then
         sleep $interval
         continue
     fi
 
-    if xwininfo -id "$win_id" | grep -qF 'Width: 360'; then
-        xdotool windowclose "$win_id"
-        sleep 60
-        continue
-    fi
+    sleep 2
+
+    for win_id in ${windows[@]}; do
+        if xwininfo -id "$win_id" | grep -qP 'Width: (360|710)'; then
+            xdotool windowclose "$win_id"
+            sleep 60
+            continue
+        fi
+    done
 
     sleep $interval
 done

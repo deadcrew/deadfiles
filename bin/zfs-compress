@@ -1,13 +1,21 @@
 #!/bin/bash
 
+
 :main() {
+    local dir=${1:-/}
+
     local mounts=$(awk '$3 != "zfs" { print $2 }' /proc/mounts)
     local find_args=$(xargs -I{} -n1 -- echo -path {} -or <<< "$mounts")
     local name
 
-    find / \( $find_args -false \) -prune -or -type f -print \
-        | while read name; do
-            printf "%s\n" "$name"
+    printf "[0/0] counting number of files... (might take a while)\n"
+
+    local amount=$(find "$dir" \( $find_args -false \) -prune -or -type f -print | wc -l)
+    local x=0
+
+    find "$dir" \( $find_args -false \) -prune -or -type f -print | while read name; do
+            x=$((x+1))
+            printf "[$x/$amount] %s\n" "$name"
             cp -a "$name" "$name.compressed"
             mv "$name.compressed" "$name"
         done

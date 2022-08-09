@@ -78,7 +78,7 @@ if [[ "$select_geometry" ]]; then
     select_arg="-g $select_geometry"
 fi
 
-video="$name".avi
+video="$name".mp4
 
 if [[ "$window_id" ]] && $press; then
     {
