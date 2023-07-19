@@ -27,7 +27,7 @@ token=$(:carcosa -Lc \
 if output=$(:carcosa -Gc "$token" 2>&1); then
     png=$(mktemp -p /var/run/user/$UID/ --suffix=.png)
     trap "rm $png" EXIT
-    qrencode <<< "$output" -o "$png" -s 10
+    qrencode -o "$png" -s 10 "$output"
     feh "$png"
 else
     if [ "$output" ]; then

@@ -1,5 +1,20 @@
 #!/bin/bash
 
 file=$1
+basename=$(basename $file)
+shift
 
-mermaid <$1 ${file%.*}.png "${@:2}"
+pup=$(mktemp --suffix=.puppeteer-config.json)
+trap "rm $pup" EXIT
+
+cat >$pup <<EOF
+{
+  "args": ["--no-sandbox"]
+}
+EOF
+
+output=${dir:-}${basename%.*}.png
+
+echo ":: mermaid :: ${file} → ${output}" >&2
+
+exec mmdc -p $pup -i $file -o $output "${@}"

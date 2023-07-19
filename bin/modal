@@ -5,7 +5,6 @@ if printf '%s\n' "$@" | grep -xE -- '-e'; then
     mode=""
 fi
 
-matching="normal"
 args=()
 while [[ "${1:-}" ]]; do
     args+=("$1")

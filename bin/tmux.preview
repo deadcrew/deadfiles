@@ -1,6 +1,5 @@
 #!/bin/bash
 
-
 read session _ <<< $1
 pid=$(tmux list-clients -t $session -F '#{pane_pid}')
 tmux capture-pane -p -t $session
