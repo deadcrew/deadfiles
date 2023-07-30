@@ -48,6 +48,7 @@ else
     if [[ "$network" == "!" ]]; then
         echo -n "Selecting available network... "
         wpa_cli reconfigure
+        exit
     else
         wpa_cli status | grep '^ssid=' | cut -d= -f2-
         exit
