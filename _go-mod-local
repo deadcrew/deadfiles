@@ -2,7 +2,6 @@
 
 function _go-mod-local() {
     local dirs=($(go list -m all | awk '{print $1}'))
-    echo $dirs > /tmp/1
 
     _values "go-mod-local items" $dirs
 }
