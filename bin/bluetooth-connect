@@ -35,13 +35,16 @@ expect {
         exp_continue
     }
 
-    -re "Device $address not available|Device has been removed|Failed to pair: .*" {
+    -re "Device $address not available|Device has been removed|Failed to pair: .*|org.bluez.Error.DoesNotExist" {
         send "scan on\r"
         expect "Discovery started"
         system notify-replace bluetooth-connect '' "'<b>BT</b> » dev $address<br>     not found: pair now!'"
         expect -re ".*NEW.* Device $address"
         send "pair $address\r"
-        expect "Pairing successful"
+        exp_continue
+    }
+
+    "Pairing successful" {
         system notify-replace bluetooth-connect '' "'<b>BT</b> » dev $address<br>     paired, connecting…'"
         expect -re ".*CHG.* $address Connected: no"
         send "scan off\r"
@@ -52,6 +55,13 @@ expect {
     }
 
     -re "\\\[agent\\\] Authorize service .*" {
+        send "yes\r"
+        exp_continue
+    }
+
+    -re "Confirm passkey .*" {
+        system notify-replace bluetooth-connect '' "'<b>BT</b> » dev $address<br>     authorising…'"
+        expect -re ".*CHG.* $address Connected: no"
         send "yes\r"
         exp_continue
     }

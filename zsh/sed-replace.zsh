@@ -32,7 +32,6 @@ sed-replace() {
                 if ! cmp -s $file $after; then
                     printf "\e[4m%s\e[0m\n" "$file"
                     diff -u --color=always $file $after \
-                        | diff-so-fancy \
                         | tail -n+3
                     printf "\n"
                 fi

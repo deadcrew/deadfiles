@@ -16,7 +16,7 @@
 
 
 if systemctl is-active eyebrod >/dev/null; then
-    data=$(curl -s 'http://127.0.0.1:3451/rpc?command=get_hostname')
+    data=$(curl -m 0.1 -s 'http://127.0.0.1:3451/rpc?command=get_hostname')
     xsel -i -b <<< "$data"
 fi
 
