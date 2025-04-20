@@ -230,6 +230,7 @@ source /usr/share/bash/opts/opts.bash
 
         if [[ "$mode" == "clipboard" ]]; then
             xclip -i -selection primary <<< "$password"
+            xclip -i -selection clipboard <<< "$password"
             return
         fi
 

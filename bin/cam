@@ -1,9 +1,0 @@
-#!/bin/bash
-
-number=$1
-
-if ! mpv --demuxer-cache-wait=no --title="camera:[$number]" --network-timeout=3 -v --no-resume-playback \
-    "https://sochi.camera:8081/cam_$number/tracks-v1/index.m3u8?token=bisv_dgZK";
-then
-    urxvt -title "camera:[$number]"
-fi

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-xdotool search --name "Google Hangouts is sharing your screen with hangouts.google.com."\
+xdotool search --name "meet.google.com is sharing your screen" \
     | while read win_id; do
     if xwininfo -id "$win_id" &>/dev/null; then
         echo ":: closing window $win_id"
