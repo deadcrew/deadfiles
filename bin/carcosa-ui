@@ -15,47 +15,6 @@
 ###     --no-sync         Disable background sync.
 
 
-if systemctl is-active eyebrod >/dev/null; then
-    data=$(curl -m 0.1 -s 'http://127.0.0.1:3451/rpc?command=get_hostname')
-    xsel -i -b <<< "$data"
-fi
-
-_lock_wait=/var/run/user/$UID/carcosa-ui.wait.lock
-_lock_run=/var/run/user/$UID/carcosa-ui.run.lock
-
-:wait() {
-    spinner=("/" "—" "\\" "|")
-    i=0
-    while :; do
-        _LOCK=wx flock --verbose -E 137 -n $_lock_run $0 "$@";
-        if [[ "$?" != "137" ]]; then
-            exit
-        fi
-
-        i=$((i+1))
-        sleep 0.1
-        notify-replace "carcosa-ui" "" \
-            "carcosa: syncing ${spinner[$((i % ${#spinner[@]}))]}"
-    done
-}
-
-if [[ ! "${_LOCK:-}" ]]; then
-    _LOCK=x flock -E 137 -n $_lock_run $0 "$@"
-    if [[ "$?" == "137" ]]; then
-        _LOCK=w exec flock -n $_lock_wait $0 "$@"
-    fi
-
-    exit
-fi
-
-if [[ "${_LOCK:-}" == "w" ]]; then
-    :wait "$@"
-fi
-
-if [[ "${_LOCK:-}" == "wx" ]]; then
-    notify-replace "carcosa-ui" "" "carcosa: synced"
-fi
-
 set -euo pipefail
 
 source /usr/share/bash/opts/opts.bash
@@ -120,12 +79,18 @@ source /usr/share/bash/opts/opts.bash
         token=$prefix$token
     fi
 
-    child_window_id=$(
-        xwininfo -id "$active_window_id" -tree \
-            | grep -P '\d+ children:' -A1 \
-            | tail -n1 \
-            | awk '{ print $1 }' || true
-    )
+    xwininfo -id "$active_window_id" -tree || {
+        notify-send "carcosa-ui" "no active window found"
+        exit 1
+    }
+
+    #child_window_id=$(
+    #    xwininfo -id "$active_window_id" -tree \
+    #        #| grep -Pv '1x1' \
+    #        | grep -P '\d+ children:' -A1 \
+    #        | tail -n1 \
+    #        | awk '{ print $1 }' || true
+    #)
 
     :use "$mode" "$token" "${repos[$repo]}" \
         "${child_window_id:-$active_window_id}"
